@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # 1. Maintain Node.js dependencies (Handles pnpm automatically)
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+    labels:
+      - 'security'
+      - 'dependencies'
+    # Grouping reduces PR noise and CI pipeline usage
+    groups:
+      all-deps:
+        patterns:
+          - '*'
+
+  # 2. Maintain GitHub Actions workflows
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    labels:
+      - 'devops'
+      - 'ci-cd'

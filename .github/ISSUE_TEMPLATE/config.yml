@@ -1,0 +1,4 @@
+blank_issues_enabled: false
+# After the repository exists, add a `contact_links` entry pointing at its
+# Discussions tab for questions, and at the private "Report a vulnerability" form
+# (Security tab) for security reports.

@@ -1,0 +1,14 @@
+# Normalize line endings: LF in the repository, platform default on checkout.
+* text=auto
+
+# Binary assets are never diffed or merged as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+
+# SVGs are text (and used as icons), so keep them diffable.
+*.svg text
