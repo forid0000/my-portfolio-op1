@@ -12,17 +12,18 @@ import {
 } from 'date-fns';
 import { Hourglass, Calendar, ArrowDown, RotateCcw } from 'lucide-react';
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
-const STORAGE_KEY = 'global-id-age-pref'; // Key for localStorage
+const STORAGE_KEY = 'my-portfolio-op1-age-pref'; // Key for localStorage
 
 interface AgeClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function AgeClient({ icon, accentColor }: AgeClientProps) {
+export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <Hourglass />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <Hourglass />, headingColorClass);
 
   // State
   const [dob, setDob] = useState('');

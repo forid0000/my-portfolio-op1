@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import CurrencyClient from './currency-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'currency';
 const FALLBACK_TITLE = 'Currency Converter - Live Exchange Rates for 160+ Currencies';
@@ -42,5 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CurrencyPage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <CurrencyClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return (
+    <CurrencyClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />
+  );
 }

@@ -64,17 +64,12 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
   }, [brand, toggles]);
   const b = { ...BRAND_FALLBACK, ...(brand || fetchedBrand || {}) };
   const t = { ...NAV_TOGGLE_FALLBACK, ...(toggles || fetchedToggles || {}) };
-  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
 
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Handle Click Outside & Scroll to close menu
   useEffect(() => {
@@ -93,7 +88,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
     };
     const handleScroll = () => setIsMenuOpen(false);
     document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('scroll', handleScroll);
@@ -129,12 +124,22 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
       setActiveSection(current);
     };
 
-    window.addEventListener('scroll', handleScrollSpy);
-    handleScrollSpy();
-    return () => window.removeEventListener('scroll', handleScrollSpy);
-  }, [pathname, t.about, t.skills, t.projects, t.gallery]);
+    // Passive + at most once per frame: reading section positions on every raw
+    // scroll event forces layout and makes scrolling janky.
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        handleScrollSpy();
+      });
+    };
 
-  if (!mounted) return null;
+    window.addEventListener('scroll', onScroll, { passive: true });
+    handleScrollSpy();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [pathname, t.about, t.skills, t.projects, t.gallery]);
 
   // Notes vault is a full-screen app - no site nav needed there
   if (pathname === '/notes') return null;

@@ -1,17 +1,17 @@
-# Global-ID: self-hosted developer portfolio with a built-in CMS
+# my-portfolio-op1: self-hosted developer portfolio with a built-in CMS
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![Tailwind CSS 4](https://img.shields.io/badge/Tailwind-4-06b6d4)
 
-Global-ID is an open-source **portfolio website and content management system** for developers. The public site is rendered from a MongoDB database, and everything on it (name, bio, projects, skills, theme, section order, SEO) is edited from a secured admin dashboard. There is no redeploy to change a sentence.
+my-portfolio-op1 is an open-source **portfolio website and content management system** for developers. The public site is rendered from a MongoDB database, and everything on it (name, bio, projects, skills, theme, section order, SEO) is edited from a secured admin dashboard. There is no redeploy to change a sentence.
 
 It also ships a private, password-protected **notes vault**, a set of client-side **utility kits** (QR codes, subnet calculator, password generator and more), a **Dev.to article feed**, and an `/llms.txt` endpoint, so one deployment covers the portfolio, a small blog, and a toolbox.
 
 > **Placeholder content.** A fresh install shows neutral placeholder content ("Your Name", `example.com` links). Replace it from `/administrator` after your first login. Nothing in the source code describes a real person.
 
-## Why Global-ID
+## Why my-portfolio-op1
 
 - **Edit from the browser, not the repo.** Every section has an admin editor with drag-and-drop ordering and unsaved-changes protection. Content lives in your own MongoDB, so a theme change or a new project is never a pull request.
 - **Stays up when the database does not.** Every server component falls back to built-in defaults if MongoDB is unreachable, so the public site renders instead of crashing.
@@ -47,57 +47,74 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 **Requirements:** Node.js 20.9 or newer, [pnpm](https://pnpm.io), and a MongoDB database ([Atlas free tier](https://www.mongodb.com/atlas) or local).
 
 ```bash
-git clone <your-fork-url> global-id
-cd global-id
+git clone <your-fork-url> my-portfolio-op1
+cd my-portfolio-op1
 pnpm install
 
 cp .env.example .env.local
-# edit .env.local and set at least:
-#   MONGODB_URI, JWT_SECRET (openssl rand -base64 32), ADMIN_PASSWORD
+# edit .env.local and set the two required values:
+#   MONGODB_URI   (your MongoDB connection string)
+#   JWT_SECRET    (openssl rand -base64 32)
 
 node scripts/create-indexes.mjs   # one-time: creates the indexes the app relies on
 pnpm dev                          # http://localhost:3000
 ```
 
-Open <http://localhost:3000/administrator> and sign in with `ADMIN_PASSWORD`. In development (`next dev`) the TOTP step is skipped; in production it is always required (see [Authentication](#authentication-and-security)).
+Then open <http://localhost:3000/administrator>. A fresh install has no admin yet, so you land on a **first-run setup wizard**:
+
+1. Enter the **setup code** printed in the terminal (or run `node scripts/setup-code.mjs`). It proves you control the server, so nobody else can claim a new deployment.
+2. Scan the QR code with an authenticator app. The authenticator is **required** for every sign-in.
+3. Optionally add a password as an extra factor.
+
+Everything else (the notes-vault password, email, Cloudinary, R2 keys) is configured later in **Admin → Security & Keys**, not in `.env`. Lost your authenticator? See [Recovery](#authentication-and-security).
 
 ### Make it yours
 
-| What                                                | Where                                                            |
-| --------------------------------------------------- | ---------------------------------------------------------------- |
-| Name, tagline, intro                                | Admin → Homepage (hero)                                          |
-| Brand, header, footer, socials, location, time zone | Admin → Global Settings                                          |
-| Bio, stats, status                                  | Admin → About                                                    |
-| Experience, projects, skills…                       | Admin → the matching section                                     |
-| Section order and visibility                        | Admin → Sections                                                 |
-| Colors and glass effect                             | Admin → Appearance                                               |
-| Page title, description, keywords, error pages      | Admin → System                                                   |
-| Avatar and résumé                                   | Admin → Media Manager                                            |
-| Dev.to username                                     | Admin → Section Texts (leave empty to disable the articles feed) |
-| Public URL, geo tags, short links, email delivery   | Environment variables (see below)                                |
+| What                                                    | Where                                                            |
+| ------------------------------------------------------- | ---------------------------------------------------------------- |
+| Name, tagline, intro                                    | Admin → Homepage (hero)                                          |
+| Brand, header, footer, socials, location, time zone     | Admin → Global Settings                                          |
+| Bio, stats, status                                      | Admin → About                                                    |
+| Experience, projects, skills…                           | Admin → the matching section                                     |
+| Section order and visibility                            | Admin → Sections                                                 |
+| Colors and glass effect                                 | Admin → Appearance                                               |
+| Page title, description, keywords, error pages          | Admin → System                                                   |
+| Avatar and résumé                                       | Admin → Media Manager                                            |
+| Passwords, authenticators, email / Cloudinary / R2 keys | Admin → Security & Keys                                          |
+| Dev.to username                                         | Admin → Section Texts (leave empty to disable the articles feed) |
+| Public URL, geo tags, short links                       | Environment variables (see below)                                |
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` for local work, or set the same variables in your hosting provider. Never commit real values: every `.env*` file except `.env.example` is git-ignored. Do **not** set `NODE_ENV` yourself.
+Only **two** values must be in the environment, because they have to exist before any dashboard can load:
 
-| Variable                                                                                       | Required      | Purpose                                                                                                                                                                       |
-| ---------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MONGODB_URI`                                                                                  | yes           | MongoDB connection string (database `portfolio_cms`).                                                                                                                         |
-| `JWT_SECRET`                                                                                   | yes           | Session signing key, at least 32 random characters. The app fails closed without it.                                                                                          |
-| `ADMIN_PASSWORD`                                                                               | yes           | Admin password (constant-time comparison).                                                                                                                                    |
-| `ADMIN_TOTP_SECRET`                                                                            | in production | Base32 TOTP secret. Generate with `node scripts/generate-totp.mjs`.                                                                                                           |
-| `NEXT_PUBLIC_SITE_URL`                                                                         | recommended   | Public origin (`https://your-domain.com`). Drives canonical URLs, sitemap, robots, llms.txt, JSON-LD. Falls back to Vercel's production domain, then `http://localhost:3000`. |
-| `NOTES_TOTP_SECRET`                                                                            | optional      | Enables a 6-digit authenticator code as a quick unlock for the Notes vault.                                                                                                   |
-| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`                         | optional      | Media explorer, avatar and gallery uploads.                                                                                                                                   |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`                                             | optional      | Contact-form email via any SMTP provider (host defaults to Brevo's relay, port to 587). `BREVO_SMTP_USER` / `BREVO_SMTP_PASS` are still accepted.                             |
-| `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL`                                                       | optional      | Inbox that receives submissions, and the sender address (defaults to `SMTP_USER`). Without these the form reports "not configured".                                           |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` | optional      | Cloudflare R2 for Notes vault image uploads.                                                                                                                                  |
-| `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`                  | optional      | Error tracking and source-map upload. Off unless a DSN is set; the CSP is extended automatically.                                                                             |
-| `SEO_GEO_REGION`, `SEO_GEO_PLACENAME`, `SEO_GEO_LAT`, `SEO_GEO_LON`                            | optional      | Geo-targeting meta tags. Nothing is emitted unless set.                                                                                                                       |
-| `SOCIAL_GITHUB_URL`, `SOCIAL_LINKEDIN_URL`, `SOCIAL_FACEBOOK_URL`, `WHATSAPP_NUMBER`           | optional      | Registers `/github`, `/linkedin`, `/facebook`, `/whatsapp` short links. Each exists only when its variable is set.                                                            |
-| `NEXT_PUBLIC_STATUS_URL`                                                                       | optional      | Makes the header uptime badge link to your status page.                                                                                                                       |
-| `NEXT_PUBLIC_PRAYER_DEFAULT_CITY`                                                              | optional      | Starting location of the prayer-times kit (default `Makkah`).                                                                                                                 |
-| `GITHUB_PROFILE_REPO`, `GITHUB_DISPATCH_TOKEN`                                                 | optional      | Triggers a `repository_dispatch` (`cms-updated`) on your profile-README repo after CMS saves.                                                                                 |
+| Variable      | Purpose                                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONGODB_URI` | MongoDB connection string (database `portfolio_cms`).                                                                                                                           |
+| `JWT_SECRET`  | At least 32 random characters. Signs sessions, derives the first-run setup code, and keys the encryption of secrets stored by the admin panel. The app fails closed without it. |
+
+Copy `.env.example` to `.env.local` for local work, or set the variables in your hosting provider. Never commit real values: every `.env*` file except `.env.example` is git-ignored. Do **not** set `NODE_ENV` yourself.
+
+**Managed in the admin panel (Admin → Security & Keys)**, so there is no `.env` juggling:
+
+- the admin authenticator (mandatory) and password (optional);
+- the notes-vault password and authenticator quick unlock (both optional);
+- contact-form email (SMTP host, port, user, password, recipient, sender);
+- Cloudinary, Cloudflare R2 (keys, account, bucket) and GitHub profile sync credentials.
+
+Secrets are encrypted before they reach the database and are never shown again. For the integrations, the matching environment variables (`SMTP_*`, `CONTACT_*`, `CLOUDINARY_*`, `R2_*`, `GITHUB_*`) still work as a **fallback** when a value is not set in the panel, which is convenient for platforms with their own secret manager.
+
+**Optional environment variables** (build-time or public values that cannot live in the database):
+
+| Variable                                                                             | Purpose                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                                                               | Public origin (`https://your-domain.com`). Drives canonical URLs, sitemap, robots, llms.txt, JSON-LD. Falls back to Vercel's production domain, then `http://localhost:3000`. |
+| `R2_PUBLIC_URL`                                                                      | Public base URL of your R2 bucket. Needed at build time by the Content-Security-Policy, so it stays an environment variable.                                                  |
+| `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`        | Error tracking and source-map upload. Off unless a DSN is set; when off, no Sentry code is shipped to browsers. The CSP is extended automatically.                            |
+| `SEO_GEO_REGION`, `SEO_GEO_PLACENAME`, `SEO_GEO_LAT`, `SEO_GEO_LON`                  | Geo-targeting meta tags. Nothing is emitted unless set.                                                                                                                       |
+| `SOCIAL_GITHUB_URL`, `SOCIAL_LINKEDIN_URL`, `SOCIAL_FACEBOOK_URL`, `WHATSAPP_NUMBER` | Registers `/github`, `/linkedin`, `/facebook`, `/whatsapp` short links. Each exists only when its variable is set.                                                            |
+| `NEXT_PUBLIC_STATUS_URL`                                                             | Makes the header uptime badge link to your status page.                                                                                                                       |
+| `NEXT_PUBLIC_PRAYER_DEFAULT_CITY`                                                    | Starting location of the prayer-times kit (default `Makkah`).                                                                                                                 |
 
 ## Architecture
 
@@ -122,6 +139,15 @@ Education, Certifications, Testimonials, Services and Publications each live in 
 
 Public pages are generated statically and refreshed on demand: admin saves call `revalidatePublicContent()` so a page regenerates once per real edit, not on a timer. In-process caches for global content, theme, and avatar share one TTL (`lib/cache-ttl.ts`) which is disabled in development so edits appear immediately.
 
+### Built to load fast
+
+The public pages are kept deliberately light, and a few rules keep them that way (see [CONTRIBUTING.md](CONTRIBUTING.md)):
+
+- **No icon library in the browser.** Icons are stored by name and may be any of ~50,000 lucide / react-icons glyphs. They are resolved **on the server** (`lib/icons/resolve.ts`), which loads only the one pack a name needs and sends just the SVG data of the icons a page actually uses. The admin icon picker searches through `/api/admin/icons`, so it never loads a catalog either.
+- **Everything visible arrives with the HTML.** The header, footer, social links and icons are rendered on the server; nothing waits for hydration or a follow-up fetch.
+- **Animations are cheap and stop.** The dot-grid background is static CSS and only upgrades to an interactive canvas on a desktop with a mouse, drawing only while the pointer moves. Text effects run once. Nothing animates layout-expensive properties forever, and `prefers-reduced-motion` turns decoration off.
+- **Optional integrations cost nothing when off:** the Sentry SDK is not bundled unless configured, and forms use plain validation instead of a schema library.
+
 ### SEO and discoverability
 
 - Metadata, JSON-LD, and `llms.txt` are derived from CMS content through `lib/identity.ts` and the canonical origin in `lib/site-config.ts`.
@@ -130,22 +156,27 @@ Public pages are generated statically and refreshed on demand: admin saves call 
 
 ## Authentication and security
 
+Credentials are managed in the admin panel (**Admin → Security & Keys**) and stored in MongoDB: passwords are scrypt-hashed, authenticator seeds and integration secrets are encrypted with AES-256-GCM using a key derived from `JWT_SECRET`.
+
 **Admin (`/administrator`)**
 
-1. Password and TOTP are verified together at `/api/admin/login`; the password check is constant-time.
-2. A successful login issues an `HS512` JWT valid for 15 minutes, stored in an `HttpOnly`, `SameSite=Strict`, `Secure` (in production) cookie.
-3. `middleware.ts` verifies the JWT for `/administrator` and `/api/admin/*`, and every mutating endpoint re-verifies it (defense in depth).
-4. Mutating admin requests are checked with `Sec-Fetch-Site` / `Origin` and cross-site requests are rejected before JWT verification.
-5. Auth endpoints are limited to 10 attempts per 15 minutes per IP, and content writes to 60 per 5 minutes per IP.
-6. Responses carry a strict Content-Security-Policy (`frame-ancestors 'none'`, `object-src 'none'`, explicit host allow-lists), HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+1. **First-run setup** (`/administrator/setup`) exists only until the admin is created. It needs the setup code printed in the server log, is rate limited, and closes permanently once it succeeds.
+2. **Sign-in:** the authenticator code is **always required**. A password is optional and is enforced once you set one. Both factors are checked together and a failure gives one generic message. Each authenticator code works once (replay protection).
+3. **Sessions:** an `HS512` JWT valid for 15 minutes in an `HttpOnly`, `SameSite=Strict`, `Secure` (production) cookie. `middleware.ts` verifies it for `/administrator` and `/api/admin/*`, and every mutating endpoint re-verifies it.
+4. **Sensitive changes need a fresh authenticator code** on top of the session (passwords, authenticator, integration keys), so a stolen session cookie cannot become a permanent takeover.
+5. Mutating admin requests are checked with `Sec-Fetch-Site` / `Origin`; auth endpoints allow 10 attempts per 15 minutes per IP and content writes 60 per 5 minutes.
+6. Responses carry a strict Content-Security-Policy, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+
+**Recovery.** If you lose your authenticator, run `node scripts/reset-admin-auth.mjs --yes` with the same `MONGODB_URI` the app uses. It removes only the admin credentials (not your content, notes or keys); then open `/administrator/setup` again. This requires access to the database, which is exactly the point: only the owner of the deployment can do it.
 
 **Notes vault (`/notes`)** is fully independent of the admin session:
 
-1. **Vault password:** scrypt-hashed (`scrypt:salt:hash`) in the database, set from `/administrator/notes-config`; 7-day session.
-2. **Optional quick unlock:** when `NOTES_TOTP_SECRET` is set, a 6-digit authenticator code grants a 45-minute session. There is deliberately no clock- or formula-based key: anything derivable from open-source code would be a public backdoor.
-3. Separate `notes_session` cookie, 30 attempts per 15 minutes per IP, image-only upload allow-list, and a strict link allow-list (`https:`, `mailto:`, `/`, `#`) when rendering Markdown.
+1. **Vault password** (optional, 7-day session) and **authenticator quick unlock** (optional, 45-minute session). The vault stays locked for everyone until at least one is set. There is deliberately no clock- or formula-based key: anything derivable from open-source code would be a public backdoor.
+2. Separate `notes_session` cookie, 30 attempts per 15 minutes per IP, image-only upload allow-list, and a strict link allow-list (`https:`, `mailto:`, `/`, `#`) when rendering Markdown.
 
 > **Notes are access-controlled, not encrypted at rest.** They are stored as plain text in your MongoDB database. Anyone with database access can read them, so enable encryption at rest on your MongoDB provider and keep credentials private. Do not store secrets you would not trust your database host with.
+
+> **Rotating `JWT_SECRET` invalidates stored secrets.** Authenticator seeds and integration keys are encrypted with a key derived from it, so after a rotation you must set up the admin again (see Recovery) and re-enter the integration keys.
 
 > **Rate limiting is in-memory and per instance.** On serverless platforms each instance counts separately, so treat it as a speed bump, not a hard guarantee. Use a platform-level WAF or an external store for strict limits. See [SECURITY.md](SECURITY.md).
 
@@ -153,9 +184,10 @@ Public pages are generated statically and refreshed on demand: admin saves call 
 
 **Vercel** (recommended; Speed Insights is already wired and is inert elsewhere):
 
-1. Import the repository and set the environment variables above (at least `MONGODB_URI`, `JWT_SECRET`, `ADMIN_PASSWORD`, `ADMIN_TOTP_SECRET`, `NEXT_PUBLIC_SITE_URL`).
+1. Import the repository and set `MONGODB_URI`, `JWT_SECRET` and `NEXT_PUBLIC_SITE_URL`.
 2. Run `node scripts/create-indexes.mjs` once against your production `MONGODB_URI`.
 3. Deploy. HTTPS must be enforced at the edge so `Secure` cookies and HSTS work.
+4. Open `/administrator`, read the **setup code** from the deployment's runtime logs (or run `node scripts/setup-code.mjs` with the production `JWT_SECRET`), and complete the setup wizard.
 
 **Self-hosted:** `pnpm build && pnpm start` behind a reverse proxy that terminates TLS (Caddy, Nginx). Node 20.9+.
 
@@ -166,12 +198,12 @@ Public pages are generated statically and refreshed on demand: admin saves call 
 ```
 app/            Next.js routes: public pages, /administrator, /notes, /kits, /articles, API routes
 components/     Section components, admin UI, shared primitives
-lib/            Auth, DB, validation (Zod), CMS content defaults, identity/SEO helpers, caches
-scripts/        create-indexes.mjs, generate-totp.mjs
+lib/            Auth and credentials, DB, validation (Zod), CMS defaults, identity/SEO, server-side icons, caches
+scripts/        create-indexes.mjs, setup-code.mjs, reset-admin-auth.mjs, generate-icon-names.mjs
 public/         Static assets (tech icons, placeholder avatar)
 ```
 
-Key files: `lib/content-defaults.ts` (placeholder content), `lib/site-config.ts` (deployment settings from env), `lib/identity.ts` (SEO identity from CMS), `lib/sections-registry.ts` (homepage sections).
+Key files: `lib/content-defaults.ts` (placeholder content), `lib/site-config.ts` (deployment settings from env), `lib/identity.ts` (SEO identity from CMS), `lib/credentials.ts` and `lib/integrations.ts` (admin-panel credentials and keys), `lib/icons/` (server-side icon resolution), `lib/sections-registry.ts` (homepage sections).
 
 ## Privacy
 

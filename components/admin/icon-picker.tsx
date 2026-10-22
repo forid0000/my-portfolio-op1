@@ -1,54 +1,54 @@
 'use client';
 
-import { createElement, useEffect, useMemo, useRef, useState } from 'react';
-import * as LucideIcons from 'lucide-react';
-import { Search, ChevronDown, TriangleAlert, Check } from 'lucide-react';
-import { resolveUniversalIcon, ALL_UNIVERSAL_ICON_NAMES } from '@/lib/universal-icon';
+import { createElement, useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Code, Loader2, Search, TriangleAlert } from 'lucide-react';
+import { IconSvg, type IconData } from '@/lib/icons/icon-data';
+import { SOCIAL_BRAND_ICON_NAMES, resolveBrandIcon } from '@/lib/social-icon';
 
-type IconResolver = (name: string) => React.ComponentType<{ className?: string }> | null;
-
-/** Cap how many matches actually render as buttons - typing narrows this fast,
- *  and nobody scrolls past a couple hundred results looking for an icon anyway. */
+/** Cap how many matches render as buttons - typing narrows this fast. */
 const MAX_RESULTS = 150;
 
-/**
- * Renders an icon by name via the given resolver, falling back to `fallback`
- * when it's empty/unresolved. Uses createElement rather than a JSX tag on a
- * locally-resolved variable - the resolved component is a stable module
- * reference so identity never actually changes across renders, but the
- * static-analysis "no components created during render" lint rule can't
- * prove that from a dynamic lookup and flags the JSX-tag form as a false
- * positive. `resolve`/`fallback` are passed as props (not closed over) so
- * this stays a single stable top-level component regardless of which
- * IconPicker instance is rendering it.
- */
-function IconGlyph({
+interface IconItem {
+  name: string;
+  data: IconData | null;
+}
+
+// Glyph data seen in this session, so re-opening the picker or revisiting a field is instant.
+const dataCache = new Map<string, IconData | null>();
+
+function remember(items: IconItem[]) {
+  for (const item of items) dataCache.set(item.name, item.data);
+}
+
+/** One glyph: a bundled brand mark, server-resolved SVG data, or a generic fallback. */
+function Glyph({
   name,
+  data,
   className,
-  resolve,
-  fallback,
 }: {
-  name?: string;
+  name: string;
+  data?: IconData | null;
   className?: string;
-  resolve: IconResolver;
-  fallback: React.ComponentType<{ className?: string }>;
 }) {
-  return createElement((name && resolve(name)) || fallback, { className });
+  const Brand = resolveBrandIcon(name);
+  // createElement (not a JSX tag): the brand component is a stable module-level
+  // reference, which the static "no components during render" rule can't prove.
+  if (Brand) return createElement(Brand, { className });
+  return data ? <IconSvg data={data} className={className} /> : <Code className={className} />;
 }
 
 interface IconPickerProps {
   value: string;
   onChange: (name: string) => void;
-  /** Names to search/browse. Defaults to every lucide-react icon (~1500). */
-  icons?: readonly string[];
-  /** Resolves a name to a component. Defaults to an exact lucide-react lookup. */
-  resolve?: IconResolver;
-  /** Shown for empty/unresolved values. Defaults to lucide's Code glyph. */
-  fallback?: React.ComponentType<{ className?: string }>;
+  /**
+   * Which names to browse. "all": every lucide + react-icons glyph. "social":
+   * the bundled brand marks, lucide, and Simple Icons brand logos (used for
+   * social/contact links).
+   */
+  scope?: 'all' | 'social';
   /**
    * Show the "or type an exact name" free-text field. Off for closed sets
-   * (e.g. floating-contact / global socials, which mix in non-lucide brand
-   * icons) where a typo'd free-text entry can't resolve to anything real.
+   * (social links) where a typo'd entry can't resolve to anything real.
    */
   allowCustom?: boolean;
   /** Placeholder for the search box. */
@@ -56,29 +56,28 @@ interface IconPickerProps {
 }
 
 /**
- * Icon field for CMS-editable content: a real-time searchable grid plus an
- * optional free-text fallback for any exact name, with a live preview and an
- * inline warning when the current value won't resolve (so the admin sees the
- * fallback glyph *before* saving, not after checking the live site).
+ * Icon field for CMS-editable content: a searchable grid plus an optional
+ * free-text fallback for any exact name, with a live preview and an inline
+ * warning when the current value won't resolve.
  *
- * Fully reusable: defaults to searching all ~1500 lucide-react icons, but
- * `icons`/`resolve`/`fallback` can be swapped to point at a closed registry
- * (e.g. floating-contact's mix of lucide + custom brand SVGs) so every icon
- * field in the CMS - open or closed - shares one picker component and UX.
+ * Search runs on the server (/api/admin/icons); the browser never loads an icon
+ * library or the 50,000-name catalog.
  */
 export function IconPicker({
   value,
   onChange,
-  icons = ALL_UNIVERSAL_ICON_NAMES,
-  resolve = resolveUniversalIcon,
-  fallback = LucideIcons.Code,
+  scope = 'all',
   allowCustom = true,
   searchPlaceholder = 'Search 50,000+ icons…',
 }: IconPickerProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ total: number; items: IconItem[] } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [, setCacheVersion] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  // Close on outside click / Escape.
   useEffect(() => {
     if (!open) return;
     const close = () => {
@@ -99,13 +98,84 @@ export function IconPicker({
     };
   }, [open]);
 
-  const isKnown = !!value && resolve(value) !== null;
+  // Resolve the glyph of the saved value (unless it is a bundled brand mark or already cached).
+  useEffect(() => {
+    if (!value || resolveBrandIcon(value) || dataCache.has(value)) return;
+    const ctrl = new AbortController();
+    fetch(`/api/admin/icons?names=${encodeURIComponent(value)}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        remember(d.items);
+        setCacheVersion((v) => v + 1);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [value]);
 
-  const { shown, totalMatches } = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const matches = q ? icons.filter((name) => name.toLowerCase().includes(q)) : icons;
-    return { shown: matches.slice(0, MAX_RESULTS), totalMatches: matches.length };
-  }, [query, icons]);
+  // Server-side search while open (debounced).
+  useEffect(() => {
+    if (!open) return;
+    const ctrl = new AbortController();
+    setLoading(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/admin/icons?scope=${scope}&q=${encodeURIComponent(query.trim())}`, {
+        signal: ctrl.signal,
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!d) return;
+          remember(d.items);
+          setResults(d);
+          setLoading(false);
+        })
+        .catch((e) => {
+          if (e?.name !== 'AbortError') setLoading(false);
+        });
+    }, 150);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [open, query, scope]);
+
+  const isBrand = !!resolveBrandIcon(value);
+  const resolved = value ? dataCache.get(value) : undefined; // undefined = not looked up yet
+  const isKnown = !!value && (isBrand || resolved === undefined || resolved !== null);
+
+  // Bundled brand marks (social scope) are matched locally and listed first.
+  const q = query.trim().toLowerCase();
+  const brandMatches =
+    scope === 'social' ? SOCIAL_BRAND_ICON_NAMES.filter((n) => n.toLowerCase().includes(q)) : [];
+  const serverItems = results?.items ?? [];
+  const shownCount = brandMatches.length + serverItems.length;
+  const totalMatches = brandMatches.length + (results?.total ?? 0);
+
+  const pick = (name: string) => {
+    onChange(name);
+    setOpen(false);
+    setQuery('');
+  };
+
+  const renderOption = (name: string, data: IconData | null | undefined) => {
+    const active = name === value;
+    return (
+      <button
+        key={name}
+        type="button"
+        title={name}
+        onClick={() => pick(name)}
+        className={`relative flex flex-col items-center justify-center gap-1 rounded p-2 transition-colors ${
+          active
+            ? 'bg-emerald-950/50 text-emerald-400 ring-1 ring-emerald-600'
+            : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+        }`}
+      >
+        {active && <Check className="absolute right-0.5 top-0.5 h-2.5 w-2.5" />}
+        <Glyph name={name} data={data} className="h-4 w-4" />
+      </button>
+    );
+  };
 
   return (
     <div ref={rootRef} className="relative">
@@ -117,7 +187,7 @@ export function IconPicker({
         <span
           className={`flex h-5 w-5 shrink-0 items-center justify-center ${isKnown ? 'text-emerald-400' : 'text-gray-600'}`}
         >
-          <IconGlyph name={value} className="h-4 w-4" resolve={resolve} fallback={fallback} />
+          <Glyph name={value} data={resolved} className="h-4 w-4" />
         </span>
         <span className={`flex-1 truncate text-left font-mono ${value ? '' : 'text-gray-600'}`}>
           {value || 'Pick an icon…'}
@@ -152,37 +222,18 @@ export function IconPicker({
                 placeholder={searchPlaceholder}
                 className="w-full bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-600"
               />
-              <span className="shrink-0 font-mono text-[10px] text-gray-600">
-                {totalMatches}
-              </span>
+              {loading ? (
+                <Loader2 className="h-3 w-3 shrink-0 animate-spin text-gray-500" />
+              ) : (
+                <span className="shrink-0 font-mono text-[10px] text-gray-600">{totalMatches}</span>
+              )}
             </div>
           </div>
 
           <div className="grid max-h-72 grid-cols-8 gap-1 overflow-y-auto p-2">
-            {shown.map((name) => {
-              const active = name === value;
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  title={name}
-                  onClick={() => {
-                    onChange(name);
-                    setOpen(false);
-                    setQuery('');
-                  }}
-                  className={`relative flex flex-col items-center justify-center gap-1 rounded p-2 transition-colors ${
-                    active
-                      ? 'bg-emerald-950/50 text-emerald-400 ring-1 ring-emerald-600'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
-                  }`}
-                >
-                  {active && <Check className="absolute right-0.5 top-0.5 h-2.5 w-2.5" />}
-                  <IconGlyph name={name} className="h-4 w-4" resolve={resolve} fallback={fallback} />
-                </button>
-              );
-            })}
-            {shown.length === 0 && (
+            {brandMatches.map((name) => renderOption(name, null))}
+            {serverItems.map((item) => renderOption(item.name, item.data))}
+            {!loading && shownCount === 0 && (
               <p className="col-span-8 py-4 text-center text-xs text-gray-500">
                 No icon matches &quot;{query}&quot;
                 {allowCustom ? ' — type an exact name below instead.' : '.'}
@@ -191,7 +242,8 @@ export function IconPicker({
           </div>
           {totalMatches > MAX_RESULTS && (
             <p className="border-t border-gray-800 px-3 py-1.5 text-center text-[10px] text-gray-600">
-              Showing first {MAX_RESULTS} of {totalMatches} matches — keep typing to narrow it down.
+              Showing the first {shownCount} of {totalMatches} matches — keep typing to narrow it
+              down.
             </p>
           )}
 

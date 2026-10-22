@@ -14,13 +14,8 @@ import { SortableItem } from '@/components/sortable-item';
 import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { IconPicker } from '@/components/admin/icon-picker';
-import { ALL_LUCIDE_ICON_NAMES } from '@/lib/lucide-icon';
-import { resolveSocialIcon, SOCIAL_BRAND_ICON_NAMES } from '@/lib/social-icon';
 import { extractApiErrorMessage, utcOffsetLabel } from '@/lib/utils';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
-
-/** Full lucide catalog plus the hand-drawn brand marks (DevToIcon, MediumIcon, etc.). */
-const SOCIAL_ICON_NAMES = [...SOCIAL_BRAND_ICON_NAMES, ...ALL_LUCIDE_ICON_NAMES];
 
 interface SocialLink {
   _dndId?: string;
@@ -488,8 +483,7 @@ export default function GlobalCMS() {
                           <IconPicker
                             value={link.icon || 'Github'}
                             onChange={(name) => handleSocialChange('socials', idx, 'icon', name)}
-                            icons={SOCIAL_ICON_NAMES}
-                            resolve={resolveSocialIcon}
+                            scope="social"
                             allowCustom={false}
                           />
                         </div>
@@ -559,8 +553,7 @@ export default function GlobalCMS() {
                           onChange={(name) =>
                             handleSocialChange('footerSocials', idx, 'icon', name)
                           }
-                          icons={SOCIAL_ICON_NAMES}
-                          resolve={resolveSocialIcon}
+                          scope="social"
                           allowCustom={false}
                         />
                       </div>

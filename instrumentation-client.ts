@@ -1,18 +1,24 @@
-// This file configures the initialization of Sentry on the client.
-// The added config here will be used whenever a users loads a page in their browser.
+// Browser-side Sentry setup, loaded on every page view.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
+//
+// Sentry is optional. The SDK is only imported when NEXT_PUBLIC_SENTRY_DSN is
+// set at build time, so a default deployment ships none of it to visitors (it is
+// otherwise a large chunk that every page would download for nothing).
 
-import * as Sentry from '@sentry/nextjs';
+type SentryModule = typeof import('@sentry/nextjs');
+let sentry: SentryModule | null = null;
 
-Sentry.init({
-  // Reporting is off unless NEXT_PUBLIC_SENTRY_DSN is set (see .env.example).
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  import('@sentry/nextjs').then((mod) => {
+    mod.init({
+      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      // Lightweight: error reporting only. Session Replay was removed because it
+      // continuously records DOM mutations on every visitor (heavy CPU/jank on mobile).
+      tracesSampleRate: 0.1,
+    });
+    sentry = mod;
+  });
+}
 
-  // Lightweight: error reporting only. Session Replay was removed because it
-  // continuously records DOM mutations on every visitor (heavy CPU/jank on mobile).
-  // Trace sampling lowered from 100% -> 10% and PII disabled.
-  tracesSampleRate: 0.1,
-});
-
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart: SentryModule['captureRouterTransitionStart'] = (...args) =>
+  sentry?.captureRouterTransitionStart(...args);

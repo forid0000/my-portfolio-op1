@@ -183,8 +183,13 @@ export default function NotesClient() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authMode, setAuthMode] = useState<'code' | 'password'>('password');
-  // True when the server has NOTES_TOTP_SECRET set (authenticator quick-unlock tab).
+  // True when an authenticator quick unlock is enabled in Admin -> Security (shows its tab).
   const [quickUnlock, setQuickUnlock] = useState(false);
+  // Which unlock methods the owner enabled in Admin -> Security (null until loaded).
+  const [vaultSetup, setVaultSetup] = useState<{
+    passwordSet: boolean;
+    quickUnlock: boolean;
+  } | null>(null);
   const [clockStr, setClockStr] = useState('');
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState('--:--');
@@ -260,9 +265,12 @@ export default function NotesClient() {
     fetch('/api/notes/auth', { signal: ctrl.signal })
       .then((r) => r.json())
       .then((d) => {
-        if (!isMountedRef.current || !d?.quickUnlock) return;
-        setQuickUnlock(true);
-        setAuthMode('code');
+        if (!isMountedRef.current || !d) return;
+        const passwordSet = Boolean(d.passwordSet);
+        const hasQuick = Boolean(d.quickUnlock);
+        setVaultSetup({ passwordSet, quickUnlock: hasQuick });
+        setQuickUnlock(hasQuick && passwordSet); // tabs only make sense with both methods
+        setAuthMode(hasQuick ? 'code' : 'password');
       })
       .catch(() => {
         /* password-only is a safe default */
@@ -1051,6 +1059,13 @@ ${meta ? `<div class="meta">${meta}</div>` : ''}
             </div>
           )}
 
+          {vaultSetup && !vaultSetup.passwordSet && !vaultSetup.quickUnlock && (
+            <p className="mb-4 rounded-xl border border-border/40 bg-muted/30 px-4 py-3 text-center text-xs font-mono text-muted-foreground">
+              This vault has no password or authenticator yet. The owner can set one in Admin →
+              Security &amp; Keys.
+            </p>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-3">
             {authMode === 'code' ? (
               <input
@@ -1093,7 +1108,12 @@ ${meta ? `<div class="meta">${meta}</div>` : ''}
 
             <button
               type="submit"
-              disabled={loading || !password || (authMode === 'code' && password.length < 6)}
+              disabled={
+                loading ||
+                !password ||
+                (authMode === 'code' && password.length < 6) ||
+                (vaultSetup !== null && !vaultSetup.passwordSet && !vaultSetup.quickUnlock)
+              }
               className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold font-mono tracking-[0.15em] uppercase text-sm flex items-center justify-center gap-2 disabled:opacity-40 transition-all hover:opacity-90"
             >
               {loading ? (

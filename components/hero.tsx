@@ -7,6 +7,7 @@ import AiTypingText from './ai-typing-text';
 import { X, Download } from 'lucide-react';
 import Image from 'next/image';
 import { SocialIcon } from '@/lib/social-icon';
+import type { IconMap } from '@/lib/icons/icon-data';
 import {
   AVATAR_PLACEHOLDER_URL,
   GLOBAL_CONTENT_DEFAULTS,
@@ -14,6 +15,8 @@ import {
 } from '@/lib/content-defaults';
 
 interface HeroProps {
+  /** Server-resolved SVG data for the social icons (see lib/icons). */
+  icons?: IconMap;
   content?: {
     greeting: string;
     aiPhrases?: string;
@@ -28,7 +31,7 @@ interface HeroProps {
   };
 }
 
-export default function Hero({ content, global }: HeroProps) {
+export default function Hero({ content, global, icons }: HeroProps) {
   const avatarUrl = global?.avatarUrl || AVATAR_PLACEHOLDER_URL;
   const firstName = content?.firstName || HERO_DEFAULTS.firstName;
   const lastName = content?.lastName || HERO_DEFAULTS.lastName;
@@ -64,7 +67,7 @@ export default function Hero({ content, global }: HeroProps) {
             <div className="absolute inset-[-8px] md:inset-[-10px] animate-morphing-blob-reverse border border-primary/10 pointer-events-none opacity-50 group-hover:opacity-80 transition-opacity duration-700" />
 
             {/* Background Glow - More elegant and diffuse */}
-            <div className="absolute inset-0 bg-primary/10 animate-morphing-blob blur-2xl md:blur-3xl md:animate-pulse-slow group-hover:bg-primary/20 transition-all duration-700" />
+            <div className="absolute inset-0 bg-primary/10 animate-morphing-blob blur-2xl md:blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
 
             {/* Image Container with Mask - Premium Glass/Modern feel */}
             <div
@@ -151,6 +154,7 @@ export default function Hero({ content, global }: HeroProps) {
                 const IconComponent = (
                   <SocialIcon
                     name={link.icon}
+                    icons={icons}
                     className="w-5 h-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary"
                   />
                 );

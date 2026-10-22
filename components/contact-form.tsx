@@ -14,23 +14,43 @@ import {
   Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { getClientDeviceInfo } from '@/lib/device-info';
 import { getVisitInfo } from '@/lib/visit-tracker';
 import { CONTACT_DEFAULTS } from '@/lib/content-defaults';
 
-const formSchema = z.object({
-  fullName: z.string().min(2, 'Full name must be at least 2 characters.'),
-  email: z.string().email('Please enter a valid email address.'),
-  phone: z.string().regex(/^\+?[0-9\s\-\(\)]{7,20}$/, 'Please enter a valid phone number.'),
-  location: z.string().optional(),
-  purpose: z.string().min(1, 'Please select a purpose.'),
-  message: z.string().min(15, 'Payload must be at least 15 characters long.'),
-});
+// Plain validation (no form/schema library: this form ships to every visitor, so
+// the page stays light). The server re-validates everything in /api/contact.
+interface FormValues {
+  fullName: string;
+  email: string;
+  phone: string;
+  location: string;
+  purpose: string;
+  message: string;
+}
 
-type FormValues = z.infer<typeof formSchema>;
+type FormErrors = Partial<Record<keyof FormValues, string>>;
+
+const INITIAL_VALUES: FormValues = {
+  fullName: '',
+  email: '',
+  phone: '',
+  location: '',
+  purpose: 'Project Inquiry',
+  message: '',
+};
+
+function validate(v: FormValues): FormErrors {
+  const errors: FormErrors = {};
+  if (v.fullName.trim().length < 2) errors.fullName = 'Full name must be at least 2 characters.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim()))
+    errors.email = 'Please enter a valid email address.';
+  if (!/^\+?[0-9\s\-()]{7,20}$/.test(v.phone.trim()))
+    errors.phone = 'Please enter a valid phone number.';
+  if (!v.purpose) errors.purpose = 'Please select a purpose.';
+  if (v.message.trim().length < 15) errors.message = 'Payload must be at least 15 characters long.';
+  return errors;
+}
 
 interface ContactFormProps {
   content?: {
@@ -54,10 +74,11 @@ export default function ContactForm({ content }: ContactFormProps) {
 
   // Engagement signals gathered passively across the page visit, snapshotted
   // at submit time (not streamed) and attached to the outgoing email.
-  const mountedAtRef = useRef(Date.now());
+  const mountedAtRef = useRef(0);
   const maxScrollDepthRef = useRef(0);
 
   useEffect(() => {
+    mountedAtRef.current = Date.now();
     const computeScrollDepth = () => {
       const doc = document.documentElement;
       const scrollable = doc.scrollHeight - doc.clientHeight;
@@ -75,20 +96,28 @@ export default function ContactForm({ content }: ContactFormProps) {
     toast.success(`${type} copied to clipboard!`);
   };
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      purpose: 'Project Inquiry',
-    },
-  });
+  const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const selectedPurpose = watch('purpose');
+  const selectedPurpose = values.purpose;
+
+  // Updates one field; once a submit was attempted, errors re-evaluate as the user types.
+  const setField = (field: keyof FormValues) => (value: string) => {
+    setValues((prev) => {
+      const next = { ...prev, [field]: value };
+      if (submitted) setErrors(validate(next));
+      return next;
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+    const found = validate(values);
+    setErrors(found);
+    if (Object.keys(found).length === 0) void onSubmit(values);
+  };
 
   const onSubmit = async (data: FormValues) => {
     setStatus('SENDING');
@@ -130,7 +159,9 @@ export default function ContactForm({ content }: ContactFormProps) {
       }
 
       setStatus('SUCCESS');
-      reset();
+      setValues(INITIAL_VALUES);
+      setErrors({});
+      setSubmitted(false);
 
       // Reset status after a few seconds
       setTimeout(() => setStatus('IDLE'), 6000);
@@ -227,7 +258,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                 </div>
               ) : (
                 <form
-                  onSubmit={handleSubmit(onSubmit)}
+                  onSubmit={handleSubmit}
                   className="space-y-5 relative z-10 animate-fade-in-up"
                 >
                   <div className="grid md:grid-cols-2 gap-5">
@@ -243,13 +274,14 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="text"
                         id="fullName"
-                        {...register('fullName')}
+                        value={values.fullName}
+                        onChange={(e) => setField('fullName')(e.target.value)}
                         placeholder="Jane Doe"
                         className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
                       {errors.fullName && (
-                        <p className="text-red-400 text-xs mt-1">{errors.fullName.message}</p>
+                        <p className="text-red-400 text-xs mt-1">{errors.fullName}</p>
                       )}
                     </div>
 
@@ -265,14 +297,13 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="email"
                         id="email"
-                        {...register('email')}
+                        value={values.email}
+                        onChange={(e) => setField('email')(e.target.value)}
                         placeholder="jane.doe@example.com"
                         className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
-                      {errors.email && (
-                        <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>
-                      )}
+                      {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                     </div>
 
                     {/* Phone */}
@@ -287,14 +318,13 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="tel"
                         id="phone"
-                        {...register('phone')}
+                        value={values.phone}
+                        onChange={(e) => setField('phone')(e.target.value)}
                         placeholder="+1 555 010 0100"
                         className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
-                      {errors.phone && (
-                        <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>
-                      )}
+                      {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
                     </div>
 
                     {/* Location */}
@@ -309,7 +339,8 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="text"
                         id="location"
-                        {...register('location')}
+                        value={values.location}
+                        onChange={(e) => setField('location')(e.target.value)}
                         placeholder="City, Country"
                         className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
@@ -344,7 +375,8 @@ export default function ContactForm({ content }: ContactFormProps) {
                             type="radio"
                             value={option}
                             className="sr-only"
-                            {...register('purpose')}
+                            checked={values.purpose === option}
+                            onChange={() => setField('purpose')(option)}
                             disabled={status === 'SENDING'}
                           />
                           {option}
@@ -352,7 +384,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                       ))}
                     </div>
                     {errors.purpose && (
-                      <p className="text-red-400 text-xs mt-1">{errors.purpose.message}</p>
+                      <p className="text-red-400 text-xs mt-1">{errors.purpose}</p>
                     )}
                   </div>
 
@@ -370,14 +402,15 @@ export default function ContactForm({ content }: ContactFormProps) {
                     </label>
                     <textarea
                       id="message"
-                      {...register('message')}
+                      value={values.message}
+                      onChange={(e) => setField('message')(e.target.value)}
                       rows={5}
                       placeholder="Describe your requirements, tech stack preferences, and expected timeline..."
                       className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30 resize-y min-h-[140px]"
                       disabled={status === 'SENDING'}
                     />
                     {errors.message && (
-                      <p className="text-red-400 text-xs mt-1">{errors.message.message}</p>
+                      <p className="text-red-400 text-xs mt-1">{errors.message}</p>
                     )}
                   </div>
 

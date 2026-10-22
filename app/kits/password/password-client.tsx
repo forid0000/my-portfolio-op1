@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { Copy, RefreshCw, ShieldCheck, Check, Keyboard, Dices, WholeWord } from 'lucide-react';
 import { toast } from 'sonner';
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
 interface PasswordClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function PasswordClient({ icon, accentColor }: PasswordClientProps) {
+export default function PasswordClient({ iconData, accentColor }: PasswordClientProps) {
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <ShieldCheck />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <ShieldCheck />, headingColorClass);
 
   const [mode, setMode] = useState<'random' | 'passphrase' | 'analyze'>('random');
   const [output, setOutput] = useState('');

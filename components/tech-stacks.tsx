@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { Container } from '@/components/site/primitives';
 import { Terminal } from 'lucide-react';
 import { Marquee } from '@/components/site/marquee';
@@ -83,48 +82,36 @@ const ROW3_TECH: string[] = [
   'Spring',
 ];
 
-const ROW1_DUPLICATED = [
-  ...ROW1_TECH,
-  ...ROW1_TECH,
-  ...ROW1_TECH,
-  ...ROW1_TECH,
-  ...ROW1_TECH,
-  ...ROW1_TECH,
-];
-const ROW2_DUPLICATED = [
-  ...ROW2_TECH,
-  ...ROW2_TECH,
-  ...ROW2_TECH,
-  ...ROW2_TECH,
-  ...ROW2_TECH,
-  ...ROW2_TECH,
-];
-const ROW3_DUPLICATED = [
-  ...ROW3_TECH,
-  ...ROW3_TECH,
-  ...ROW3_TECH,
-  ...ROW3_TECH,
-  ...ROW3_TECH,
-  ...ROW3_TECH,
-];
+/**
+ * Repeats a row until one marquee half is wider than a large screen (the Marquee
+ * itself doubles its children for a seamless loop). Enough to look continuous
+ * without rendering hundreds of chips, each with its own image.
+ */
+const MIN_CHIPS_PER_HALF = 20;
+
+function fillRow(items: string[]): string[] {
+  if (items.length === 0) return [];
+  const copies = Math.ceil(MIN_CHIPS_PER_HALF / items.length);
+  return Array.from({ length: copies }, () => items).flat();
+}
 
 function TechChip({ name }: { name: string }) {
   const icon = TECH_ICONS[name];
   return (
-    <div className="group flex items-center gap-2.5 rounded-full border border-border/50 bg-card/20 backdrop-blur-sm px-5 py-2.5 transition-all duration-300 hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.2)]">
+    <div className="tech-chip">
       {icon ? (
-        <Image
+        // Plain <img>: these are small local SVGs, so the image optimizer adds nothing.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={`/tech-icons/${icon}.svg`}
           alt={name}
-          width={22}
-          height={22}
-          unoptimized
-          className="w-5 h-5 shrink-0 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300"
+          width={20}
+          height={20}
+          loading="lazy"
+          decoding="async"
         />
       ) : null}
-      <span className="text-sm font-semibold tracking-tight text-foreground/80 group-hover:text-primary transition-colors duration-300">
-        {name}
-      </span>
+      <span>{name}</span>
     </div>
   );
 }
@@ -140,9 +127,9 @@ export default function TechStacks({
   content,
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
 }: TechStacksProps) {
-  const row1 = content?.row1 ? Array(6).fill(content.row1).flat() : ROW1_DUPLICATED;
-  const row2 = content?.row2 ? Array(6).fill(content.row2).flat() : ROW2_DUPLICATED;
-  const row3 = content?.row3 ? Array(6).fill(content.row3).flat() : ROW3_DUPLICATED;
+  const row1 = fillRow(content?.row1 ?? ROW1_TECH);
+  const row2 = fillRow(content?.row2 ?? ROW2_TECH);
+  const row3 = fillRow(content?.row3 ?? ROW3_TECH);
 
   return (
     <section

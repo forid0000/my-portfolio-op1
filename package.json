@@ -1,5 +1,5 @@
 {
-  "name": "global-id",
+  "name": "my-portfolio-op1",
   "version": "0.1.0",
   "description": "Self-hosted developer portfolio with a built-in CMS, admin dashboard, notes vault and utility kits. Next.js, MongoDB, Tailwind.",
   "keywords": [
@@ -12,7 +12,6 @@
     "tailwindcss"
   ],
   "license": "MIT",
-  "packageManager": "pnpm@12.14.0",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
@@ -30,7 +29,6 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-dialog": "1.1.20",
     "@radix-ui/react-slot": "1.3.0",
     "@radix-ui/react-switch": "1.3.4",
@@ -55,7 +53,6 @@
     "qrcode.react": "^4.2.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "react-hook-form": "^7.82.0",
     "react-icons": "^5.7.0",
     "react-json-view-lite": "^2.5.0",
     "react-markdown": "^10.1.0",

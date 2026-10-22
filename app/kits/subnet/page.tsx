@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import SubnetClient from './subnet-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'subnet';
 const FALLBACK_TITLE = 'IP Subnet Calculator - CIDR, Subnet Mask & IP Range Calculator';
@@ -42,5 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SubnetPage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <SubnetClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return (
+    <SubnetClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />
+  );
 }

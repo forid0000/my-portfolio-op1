@@ -1,8 +1,8 @@
-# Contributing to Global-ID
+# Contributing to my-portfolio-op1
 
 [Home](README.md)
 
-Thanks for helping improve Global-ID. Bug reports, fixes, documentation, and focused features are all welcome.
+Thanks for helping improve my-portfolio-op1. Bug reports, fixes, documentation, and focused features are all welcome.
 
 ## Before you start
 
@@ -17,12 +17,12 @@ Requirements: Node.js 20.9+, [pnpm](https://pnpm.io), and a MongoDB database.
 
 ```bash
 pnpm install
-cp .env.example .env.local     # set MONGODB_URI, JWT_SECRET, ADMIN_PASSWORD
+cp .env.example .env.local     # set MONGODB_URI and JWT_SECRET
 node scripts/create-indexes.mjs
 pnpm dev
 ```
 
-The app runs at <http://localhost:3000>; the admin dashboard is at `/administrator` (password only in development).
+The app runs at <http://localhost:3000>. On first visit to `/administrator` a setup wizard asks for the setup code printed in your terminal (or `node scripts/setup-code.mjs`) and enrols your authenticator; there is no development bypass. Credentials and integration keys are managed in Admin → Security & Keys.
 
 ## Checks to run before opening a pull request
 
@@ -38,7 +38,8 @@ CI runs the same checks on every pull request.
 ## Project conventions
 
 - **Never hardcode identity.** Names, links, emails, domains, and locations must not appear in source code. Placeholder content lives in `lib/content-defaults.ts`, deployment settings come from environment variables via `lib/site-config.ts`, and SEO identity comes from the CMS via `lib/identity.ts`.
-- **Never hardcode secrets or fallbacks for them.** Credentials are read from the environment only, with no default value.
+- **Never hardcode secrets or fallbacks for them.** Credentials come from the admin panel's store (`lib/credentials.ts`, `lib/integrations.ts`) or, for integrations, the environment, and never have a default value. Only `MONGODB_URI` and `JWT_SECRET` are required in the environment; do not add new required environment secrets.
+- **Keep the browser light.** Never import an icon library (`lucide-react` namespace, `react-icons`) or a schema library like `zod` into client code. Resolve icons on the server (`lib/icons/resolve.ts`) and pass SVG data down, validate in the browser with plain functions, and render visible UI on the server so it arrives with the HTML. Animations must stop when idle, avoid layout-expensive properties, and respect `prefers-reduced-motion`.
 - **One source of default content.** Do not copy default text into components or routes; import it from `lib/content-defaults.ts`.
 - **Validate every write.** New mutating admin routes need a Zod schema, session verification, and rate limiting, like the existing ones (see `lib/api/collection-crud.ts`).
 - **Database failures must degrade gracefully.** Public pages wrap reads and fall back to defaults.

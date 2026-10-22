@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner'; // Assuming you have sonner or similar for toasts, otherwise remove
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
 // --- Types ---
 type GenMode = 'text' | 'url' | 'wifi' | 'email';
@@ -49,18 +50,18 @@ interface ScanHistoryItem {
 const MAX_QR_CHARS = 1273;
 
 // --- Storage Keys ---
-const GEN_STORAGE_KEY = 'global-id-qr-gen-state';
-const SCAN_HISTORY_KEY = 'global-id-qr-scan-history';
+const GEN_STORAGE_KEY = 'my-portfolio-op1-qr-gen-state';
+const SCAN_HISTORY_KEY = 'my-portfolio-op1-qr-scan-history';
 
 interface QrClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function QrClient({ icon, accentColor }: QrClientProps) {
+export default function QrClient({ iconData, accentColor }: QrClientProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'scan'>('generate');
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <QrCode />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <QrCode />, headingColorClass);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

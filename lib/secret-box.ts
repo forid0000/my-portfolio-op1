@@ -23,7 +23,13 @@ function getKey(): Buffer {
   }
   if (cachedKey?.secret === secret) return cachedKey.key;
   const key = Buffer.from(
-    hkdfSync('sha256', secret, 'global-id/secret-box/salt', 'global-id/secret-box/v1', 32)
+    hkdfSync(
+      'sha256',
+      secret,
+      'my-portfolio-op1/secret-box/salt',
+      'my-portfolio-op1/secret-box/v1',
+      32
+    )
   );
   cachedKey = { secret, key };
   return key;

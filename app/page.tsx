@@ -30,6 +30,7 @@ import {
   SKILLS_DEFAULTS,
 } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
+import { resolveIconMap } from '@/lib/icons/resolve';
 import { SITE_URL } from '@/lib/site-config';
 import {
   GLOBAL_DEFAULTS,
@@ -255,12 +256,20 @@ export default async function Home() {
   // this return statement.
   const renderableSections = getRenderableSections(sections);
 
+  // Icons are stored by name in the CMS; resolve the ones this page uses to
+  // plain SVG data on the server, so no icon library is sent to the browser.
+  const icons = await resolveIconMap([
+    ...globalContent.socials.map((s) => s.icon),
+    ...globalContent.footerSocials.map((s) => s.icon),
+    ...floatingContent.items.map((i) => i.icon),
+  ]);
+
   // Per-id props, since these components take heterogeneous shapes (Hero
   // needs `global`, Projects needs `githubUrl`, the five collection-backed
   // sections just need `content`) that no single uniform prop object could
   // express. Every key here has a matching entry in SECTION_COMPONENT_MAP.
   const sectionProps: Record<string, Record<string, unknown>> = {
-    hero: { content: heroContent, global: globalContent },
+    hero: { content: heroContent, global: globalContent, icons },
     about: {
       content: aboutContent,
       heading: sectionTexts.aboutHeading,
@@ -326,8 +335,8 @@ export default async function Home() {
           </Fragment>
         );
       })}
-      <Footer content={globalContent} />
-      <FloatingContact content={floatingContent} />
+      <Footer content={globalContent} icons={icons} />
+      <FloatingContact content={floatingContent} icons={icons} />
     </main>
   );
 }

@@ -6,21 +6,22 @@ import { Dices, Coins, Hash, List, Shuffle, Trophy } from 'lucide-react';
 // --- Storage Keys ---
 import { getSecureRandom, getSecureRandomInt, pickSecureRandom } from '@/lib/crypto-utils';
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
-const STORAGE_KEY_NUMBER = 'global-id-picker-number';
-const STORAGE_KEY_LIST = 'global-id-picker-list';
+const STORAGE_KEY_NUMBER = 'my-portfolio-op1-picker-number';
+const STORAGE_KEY_LIST = 'my-portfolio-op1-picker-list';
 
 type Tab = 'coin' | 'number' | 'list';
 
 interface PickerClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function PickerClient({ icon, accentColor }: PickerClientProps) {
+export default function PickerClient({ iconData, accentColor }: PickerClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('coin');
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <Dices />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <Dices />, headingColorClass);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

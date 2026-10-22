@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import AgeClient from './age-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'age';
 const FALLBACK_TITLE = 'Age Calculator - Calculate Exact Age in Years, Months, Days';
@@ -42,5 +43,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AgePage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <AgeClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return <AgeClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />;
 }

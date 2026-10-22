@@ -26,6 +26,7 @@ import {
   Cloud,
   FileText,
   NotebookPen,
+  ShieldCheck,
   Wrench,
   Layers,
   GraduationCap,
@@ -85,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/administrator/cloudinary', label: 'Cloudinary Data', icon: Cloud },
       { href: '/administrator/data', label: 'MongoDB Data', icon: Database },
       { href: '/administrator/system', label: 'System & SEO', icon: Settings },
+      { href: '/administrator/security', label: 'Security & Keys', icon: ShieldCheck },
       { href: '/administrator/notes-config', label: 'Notes Config', icon: NotebookPen },
     ],
   },
@@ -113,18 +115,23 @@ function buildAdmClock(d: Date) {
   return `${ADM_DAYS[d.getDay()]} · ${dd} ${ADM_MONTHS[d.getMonth()]} ${d.getFullYear()} · ${hh}:${mm}:${ss}`;
 }
 
+/** Ticking clock. Own component so its per-second updates never re-render the whole shell. */
+function AdminClock({ className }: { className?: string }) {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    const tick = () => setText(buildAdmClock(new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <p className={className}>{text}</p>;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [sessionStatus, setSessionStatus] = useState<'loading' | 'active' | 'expired'>('loading');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [logoutCountdown, setLogoutCountdown] = useState<number | null>(null);
-  const [clockStr, setClockStr] = useState('');
-
-  useEffect(() => {
-    const id = setInterval(() => setClockStr(buildAdmClock(new Date())), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -160,24 +167,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // On expiry: 3-second countdown then logout + go home
+  // On expiry: sign out and go to the sign-in page.
   useEffect(() => {
-    if (sessionStatus === 'expired' && logoutCountdown === null) {
-      setLogoutCountdown(3);
-    }
+    if (sessionStatus !== 'expired') return;
+    fetch('/api/admin/logout', { method: 'POST' }).finally(() => {
+      window.location.href = '/administrator/login';
+    });
   }, [sessionStatus]);
-
-  useEffect(() => {
-    if (logoutCountdown === null) return;
-    if (logoutCountdown === 0) {
-      fetch('/api/admin/logout', { method: 'POST' }).finally(() => {
-        window.location.href = '/';
-      });
-      return;
-    }
-    const t = setTimeout(() => setLogoutCountdown((n) => (n !== null ? n - 1 : null)), 1000);
-    return () => clearTimeout(t);
-  }, [logoutCountdown]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -232,25 +228,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // - 3-second forced logout overlay -
-  if (logoutCountdown !== null) {
+  if (sessionStatus === 'expired') {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-950 space-y-10 animate-in fade-in duration-300">
-        <p className="text-[11px] font-mono text-gray-600 tracking-[0.15em]">{clockStr}</p>
-        <div className="w-28 h-28 bg-red-950/40 rounded-full flex items-center justify-center border border-red-900/50 shadow-[0_0_50px_rgba(239,68,68,0.2)] animate-pulse">
-          <LogOut className="w-14 h-14 text-red-500" />
-        </div>
-        <div className="text-center space-y-3">
-          <h2 className="text-4xl font-black text-red-500 uppercase tracking-[0.2em] drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-            Session Expired
-          </h2>
-          <p className="text-lg font-mono text-red-400/70 uppercase tracking-widest">
-            Logging out...
-          </p>
-        </div>
-        <div className="text-[14rem] leading-none font-mono font-black text-red-500 tabular-nums drop-shadow-[0_0_60px_rgba(239,68,68,0.8)]">
-          {logoutCountdown}
-        </div>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-gray-950">
+        <LogOut className="w-8 h-8 text-gray-500" />
+        <h2 className="text-lg font-semibold text-gray-200">Session expired</h2>
+        <p className="text-sm font-mono text-gray-500">Redirecting to sign in...</p>
       </div>
     );
   }
@@ -288,45 +271,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       `}
       >
         <div className="p-4 border-b border-gray-800">
-          <p className="text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums">
-            {clockStr}
-          </p>
+          <AdminClock className="text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums" />
           <div className="flex flex-col">
             <h2 className="text-lg font-bold tracking-tight text-emerald-500 font-mono">
               Admin Portal
             </h2>
-            <span className="text-[10px] text-red-500 font-bold tracking-widest font-mono mt-0.5 flex items-center gap-1 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]">
-              <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block animate-pulse shadow-[0_0_5px_rgba(239,68,68,1)]"></span>
-              portal_undressed [ hot ]
+            <span className="text-[10px] text-gray-500 tracking-widest font-mono mt-0.5">
+              dashboard
             </span>
           </div>
 
           {/* Enhanced Session Timer */}
           <div
             className={`mt-4 flex flex-col items-center justify-center p-3 rounded-xl border backdrop-blur-md shadow-lg transition-all duration-500 ${
-              sessionStatus === 'expired' || isWarning
+              isWarning
                 ? 'bg-gradient-to-br from-red-950/80 to-gray-900 border-red-900/50 shadow-red-900/20'
                 : 'bg-gradient-to-br from-gray-900 to-gray-800/80 border-gray-700/50 shadow-emerald-900/10'
-            } ${isWarning && sessionStatus !== 'expired' ? 'animate-pulse' : ''}`}
+            } ${isWarning ? 'animate-pulse' : ''}`}
           >
             <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold mb-1 text-gray-400">
-              <Clock
-                className={`w-3 h-3 ${sessionStatus === 'expired' || isWarning ? 'text-red-500' : 'text-emerald-500'}`}
-              />
+              <Clock className={`w-3 h-3 ${isWarning ? 'text-red-500' : 'text-emerald-500'}`} />
               Active Session
             </div>
             <div
               className={`text-2xl font-black font-mono tracking-widest ${
-                sessionStatus === 'expired' || isWarning
+                isWarning
                   ? 'text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]'
                   : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]'
               }`}
             >
-              {sessionStatus === 'loading'
-                ? '--:--'
-                : sessionStatus === 'expired'
-                  ? '00:00'
-                  : formatTime(timeLeft!)}
+              {sessionStatus === 'loading' ? '--:--' : formatTime(timeLeft!)}
             </div>
 
             {/* Refresh Session Button */}

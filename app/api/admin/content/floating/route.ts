@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { revalidatePublicContent } from '@/lib/revalidate';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
-import { mergeFloating, floatingContentSchema } from '@/lib/floating';
+import { mergeFloating } from '@/lib/floating';
+import { floatingContentSchema } from '@/lib/validation/floating-schema';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export async function GET() {

@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     }
 
     resetRateLimit(rlKey);
-    console.info('[global-id] Admin account created via first-run setup.');
+    console.info('[my-portfolio-op1] Admin account created via first-run setup.');
     return attachAdminSession(NextResponse.json({ success: true }));
   } catch (error: any) {
     console.error('Setup error:', error);

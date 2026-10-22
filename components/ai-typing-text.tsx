@@ -1,85 +1,92 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Terminal } from 'lucide-react';
+import { HERO_DEFAULTS } from '@/lib/content-defaults';
 
-const PHRASES = [
-  'checking environment...',
-  'analyzing repository...',
-  'hunking data...',
-  'punking algorithms...',
-  'compiling assets...',
-  'PEACE BE UPON YOU ___ !',
-];
+const DEFAULT_PHRASES = HERO_DEFAULTS.aiPhrases.split(',').map((s) => s.trim());
 
+/**
+ * Types each status phrase once, then settles on the final greeting and stops.
+ * (It used to loop forever, keeping timers and re-renders running for as long as
+ * the page was open.) Reduced-motion users see the greeting immediately.
+ */
 export default function AiTypingText({
-  finalGreeting = 'PEACE BE UPON YOU ___ !',
+  finalGreeting = HERO_DEFAULTS.greeting,
   aiPhrases,
 }: {
   finalGreeting?: string;
   aiPhrases?: string;
 }) {
   const [text, setText] = useState('');
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [done, setDone] = useState(false);
 
-  // Parse comma-separated phrases from CMS or fallback to default
-  const dynamicPhrases = aiPhrases
-    ? aiPhrases
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
-    : [...PHRASES];
-
-  if (aiPhrases) {
-    dynamicPhrases.push(finalGreeting);
-  } else {
-    dynamicPhrases[dynamicPhrases.length - 1] = finalGreeting;
-  }
+  const phrases = useMemo(() => {
+    const list = aiPhrases
+      ? aiPhrases
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : DEFAULT_PHRASES;
+    return [...list, finalGreeting];
+  }, [aiPhrases, finalGreeting]);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
-
-    const currentPhrase = dynamicPhrases[phraseIndex];
-
-    if (isDeleting) {
-      if (text === '') {
-        setIsDeleting(false);
-        setPhraseIndex((prev) => (prev + 1) % dynamicPhrases.length);
-        timeout = setTimeout(() => {}, 400); // Wait before typing next
-      } else {
-        timeout = setTimeout(() => {
-          setText(text.slice(0, -1));
-        }, 20); // Fast delete
-      }
-    } else {
-      if (text === currentPhrase) {
-        const isLast = phraseIndex === dynamicPhrases.length - 1;
-        // Pause significantly longer on the final phrase before looping
-        timeout = setTimeout(
-          () => {
-            setIsDeleting(true);
-          },
-          isLast ? 6000 : 1500
-        );
-      } else {
-        timeout = setTimeout(
-          () => {
-            setText(currentPhrase.slice(0, text.length + 1));
-          },
-          Math.random() * 40 + 40
-        ); // Variable typing speed for human feel
-      }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setText(finalGreeting);
+      setDone(true);
+      return;
     }
 
-    return () => clearTimeout(timeout);
-  }, [text, isDeleting, phraseIndex, dynamicPhrases]);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    let index = 0;
+    let length = 0;
+    let deleting = false;
+
+    const tick = () => {
+      if (cancelled) return;
+      const phrase = phrases[index];
+      const isLast = index === phrases.length - 1;
+
+      if (!deleting) {
+        length += 1;
+        setText(phrase.slice(0, length));
+        if (length >= phrase.length) {
+          if (isLast) {
+            setDone(true); // settle on the greeting; no more timers
+            return;
+          }
+          deleting = true;
+          timer = setTimeout(tick, 900);
+          return;
+        }
+        timer = setTimeout(tick, 40 + Math.random() * 35);
+      } else {
+        length -= 1;
+        setText(phrase.slice(0, length));
+        if (length <= 0) {
+          deleting = false;
+          index += 1;
+          timer = setTimeout(tick, 250);
+          return;
+        }
+        timer = setTimeout(tick, 18);
+      }
+    };
+
+    timer = setTimeout(tick, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [phrases, finalGreeting]);
 
   return (
     <div className="flex items-center justify-center md:justify-start gap-2 text-primary/90 font-mono text-sm tracking-widest uppercase h-6">
       <Terminal className="w-4 h-4 text-primary" />
       <span className="relative inline-flex items-center">
         <span className="bg-primary/10 px-1 font-semibold">{text}</span>
-        <span className="ml-1 w-2 h-4 bg-primary/80 animate-pulse"></span>
+        <span className={`ml-1 w-2 h-4 bg-primary/80 ${done ? '' : 'animate-pulse'}`}></span>
       </span>
     </div>
   );

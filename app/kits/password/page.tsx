@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import PasswordClient from './password-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'password';
 const FALLBACK_TITLE = 'Free Password Generator - Strong, Secure & Random Passwords';
@@ -42,5 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PasswordPage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <PasswordClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return (
+    <PasswordClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />
+  );
 }

@@ -21,7 +21,7 @@ const scryptAsync = promisify(scrypt);
 export const ADMIN_PASSWORD_MIN = 12;
 export const NOTES_PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 200;
-const TOTP_ISSUER = 'Global-ID';
+const TOTP_ISSUER = 'my-portfolio-op1';
 
 // ── Passwords ────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,12 @@ export function checkTotp(secret: string, code: unknown): { valid: boolean; time
   if (!token) return { valid: false };
   try {
     const result = verifySync({ token, secret, epochTolerance: 30 });
-    return result.valid ? { valid: true, timeStep: result.timeStep } : { valid: false };
+    if (!result.valid) return { valid: false };
+    // `timeStep` is returned at runtime (and documented by @otplib/totp) but is missing
+    // from the union type exported by `otplib`; derive it from the drift if absent.
+    const reported = (result as { timeStep?: number }).timeStep;
+    const timeStep = reported ?? Math.floor(Date.now() / 1000 / 30) + result.delta;
+    return { valid: true, timeStep };
   } catch {
     return { valid: false };
   }

@@ -42,6 +42,12 @@ const db = mongoose.connection.client.db('portfolio_cms');
 await db.collection('homepage').createIndex({ type: 1 }, { unique: true });
 console.log('homepage: unique index on { type: 1 }');
 
+// settings: key/value store for admin-panel credentials, integration keys and
+// notes options. `key` is unique so first-run setup can claim the admin record
+// atomically (two racing setup requests can never both succeed).
+await db.collection('settings').createIndex({ key: 1 }, { unique: true });
+console.log('settings: unique index on { key: 1 }');
+
 // gallery: re-affirmed here (already created by seed-gallery-mongo.mjs) so
 // this script is a complete, single source of truth for index setup.
 // public_id is unique per Cloudinary asset; order backs the sort every public

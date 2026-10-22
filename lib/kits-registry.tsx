@@ -1,10 +1,10 @@
 /**
  * Kits tool registry - the CMS-editable "identity" layer (name, description,
  * icon, accent color, display order) for each /kits/* tool. Icon is any
- * lucide-react name (picked via the admin IconPicker, which searches the
- * full icon set) resolved through resolveUniversalIcon() with a caller-supplied
- * fallback, so an unrecognized name degrades gracefully instead of needing a
- * schema change. Accent color stays a curated enum (KITS_COLOR_MAP) since
+ * lucide or react-icons name (picked via the admin IconPicker, which searches the
+ * full icon set), resolved to SVG data on the server (lib/icons/resolve.ts) and
+ * rendered with a caller-supplied fallback, so an unrecognized name degrades
+ * gracefully instead of needing a schema change. Accent color stays a curated enum (KITS_COLOR_MAP) since
  * it's a fixed Tailwind class palette, not an open namespace like icons.
  *
  * KITS_DEFAULTS reproduces the exact tools/icons/copy that were hardcoded in
@@ -12,7 +12,7 @@
  * saved) `kits_content` doc renders identically to the pre-CMS version.
  */
 import React from 'react';
-import { resolveUniversalIcon } from '@/lib/universal-icon';
+import { renderIcon, type IconData } from '@/lib/icons/icon-data';
 
 export interface KitsColorClasses {
   text: string;
@@ -125,7 +125,8 @@ export function mergeKitsContent(doc: any): KitsContent {
         key: t.key || fallback.key,
         name: t.name || fallback.name,
         description: t.description || fallback.description,
-        icon: t.icon && resolveUniversalIcon(t.icon) ? t.icon : fallback.icon,
+        // Any non-empty name; an unknown one renders the fallback glyph (see renderKitIcon).
+        icon: t.icon || fallback.icon,
         accentColor:
           t.accentColor && KITS_COLOR_MAP[t.accentColor] ? t.accentColor : fallback.accentColor,
       };
@@ -145,10 +146,9 @@ export function getKitColor(name: string): KitsColorClasses {
 
 /** Resolve an icon name to an element with the given className, falling back if unknown/absent. */
 export function renderKitIcon(
-  name: string | undefined,
+  data: IconData | null | undefined,
   fallback: React.ReactElement<{ className?: string }>,
   className: string
 ): React.ReactElement {
-  const Icon = resolveUniversalIcon(name);
-  return Icon ? React.createElement(Icon, { className }) : React.cloneElement(fallback, { className });
+  return renderIcon(data, fallback, className);
 }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import PickerClient from './picker-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'picker';
 const FALLBACK_TITLE = 'Random Picker - Coin Flip, Number Generator & List Randomizer';
@@ -42,5 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PickerPage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <PickerClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return (
+    <PickerClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />
+  );
 }

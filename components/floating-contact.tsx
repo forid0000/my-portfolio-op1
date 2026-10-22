@@ -5,8 +5,15 @@ import { X, Copy, ExternalLink, Check, ShieldCheck, MessageSquare } from 'lucide
 import { toast } from 'sonner';
 import { SocialIcon } from '@/lib/social-icon';
 import { FLOATING_DEFAULTS, type FloatingContent } from '@/lib/floating';
+import type { IconMap } from '@/lib/icons/icon-data';
 
-export default function FloatingContact({ content }: { content?: FloatingContent }) {
+export default function FloatingContact({
+  content,
+  icons,
+}: {
+  content?: FloatingContent;
+  icons?: IconMap;
+}) {
   const data = content || FLOATING_DEFAULTS;
   const [isOpen, setIsOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -143,7 +150,7 @@ export default function FloatingContact({ content }: { content?: FloatingContent
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="p-2 rounded-lg bg-gray-800 text-primary shrink-0">
-                            <SocialIcon name={contact.icon} className="w-4 h-4" />
+                            <SocialIcon name={contact.icon} icons={icons} className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

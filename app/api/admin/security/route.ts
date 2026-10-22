@@ -187,7 +187,7 @@ export async function POST(request: Request) {
         break;
     }
 
-    console.info(`[global-id] Security change "${body.action}" by admin from ${ip}`);
+    console.info(`[my-portfolio-op1] Security change "${body.action}" by admin from ${ip}`);
     return NextResponse.json({ success: true, ...(await buildOverview()) });
   } catch (error: any) {
     console.error('Security update error:', error);

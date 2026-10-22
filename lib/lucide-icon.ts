@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import 'server-only';
 import * as LucideIcons from 'lucide-react';
 
 type LucideIconMap = Record<string, unknown>;
@@ -23,22 +24,6 @@ function isIconComponent(value: unknown): value is ComponentType<{ className?: s
     '$$typeof' in value &&
     (value as { $$typeof: unknown }).$$typeof === Symbol.for('react.forward_ref')
   );
-}
-
-/**
- * Resolves a lucide-react icon by its exact export name (PascalCase, as
- * listed on lucide.dev/icons), or null when the name is empty/unknown/not
- * actually a renderable icon. Shared by every CMS section that lets the
- * admin pick an icon by name (expertises, skills, roadmap, about, services,
- * kits) and by the admin IconPicker, so "is this a real icon" is answered
- * identically on both the editor and the live site.
- */
-export function resolveLucideIcon(
-  name: string | undefined
-): ComponentType<{ className?: string }> | null {
-  if (!name || NON_ICON_EXPORTS.has(name)) return null;
-  const icon = (LucideIcons as unknown as LucideIconMap)[name];
-  return isIconComponent(icon) ? icon : null;
 }
 
 /**

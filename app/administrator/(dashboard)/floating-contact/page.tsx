@@ -9,12 +9,7 @@ import { SortableItem } from '@/components/sortable-item';
 import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { IconPicker } from '@/components/admin/icon-picker';
-import { ALL_LUCIDE_ICON_NAMES } from '@/lib/lucide-icon';
-import { resolveSocialIcon, SOCIAL_BRAND_ICON_NAMES } from '@/lib/social-icon';
 import { extractApiErrorMessage } from '@/lib/utils';
-
-/** Full lucide catalog plus the hand-drawn brand marks (DevToIcon, MediumIcon, etc.). */
-const SOCIAL_ICON_NAMES = [...SOCIAL_BRAND_ICON_NAMES, ...ALL_LUCIDE_ICON_NAMES];
 
 interface Item {
   _dndId?: string;
@@ -268,8 +263,7 @@ export default function FloatingContactCMS() {
                           <IconPicker
                             value={item.icon}
                             onChange={(name) => setItem(idx, 'icon', name)}
-                            icons={SOCIAL_ICON_NAMES}
-                            resolve={resolveSocialIcon}
+                            scope="social"
                             allowCustom={false}
                           />
                           <input

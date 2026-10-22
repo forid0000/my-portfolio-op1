@@ -52,7 +52,7 @@ export function notifyProfileReadme(section: string): void {
           Authorization: `Bearer ${token}`,
           'X-GitHub-Api-Version': '2022-11-28',
           'Content-Type': 'application/json',
-          'User-Agent': 'global-id-cms',
+          'User-Agent': 'my-portfolio-op1-cms',
         },
         body: JSON.stringify({
           event_type: EVENT_TYPE,

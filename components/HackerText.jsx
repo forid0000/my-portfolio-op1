@@ -1,16 +1,23 @@
-'use client'; // <--- ADD THIS LINE AT THE VERY TOP
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { getSecureRandom } from '@/lib/crypto-utils';
 
+const LETTERS = "!@#$%^&*()-=_+[]{}|;:'<>,.?/~";
+
+/** Decodes the text from random symbols in ~1 s, then stops. Instant for reduced-motion users. */
 const HackerText = ({ text, className }) => {
   const [displayedText, setDisplayedText] = useState('');
-  const letters = "!@#$%^&*()-=_+[]{}|;:'<>,.?/~";
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayedText(text);
+      return;
+    }
+
     let iteration = 0;
-    const steps = 50; // Number of iterations
-    const intervalTime = 25; // ms per frame
+    const steps = 30; // number of frames
+    const intervalTime = 33; // ms per frame (~30 fps)
 
     const interval = setInterval(() => {
       setDisplayedText(
@@ -18,14 +25,17 @@ const HackerText = ({ text, className }) => {
           .split('')
           .map((char, index) => {
             if (index < Math.floor(iteration)) return char;
-            return letters[Math.floor(getSecureRandom() * letters.length)];
+            return LETTERS[Math.floor(getSecureRandom() * LETTERS.length)];
           })
           .join('')
       );
 
       iteration += text.length / steps;
 
-      if (iteration >= text.length) clearInterval(interval);
+      if (iteration >= text.length) {
+        clearInterval(interval);
+        setDisplayedText(text); // always end on the exact text
+      }
     }, intervalTime);
 
     return () => clearInterval(interval);

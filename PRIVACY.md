@@ -2,7 +2,7 @@
 
 [Home](README.md)
 
-Global-ID is software you host yourself, so **you** are the operator of your site and responsible for its privacy notice. This page states exactly what the code does, so that your own notice can be truthful.
+my-portfolio-op1 is software you host yourself, so **you** are the operator of your site and responsible for its privacy notice. This page states exactly what the code does, so that your own notice can be truthful.
 
 ## What the site does not do
 
@@ -25,11 +25,11 @@ If you serve visitors in regions with strict privacy laws, consider disclosing t
 
 ### Browser storage (stays on the visitor's device)
 
-| Key                                                                            | Purpose                                                          |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `global-id-visit-meta`                                                         | Visit counter and first-visit date, attached to contact messages |
-| `global-id:pageVisits`, `global-id:totalUptime`                                | Counters shown in the header uptime badge                        |
-| `global-id-*-pref`, `global-id-qr-*`, `global-id-picker-*`, `genpass-prefs-v2` | Remembered settings of the utility kits                          |
+| Key                                                                                                 | Purpose                                                          |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `my-portfolio-op1-visit-meta`                                                                       | Visit counter and first-visit date, attached to contact messages |
+| `my-portfolio-op1:pageVisits`, `my-portfolio-op1:totalUptime`                                       | Counters shown in the header uptime badge                        |
+| `my-portfolio-op1-*-pref`, `my-portfolio-op1-qr-*`, `my-portfolio-op1-picker-*`, `genpass-prefs-v2` | Remembered settings of the utility kits                          |
 
 Nothing in browser storage is sent anywhere except the visit counter that accompanies a contact-form submission.
 
@@ -46,6 +46,10 @@ Nothing in browser storage is sent anywhere except the visit counter that accomp
 | Vercel Speed Insights                   | Only when hosted on Vercel                                                   | Anonymous performance metrics                                                                 |
 
 The QR scanner kit uses the camera entirely in the browser; images are not uploaded.
+
+## Credentials and keys
+
+Passwords are stored as scrypt hashes, and authenticator seeds and integration keys (email, Cloudinary, R2, GitHub) are stored encrypted in your MongoDB database. They are only used by your own server and are never sent to visitors or to this project's authors.
 
 ## Notes vault
 

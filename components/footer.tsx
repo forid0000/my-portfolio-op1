@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { Terminal, GitBranch, Clock, Globe } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SocialIcon } from '@/lib/social-icon';
+import type { IconMap } from '@/lib/icons/icon-data';
 import { utcOffsetLabel } from '@/lib/utils';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
 
 interface FooterProps {
+  /** Server-resolved SVG data for the social icons (see lib/icons). */
+  icons?: IconMap;
   content?: {
     brandName: string;
     footerText: string;
@@ -18,7 +21,7 @@ interface FooterProps {
   };
 }
 
-export default function Footer({ content }: FooterProps) {
+export default function Footer({ content, icons }: FooterProps) {
   const footerData = content || GLOBAL_CONTENT_DEFAULTS;
 
   const timeZone = footerData.timeZone || GLOBAL_CONTENT_DEFAULTS.timeZone;
@@ -38,9 +41,15 @@ export default function Footer({ content }: FooterProps) {
       );
     };
 
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+    // The clock shows HH:MM, so wake once per minute (aligned to the minute
+    // boundary) instead of re-rendering the footer every second.
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      updateTime();
+      timer = setTimeout(tick, 60_000 - (Date.now() % 60_000) + 50);
+    };
+    tick();
+    return () => clearTimeout(timer);
   }, [timeZone]);
 
   return (
@@ -114,6 +123,7 @@ export default function Footer({ content }: FooterProps) {
                   const IconComponent = (
                     <SocialIcon
                       name={link.icon}
+                      icons={icons}
                       className="w-4 h-4 text-muted-foreground transition-colors duration-300 group-hover:text-primary"
                     />
                   );

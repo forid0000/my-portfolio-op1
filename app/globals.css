@@ -657,42 +657,15 @@
    MORPHING LIQUID BLOB ANIMATION
    ========================================= */
 
-@keyframes morphing-blob {
-  0% {
-    border-radius: 70% 30% 30% 70% / 60% 30% 70% 40%;
-  }
-  33% {
-    border-radius: 60% 40% 20% 80% / 70% 40% 60% 30%;
-  }
-  66% {
-    border-radius: 80% 20% 40% 60% / 50% 30% 70% 50%;
-  }
-  100% {
-    border-radius: 70% 30% 30% 70% / 60% 30% 70% 40%;
-  }
-}
-
-@keyframes morphing-blob-reverse {
-  0% {
-    border-radius: 60% 40% 50% 50% / 60% 50% 50% 40%;
-  }
-  33% {
-    border-radius: 80% 20% 40% 60% / 50% 40% 60% 50%;
-  }
-  66% {
-    border-radius: 50% 50% 30% 70% / 70% 30% 70% 30%;
-  }
-  100% {
-    border-radius: 60% 40% 50% 50% / 60% 50% 50% 40%;
-  }
-}
-
+/* The organic blob outlines are static shapes. (They used to animate
+   `border-radius` forever on large, blurred elements: that repaints the whole
+   layer every frame, which is what made the first paint feel heavy.) */
 .animate-morphing-blob {
-  animation: morphing-blob 6s ease-in-out infinite;
+  border-radius: 70% 30% 30% 70% / 60% 30% 70% 40%;
 }
 
 .animate-morphing-blob-reverse {
-  animation: morphing-blob-reverse 7s ease-in-out infinite;
+  border-radius: 60% 40% 50% 50% / 60% 50% 50% 40%;
 }
 /* ... existing code in globals.css ... */
 
@@ -1106,65 +1079,48 @@
   }
 }
 
-/* Industry-expertise ambient sweep (dark adaptation of the split-border
-   reference pattern). Each card's border/glyph/underline "lights up" in its
-   accent (--ie-c) once per 8.4s cycle, staggered per card by --ie-d, so the
-   grid reads as a slow wave. Hover disables the loop so the pointer state
-   (full accent via the Tailwind hover classes) always wins — running
-   animations would otherwise override hover colors. */
-@keyframes ie-card-border {
-  0%,
-  15%,
-  100% {
-    border-color: color-mix(in srgb, var(--ie-c, #34d399) 28%, transparent);
-  }
-  3%,
-  9% {
-    border-color: var(--ie-c, #34d399);
-  }
+/* Industry-expertise cards: the accent border/glyph/underline light up on hover
+   via the Tailwind hover classes on each card. (An ambient 8.4 s loop that
+   animated border-color, color and background-size on every card at all times was
+   removed: those properties repaint on the main thread continuously.) */
+
+/* Tech-stack marquee chips. One class instead of ~230 characters of utilities
+   repeated on each of ~120 chips, and no backdrop-filter / drop-shadow filter per
+   chip (each one forces its own GPU layer inside an animating strip). */
+.tech-chip {
+  @apply flex items-center gap-2.5 rounded-full border border-border/50 bg-card/30 px-5 py-2.5;
+  transition:
+    border-color 0.3s,
+    background-color 0.3s,
+    box-shadow 0.3s;
 }
-@keyframes ie-card-glyph {
-  0%,
-  15%,
-  100% {
-    color: color-mix(in srgb, var(--ie-c, #34d399) 75%, transparent);
-  }
-  3%,
-  9% {
-    color: var(--ie-c, #34d399);
-  }
+.tech-chip:hover {
+  @apply border-primary/50 bg-primary/10;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
 }
-@keyframes ie-card-underline {
-  0%,
-  100% {
-    background-size: 0% 1px;
-  }
-  3%,
-  9% {
-    background-size: 100% 1px;
-  }
-  15% {
-    background-size: 0% 1px;
-  }
+.tech-chip img {
+  @apply h-5 w-5 shrink-0 object-contain;
+  transition: transform 0.3s;
 }
-.ie-card {
-  animation: ie-card-border 8.4s ease-in-out var(--ie-d, 0s) infinite;
+.tech-chip:hover img {
+  transform: scale(1.1);
 }
-.ie-card .ie-glyph {
-  animation: ie-card-glyph 8.4s ease-in-out var(--ie-d, 0s) infinite;
+.tech-chip span {
+  @apply text-sm font-semibold tracking-tight text-foreground/80;
+  transition: color 0.3s;
 }
-.ie-card .ie-underline {
-  animation: ie-card-underline 8.4s ease-in-out var(--ie-d, 0s) infinite;
+.tech-chip:hover span {
+  @apply text-primary;
 }
-.ie-card:hover,
-.ie-card:hover .ie-glyph,
-.ie-card:hover .ie-underline {
-  animation: none;
-}
+
+/* People who ask their OS for less motion get none of the decorative loops. */
 @media (prefers-reduced-motion: reduce) {
-  .ie-card,
-  .ie-card .ie-glyph,
-  .ie-card .ie-underline {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

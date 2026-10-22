@@ -3,18 +3,19 @@
 import { useState, useEffect } from 'react';
 import { Network, Globe, Shield, Activity, Binary } from 'lucide-react';
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
-const STORAGE_KEY = 'global-id-subnet-pref'; // Key for localStorage
+const STORAGE_KEY = 'my-portfolio-op1-subnet-pref'; // Key for localStorage
 const DEFAULT_IP_ADDRESS = '192.168.1.1'; // Default example IP for the calculator
 
 interface SubnetClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function SubnetClient({ icon, accentColor }: SubnetClientProps) {
+export default function SubnetClient({ iconData, accentColor }: SubnetClientProps) {
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <Network />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <Network />, headingColorClass);
 
   // State - Default values act as fallbacks
   const [ip, setIp] = useState(DEFAULT_IP_ADDRESS);

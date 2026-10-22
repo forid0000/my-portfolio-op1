@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import QrClient from './qrcode-client';
 import { getToolContent } from '../get-tool-content';
 import { SITE_URL } from '@/lib/site-config';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 const TOOL_KEY = 'qrcode';
 const FALLBACK_TITLE = 'Free QR Code Generator & Scanner - Create & Scan QR Codes Online';
@@ -42,5 +43,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function QrPage() {
   const tool = await getToolContent(TOOL_KEY);
-  return <QrClient icon={tool?.icon} accentColor={tool?.accentColor} />;
+  return <QrClient iconData={await resolveIconData(tool?.icon)} accentColor={tool?.accentColor} />;
 }

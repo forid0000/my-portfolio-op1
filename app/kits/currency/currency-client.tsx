@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import { ArrowRightLeft, RefreshCw, TrendingUp, AlertCircle } from 'lucide-react';
 import { renderKitIcon, getKitColor } from '@/lib/kits-registry';
+import type { IconData } from '@/lib/icons/icon-data';
 
-const STORAGE_KEY = 'global-id-currency-pref'; // Key for localStorage
+const STORAGE_KEY = 'my-portfolio-op1-currency-pref'; // Key for localStorage
 
 interface CurrencyClientProps {
-  icon?: string;
+  iconData?: IconData | null;
   accentColor?: string;
 }
 
-export default function CurrencyClient({ icon, accentColor }: CurrencyClientProps) {
+export default function CurrencyClient({ iconData, accentColor }: CurrencyClientProps) {
   const headingColorClass = accentColor ? getKitColor(accentColor).text : 'text-primary';
-  const headingIcon = renderKitIcon(icon, <TrendingUp />, headingColorClass);
+  const headingIcon = renderKitIcon(iconData, <TrendingUp />, headingColorClass);
 
   // Store amount as string to allow typing decimals (e.g., "10.") without it snapping back to "10"
   const [amountStr, setAmountStr] = useState('1');

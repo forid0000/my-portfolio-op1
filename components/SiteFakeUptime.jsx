@@ -76,6 +76,8 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
   const [pageVisits, setPageVisits] = useState(0);
 
   const popoverRef = useRef(null);
+  // The two clocks live in a hover popover, so they only tick while it is visible.
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Runs once per mount: page-visit counter, device info and the uptime ticker.
   useEffect(() => {
@@ -83,19 +85,19 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
     setPlatform(navigator.platform || 'Unknown');
     setLanguage(navigator.language || 'Unknown');
 
-    const visits = safeGetStorage('global-id:pageVisits') || 0;
+    const visits = safeGetStorage('my-portfolio-op1:pageVisits') || 0;
     const newVisits = visits + 1;
-    safeSetStorage('global-id:pageVisits', newVisits);
+    safeSetStorage('my-portfolio-op1:pageVisits', newVisits);
     setPageVisits(newVisits);
 
-    const initialTotal = safeGetStorage('global-id:totalUptime') || 0;
+    const initialTotal = safeGetStorage('my-portfolio-op1:totalUptime') || 0;
     setTotalUptime(initialTotal);
 
     const tick = () => {
       setTotalUptime((prevTotal) => {
         const newTotal = prevTotal + 1;
         if (newTotal % 5 === 0) {
-          safeSetStorage('global-id:totalUptime', newTotal);
+          safeSetStorage('my-portfolio-op1:totalUptime', newTotal);
         }
         return newTotal;
       });
@@ -105,8 +107,9 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
     return () => clearInterval(interval);
   }, []);
 
-  // Clocks: re-run when the CMS time zone arrives/changes, without touching the counters above.
+  // Clocks: only while the popover is open; re-run when the CMS time zone arrives/changes.
   useEffect(() => {
+    if (!popoverOpen) return;
     const clockOptions = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
     const updateClocks = () => {
       let hostNow;
@@ -123,7 +126,7 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
     updateClocks();
     const interval = setInterval(updateClocks, 1000);
     return () => clearInterval(interval);
-  }, [timeZone]);
+  }, [timeZone, popoverOpen]);
 
   const Badge = STATUS_URL ? 'a' : 'div';
   const badgeProps = STATUS_URL
@@ -140,7 +143,14 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
     : 'absolute top-full right-0 mt-2';
 
   return (
-    <div className="relative group" ref={popoverRef}>
+    <div
+      className="relative group"
+      ref={popoverRef}
+      onMouseEnter={() => setPopoverOpen(true)}
+      onMouseLeave={() => setPopoverOpen(false)}
+      onFocus={() => setPopoverOpen(true)}
+      onBlur={() => setPopoverOpen(false)}
+    >
       {/* --- 1. The Visible Timer (a link when NEXT_PUBLIC_STATUS_URL is set) --- */}
       <Badge
         {...badgeProps}

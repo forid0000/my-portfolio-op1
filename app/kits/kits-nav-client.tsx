@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutGrid, ArrowRight, ShieldCheck } from 'lucide-react';
 import { renderKitIcon, getKitColor, type KitsContent } from '@/lib/kits-registry';
+import type { IconMap } from '@/lib/icons/icon-data';
 
 export function KitsNavClient({
   content,
+  icons,
   children,
 }: {
   content: KitsContent;
+  /** Server-resolved SVG data for each tool's icon (see lib/icons). */
+  icons: IconMap;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -39,7 +43,7 @@ export function KitsNavClient({
                   : 'hover:bg-white/5 border-transparent hover:border-white/10 text-muted-foreground'
               }`}
             >
-              {renderKitIcon(tool.icon, <ShieldCheck />, 'w-4 h-4')}
+              {renderKitIcon(icons[tool.icon], <ShieldCheck />, 'w-4 h-4')}
               {tool.name}
             </Link>
           );
@@ -80,7 +84,7 @@ export function KitsNavClient({
                         : 'bg-primary/10 text-muted-foreground group-hover:text-primary group-hover:bg-primary/20'
                     }`}
                   >
-                    {renderKitIcon(tool.icon, <ShieldCheck />, 'w-4 h-4')}
+                    {renderKitIcon(icons[tool.icon], <ShieldCheck />, 'w-4 h-4')}
                   </div>
                   {!isActive && (
                     <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />

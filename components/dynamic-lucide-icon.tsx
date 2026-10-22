@@ -1,13 +1,22 @@
-import { createElement } from 'react';
 import { Code } from 'lucide-react';
-import { resolveUniversalIcon } from '@/lib/universal-icon';
+import { IconSvg } from '@/lib/icons/icon-data';
+import { resolveIconData } from '@/lib/icons/resolve';
 
 /**
- * Renders a CMS-supplied lucide icon name, falling back to a generic Code
- * glyph when it's empty or unrecognized - a bad/typo'd admin entry degrades
- * gracefully instead of crashing the section. Works in both server and
- * client components (no hooks, no 'use client').
+ * Renders a CMS-supplied icon name (any lucide or react-icons glyph) as inline
+ * SVG, falling back to a generic Code glyph when it's empty or unrecognized - a
+ * bad/typo'd admin entry degrades gracefully instead of crashing the section.
+ *
+ * A Server Component: the name is resolved on the server, so no icon library
+ * is ever sent to the browser.
  */
-export function DynamicLucideIcon({ name, className }: { name?: string; className?: string }) {
-  return createElement(resolveUniversalIcon(name) ?? Code, { className });
+export async function DynamicLucideIcon({
+  name,
+  className,
+}: {
+  name?: string;
+  className?: string;
+}) {
+  const data = await resolveIconData(name);
+  return data ? <IconSvg data={data} className={className} /> : <Code className={className} />;
 }

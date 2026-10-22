@@ -4,7 +4,7 @@
  * to submissions so a repeat visitor reaching out reads differently than a
  * first-time one). Client-only.
  */
-const STORAGE_KEY = 'global-id-visit-meta';
+const STORAGE_KEY = 'my-portfolio-op1-visit-meta';
 
 export interface VisitInfo {
   visitCount: number;

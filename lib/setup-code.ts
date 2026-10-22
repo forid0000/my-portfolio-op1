@@ -14,7 +14,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 // 32 symbols without the look-alikes 0/O and 1/I.
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const LABEL = 'global-id/setup-code/v1';
+const LABEL = 'my-portfolio-op1/setup-code/v1';
 
 function requireSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -57,7 +57,7 @@ export function announceSetupCode(): void {
     [
       '',
       bar,
-      '  Global-ID: first-run setup is pending (no admin account yet).',
+      '  my-portfolio-op1: first-run setup is pending (no admin account yet).',
       '  Open /administrator/setup and enter this setup code:',
       '',
       `      ${getSetupCode()}`,

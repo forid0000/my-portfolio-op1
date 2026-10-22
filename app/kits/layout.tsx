@@ -5,6 +5,8 @@ import Footer from '@/components/footer';
 import connectToDatabase from '@/lib/db';
 import { mergeKitsContent, type KitsContent } from '@/lib/kits-registry';
 import { getLayoutSections, isSectionEnabled } from '@/lib/sections-registry';
+import { getGlobalContent, toHeaderBrand, toNavToggles } from '@/lib/site';
+import { resolveIconMap } from '@/lib/icons/resolve';
 import { KitsNavClient } from './kits-nav-client';
 import './style.css';
 
@@ -22,17 +24,27 @@ async function getKitsContent(): Promise<KitsContent> {
 }
 
 export default async function KitsLayout({ children }: { children: React.ReactNode }) {
-  const sections = await getLayoutSections();
+  const [sections, global, content] = await Promise.all([
+    getLayoutSections(),
+    getGlobalContent(),
+    getKitsContent(),
+  ]);
   if (!isSectionEnabled(sections, 'kits')) notFound();
 
-  const content = await getKitsContent();
+  // Everything the header, footer and tool nav show is resolved here, on the
+  // server, so the page arrives complete: no client fetch, no icon library.
+  const icons = await resolveIconMap([
+    ...content.tools.map((t) => t.icon),
+    ...global.footerSocials.map((s) => s.icon),
+  ]);
 
   return (
     <div className="min-h-screen text-foreground flex flex-col relative font-sans">
-      <div className="scan-overlay" />
-      <Header />
-      <KitsNavClient content={content}>{children}</KitsNavClient>
-      <Footer />
+      <Header brand={toHeaderBrand(global)} toggles={toNavToggles(sections)} />
+      <KitsNavClient content={content} icons={icons}>
+        {children}
+      </KitsNavClient>
+      <Footer content={global} icons={icons} />
     </div>
   );
 }

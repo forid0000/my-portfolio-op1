@@ -2,9 +2,11 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { getGlobalContent, toHeaderBrand, toNavToggles } from '@/lib/site';
 import { getLayoutSections } from '@/lib/sections-registry';
+import { resolveIconMap } from '@/lib/icons/resolve';
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
   const [global, sections] = await Promise.all([getGlobalContent(), getLayoutSections()]);
+  const icons = await resolveIconMap(global.footerSocials.map((s) => s.icon));
   return (
     // bg-background commented out to remove solid background color
     <div className="min-h-screen  flex flex-col font-sans selection:bg-primary/20">
@@ -21,7 +23,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         />
         {children}
       </main>
-      <Footer />
+      <Footer content={global} icons={icons} />
     </div>
   );
 }
