@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, KeyRound, Loader2, ShieldCheck, Terminal } from 'lucide-react';
+import { ArrowRight, Check, KeyRound, Loader2, ShieldCheck, Terminal } from 'lucide-react';
 import { TotpEnroll } from '@/components/admin/totp-enroll';
 
 const PASSWORD_MIN = 12;
+
+const STEP_LABELS = ['Verify access', 'Authenticator', 'Finish'];
 
 type Step = 'loading' | 'code' | 'authenticator' | 'password';
 
@@ -30,6 +32,7 @@ export default function AdminSetup() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [keySaved, setKeySaved] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -94,6 +97,10 @@ export default function AdminSetup() {
       setError('Enter the 6-digit code from your authenticator app.');
       return;
     }
+    if (!keySaved) {
+      setError('Please confirm that you saved the key.');
+      return;
+    }
     setError('');
     setStep('password');
   };
@@ -121,7 +128,8 @@ export default function AdminSetup() {
         ...(password ? { password } : {}),
       });
       if (ok) {
-        router.push('/administrator/security');
+        // The dashboard greets a new owner with the welcome prompt, the guided tour and the checklist.
+        router.push('/administrator');
         router.refresh();
         return;
       }
@@ -157,9 +165,41 @@ export default function AdminSetup() {
           </div>
           <h1 className="text-2xl font-bold text-gray-100">Set up your admin account</h1>
           {step !== 'loading' && (
-            <p className="text-xs font-mono text-gray-500 mt-2 tracking-widest uppercase">
-              Step {stepNumber} of 3
-            </p>
+            <ol className="mt-5 flex items-center justify-center gap-2" aria-label="Setup progress">
+              {STEP_LABELS.map((label, i) => {
+                const n = i + 1;
+                const state = n < stepNumber ? 'done' : n === stepNumber ? 'current' : 'todo';
+                return (
+                  <li
+                    key={label}
+                    aria-current={state === 'current' ? 'step' : undefined}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                        state === 'done'
+                          ? 'bg-emerald-600 text-white'
+                          : state === 'current'
+                            ? 'bg-emerald-950 text-emerald-300 ring-2 ring-emerald-500'
+                            : 'bg-gray-800 text-gray-500'
+                      }`}
+                    >
+                      {state === 'done' ? <Check className="h-3.5 w-3.5" /> : n}
+                    </span>
+                    <span
+                      className={`hidden text-xs font-medium sm:inline ${
+                        state === 'todo' ? 'text-gray-600' : 'text-gray-300'
+                      }`}
+                    >
+                      {label}
+                    </span>
+                    {n < STEP_LABELS.length && (
+                      <span className="h-px w-6 bg-gray-700" aria-hidden />
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
           )}
         </div>
 
@@ -236,6 +276,18 @@ export default function AdminSetup() {
               onCodeChange={setTotpCode}
               codeLabel="Code from your authenticator app"
             />
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-800 bg-gray-950 p-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={keySaved}
+                onChange={(e) => setKeySaved(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-600"
+              />
+              <span>
+                I saved the written key (or added this account to a second device). It is my only
+                way back in if I lose my phone, because there are no backup codes.
+              </span>
+            </label>
             <button type="submit" className={primaryButton}>
               Continue <ArrowRight className="w-4 h-4" />
             </button>
@@ -247,7 +299,7 @@ export default function AdminSetup() {
             <p className="text-sm text-gray-400">
               Optionally add a password as an additional factor. If you set one, sign-in will ask
               for it together with the authenticator code. You can add, change or remove it later in
-              Security.
+              Security. Next you will land on your dashboard, where a short guide shows you around.
             </p>
             <div>
               <label htmlFor="pw" className="block text-sm font-medium text-gray-300 mb-1">

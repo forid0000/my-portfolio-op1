@@ -37,14 +37,27 @@ import {
   ListOrdered,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/admin/command-palette';
+import { OnboardingProvider, TourLauncher } from '@/components/admin/onboarding/provider';
 
-type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
-type NavGroup = { label: string | null; items: NavItem[] };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** `data-tour` name the guided tour can point at (see components/admin/onboarding). */
+  tour?: string;
+};
+type NavGroup = { label: string | null; tour?: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
-  { label: null, items: [{ href: '/administrator', label: 'Dashboard', icon: LayoutDashboard }] },
+  {
+    label: null,
+    items: [
+      { href: '/administrator', label: 'Dashboard', icon: LayoutDashboard, tour: 'nav-dashboard' },
+    ],
+  },
   {
     label: 'Content',
+    tour: 'nav-content',
     items: [
       { href: '/administrator/homepage', label: 'Hero Section', icon: Home },
       { href: '/administrator/about', label: 'About', icon: User },
@@ -65,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Customize',
+    tour: 'nav-customize',
     items: [
       { href: '/administrator/sections', label: 'Sections & Layout', icon: ListOrdered },
       { href: '/administrator/appearance', label: 'Appearance', icon: Palette },
@@ -75,6 +89,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Media',
+    tour: 'nav-media',
     items: [
       { href: '/administrator/gallery', label: 'Gallery', icon: ImageIcon },
       { href: '/administrator/media-manager', label: 'Media Manager', icon: FileText },
@@ -86,8 +101,18 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/administrator/cloudinary', label: 'Cloudinary Data', icon: Cloud },
       { href: '/administrator/data', label: 'MongoDB Data', icon: Database },
       { href: '/administrator/system', label: 'System & SEO', icon: Settings },
-      { href: '/administrator/security', label: 'Security & Keys', icon: ShieldCheck },
-      { href: '/administrator/notes-config', label: 'Notes Config', icon: NotebookPen },
+      {
+        href: '/administrator/security',
+        label: 'Security & Keys',
+        icon: ShieldCheck,
+        tour: 'nav-security',
+      },
+      {
+        href: '/administrator/notes-config',
+        label: 'Notes Config',
+        icon: NotebookPen,
+        tour: 'nav-notes',
+      },
     ],
   },
 ];
@@ -242,138 +267,151 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
-      {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 z-40">
-        <h2 className="text-lg font-bold tracking-tight text-emerald-500">Admin Portal [Open]</h2>
-        <div className="flex items-center gap-2">
-          <CommandPalette />
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+    <OnboardingProvider setMenuOpen={setIsMobileMenuOpen}>
+      <div className="flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
+        {/* Mobile Top Bar */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 z-40">
+          <h2 className="text-lg font-bold tracking-tight text-emerald-500">Admin Portal</h2>
+          <div className="flex items-center gap-2">
+            <span data-tour="search" className="inline-flex">
+              <CommandPalette />
+            </span>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 -mr-2 text-gray-400 hover:text-white transition-colors"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Sidebar Overlay (Mobile) */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+        {/* Sidebar Overlay (Mobile) */}
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <aside
-        className={`
+        {/* Sidebar */}
+        <aside
+          data-tour-sidebar
+          className={`
         fixed md:static inset-y-0 left-0 z-50 w-64 h-full bg-gray-900 border-r border-gray-800 flex flex-col
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}
-      >
-        <div className="p-4 border-b border-gray-800">
-          <AdminClock className="text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums" />
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold tracking-tight text-emerald-500 font-mono">
-              Admin Portal
-            </h2>
-            <span className="text-[10px] text-gray-500 tracking-widest font-mono mt-0.5">
-              dashboard
-            </span>
-          </div>
-
-          {/* Enhanced Session Timer */}
-          <div
-            className={`mt-4 flex flex-col items-center justify-center p-3 rounded-xl border backdrop-blur-md shadow-lg transition-all duration-500 ${
-              isWarning
-                ? 'bg-gradient-to-br from-red-950/80 to-gray-900 border-red-900/50 shadow-red-900/20'
-                : 'bg-gradient-to-br from-gray-900 to-gray-800/80 border-gray-700/50 shadow-emerald-900/10'
-            } ${isWarning ? 'animate-pulse' : ''}`}
-          >
-            <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold mb-1 text-gray-400">
-              <Clock className={`w-3 h-3 ${isWarning ? 'text-red-500' : 'text-emerald-500'}`} />
-              Active Session
+        >
+          <div className="p-4 border-b border-gray-800">
+            <AdminClock className="text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums" />
+            <div className="flex flex-col">
+              <h2 className="text-lg font-bold tracking-tight text-emerald-500 font-mono">
+                Admin Portal
+              </h2>
+              <span className="text-[10px] text-gray-500 tracking-widest font-mono mt-0.5">
+                dashboard
+              </span>
             </div>
+
+            {/* Enhanced Session Timer */}
             <div
-              className={`text-2xl font-black font-mono tracking-widest ${
+              data-tour="session"
+              className={`mt-4 flex flex-col items-center justify-center p-3 rounded-xl border backdrop-blur-md shadow-lg transition-all duration-500 ${
                 isWarning
-                  ? 'text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]'
-                  : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]'
-              }`}
+                  ? 'bg-gradient-to-br from-red-950/80 to-gray-900 border-red-900/50 shadow-red-900/20'
+                  : 'bg-gradient-to-br from-gray-900 to-gray-800/80 border-gray-700/50 shadow-emerald-900/10'
+              } ${isWarning ? 'animate-pulse' : ''}`}
             >
-              {sessionStatus === 'loading' ? '--:--' : formatTime(timeLeft!)}
-            </div>
-
-            {/* Refresh Session Button */}
-            {sessionStatus === 'active' && timeLeft !== null && timeLeft <= 300 && (
-              <button
-                onClick={handleRefreshSession}
-                disabled={isRefreshing}
-                className="mt-3 px-3 py-1.5 w-full rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5"
+              <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold mb-1 text-gray-400">
+                <Clock className={`w-3 h-3 ${isWarning ? 'text-red-500' : 'text-emerald-500'}`} />
+                Active Session
+              </div>
+              <div
+                className={`text-2xl font-black font-mono tracking-widest ${
+                  isWarning
+                    ? 'text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]'
+                    : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]'
+                }`}
               >
-                {isRefreshing ? (
-                  <span className="animate-spin w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full" />
-                ) : (
-                  <Clock className="w-3.5 h-3.5" />
-                )}
-                +5 Min
-              </button>
-            )}
-          </div>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
-          {NAV_GROUPS.map((group, gi) => (
-            <div key={gi} className={group.label ? 'mt-4 first:mt-0' : ''}>
-              {group.label && (
-                <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
-                  {group.label}
-                </p>
+                {sessionStatus === 'loading' ? '--:--' : formatTime(timeLeft!)}
+              </div>
+
+              {/* Refresh Session Button */}
+              {sessionStatus === 'active' && timeLeft !== null && timeLeft <= 300 && (
+                <button
+                  onClick={handleRefreshSession}
+                  disabled={isRefreshing}
+                  className="mt-3 px-3 py-1.5 w-full rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {isRefreshing ? (
+                    <span className="animate-spin w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full" />
+                  ) : (
+                    <Clock className="w-3.5 h-3.5" />
+                  )}
+                  +5 Min
+                </button>
               )}
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.href} href={item.href} className={getLinkClasses(item.href)}>
-                    <Icon className="w-5 h-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
             </div>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-gray-800 space-y-1">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 transition-colors"
-          >
-            <ExternalLink className="w-5 h-5" />
-            View Live Site
-          </a>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-950/50 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full bg-gray-950 overflow-hidden">
-        {/* Global Search Top Bar (Desktop) */}
-        <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
-          <div className="flex-1 max-w-2xl mx-auto">
-            <CommandPalette />
           </div>
-        </div>
+          <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
+            {NAV_GROUPS.map((group, gi) => (
+              <div key={gi} data-tour={group.tour} className={group.label ? 'mt-4 first:mt-0' : ''}>
+                {group.label && (
+                  <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                    {group.label}
+                  </p>
+                )}
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      data-tour={item.tour}
+                      className={getLinkClasses(item.href)}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+          <div className="p-4 border-t border-gray-800 space-y-1">
+            <a
+              href="/"
+              data-tour="live-site"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5" />
+              View Live Site
+            </a>
+            <TourLauncher className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 disabled:opacity-50 transition-colors" />
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-950/50 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          </div>
+        </aside>
 
-        <div className="flex-1 overflow-y-auto p-8">{children}</div>
-      </main>
-    </div>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col h-full bg-gray-950 overflow-hidden">
+          {/* Global Search Top Bar (Desktop) */}
+          <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+            <div data-tour="search" className="flex-1 max-w-2xl mx-auto">
+              <CommandPalette />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-8">{children}</div>
+        </main>
+      </div>
+    </OnboardingProvider>
   );
 }

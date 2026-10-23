@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { KeyRound, Save, ShieldCheck, Loader2, Timer, List, Type } from 'lucide-react';
+import { BookOpen, KeyRound, Save, ShieldCheck, Loader2, Timer, List, Type } from 'lucide-react';
 import { toast } from 'sonner';
 
 const INTERVAL_OPTIONS = [
@@ -164,6 +164,56 @@ export default function NotesConfigPage() {
             , where changes need a fresh authenticator code.
           </p>
         </div>
+      </div>
+
+      {/* Plain-language walkthrough: unlock, write, publish */}
+      <div className="space-y-4 bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-emerald-400" />
+          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-400">
+            How the vault works
+          </h2>
+        </div>
+        <ol className="space-y-3 text-sm text-gray-400 list-decimal list-inside marker:text-emerald-500 marker:font-bold">
+          <li>
+            <strong className="text-gray-200">Lock it.</strong> Set a vault password and/or
+            authenticator quick-unlock in{' '}
+            <Link
+              href="/administrator/security#notes-vault"
+              className="text-emerald-400 underline hover:text-emerald-300"
+            >
+              Security &amp; Keys
+            </Link>
+            . Until you do, the vault stays locked for everyone, including you.
+          </li>
+          <li>
+            <strong className="text-gray-200">Open it.</strong> Go to{' '}
+            <a
+              href="/notes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-emerald-400 underline hover:text-emerald-300"
+            >
+              /notes
+            </a>{' '}
+            and unlock with your password or a code from your authenticator.
+          </li>
+          <li>
+            <strong className="text-gray-200">Write.</strong> Notes are Markdown, saved
+            automatically (interval below), with tags, search and export to .md, .txt or PDF.
+          </li>
+          <li>
+            <strong className="text-gray-200">Publish (optional).</strong> Use the Publish button on
+            a note to give it a public page at{' '}
+            <span className="font-mono text-gray-300">/notes/your-note</span>. Only notes you
+            publish are public, and you can unpublish at any time.
+          </li>
+          <li>
+            <strong className="text-gray-200">Images (optional).</strong> Uploading pictures into a
+            note needs Cloudflare R2: add its keys under Security &amp; Keys and set the{' '}
+            <span className="font-mono text-gray-300">R2_PUBLIC_URL</span> environment variable.
+          </li>
+        </ol>
       </div>
 
       {/* Auto-save interval */}

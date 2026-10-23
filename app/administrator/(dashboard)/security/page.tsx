@@ -52,18 +52,30 @@ const dangerButton =
   'inline-flex items-center gap-2 px-4 py-2 border border-red-900/60 hover:bg-red-950/40 disabled:opacity-50 text-red-400 text-sm font-medium rounded-lg transition-colors';
 
 function Card({
+  id,
+  highlighted,
   icon: Icon,
   title,
   description,
   children,
 }: {
+  /** Anchor target (/administrator/security#id); the getting-started checklist links here. */
+  id?: string;
+  highlighted?: boolean;
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-5 bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <section
+      id={id}
+      className={`scroll-mt-28 space-y-5 bg-gray-900 border rounded-xl p-6 transition-shadow duration-500 ${
+        highlighted
+          ? 'border-emerald-500/70 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
+          : 'border-gray-800'
+      }`}
+    >
       <div>
         <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-400">
           <Icon className="w-4 h-4 text-emerald-400" />
@@ -178,6 +190,29 @@ export default function SecurityPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // The cards render after the data arrives, so the browser's own #anchor scroll would
+  // miss them. Scroll to the requested card ourselves and flash it briefly.
+  const [focusId, setFocusId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!overview) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const focusHash = () => {
+      const id = window.location.hash.slice(1);
+      const el = id ? document.getElementById(id) : null;
+      if (!el) return;
+      el.scrollIntoView({ block: 'start' });
+      setFocusId(id);
+      clearTimeout(timer);
+      timer = setTimeout(() => setFocusId(null), 2400);
+    };
+    focusHash();
+    window.addEventListener('hashchange', focusHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('hashchange', focusHash);
+    };
+  }, [overview]);
 
   const codeReady = stepUp.replace(/\s/g, '').length === 6;
 
@@ -320,6 +355,8 @@ export default function SecurityPage() {
 
       {/* Admin sign-in */}
       <Card
+        id="admin-signin"
+        highlighted={focusId === 'admin-signin'}
         icon={ShieldCheck}
         title="Admin sign-in"
         description="The authenticator code is always required to sign in. A password is optional: once you set one it is required together with the code."
@@ -388,6 +425,8 @@ export default function SecurityPage() {
 
       {/* Notes vault */}
       <Card
+        id="notes-vault"
+        highlighted={focusId === 'notes-vault'}
         icon={NotebookPen}
         title="Notes vault"
         description="The vault at /notes has its own sign-in. Both options below are optional, but the vault stays locked for everyone until at least one is set."
@@ -485,7 +524,14 @@ export default function SecurityPage() {
         const fields = overview.integrations.filter((f) => f.group === group);
         const info = overview.groups[group];
         return (
-          <Card key={group} icon={KeyRound} title={info.label} description={info.description}>
+          <Card
+            key={group}
+            id={group}
+            highlighted={focusId === group}
+            icon={KeyRound}
+            title={info.label}
+            description={info.description}
+          >
             <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
               {fields.map((f) => {
                 const queuedClear = clears.has(f.key);
