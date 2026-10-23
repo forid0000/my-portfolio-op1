@@ -75,3 +75,16 @@ export function singleMediaSchema(scope: MediaScope) {
     .object({ src: z.string().max(700), public_id: z.string().min(3).max(300).regex(PUBLIC_ID_RE) })
     .superRefine((item, ctx) => checkItem(scope, { ...item, kind: 'image' }, ctx, []));
 }
+
+/** One cover picture for an article (kept apart from the inline media list). */
+export function coverSchema(scope: MediaScope) {
+  return z
+    .object({
+      src: z.string().max(700),
+      public_id: z.string().min(3).max(300).regex(PUBLIC_ID_RE),
+      alt: z.string().max(200).optional(),
+      width: dimension,
+      height: dimension,
+    })
+    .superRefine((item, ctx) => checkItem(scope, { ...item, kind: 'image' }, ctx, []));
+}

@@ -108,7 +108,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold flex items-center gap-2">{headingIcon} Age Calculator</h2>
         {stats === 'error' && (
-          <span className="text-xs font-bold text-red-400 bg-red-400/10 px-3 py-1 rounded-full border border-red-400/20">
+          <span className="text-xs font-bold text-destructive bg-destructive/10 px-3 py-1 rounded-full border border-destructive/20">
             Birth date cannot be in the future relative to Target
           </span>
         )}
@@ -124,12 +124,12 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
             type="date"
             value={dob}
             onChange={(e) => setDob(e.target.value)}
-            className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-lg text-white appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
 
         {/* Decorator Arrow (Desktop Only) */}
-        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted-foreground">
+        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center rounded-full bg-foreground/5 border border-foreground/10 text-muted-foreground">
           <ArrowDown className="w-4 h-4 -rotate-90" />
         </div>
 
@@ -151,7 +151,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-lg text-white appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
               Time Elapsed
             </div>
 
-            <div className="flex flex-wrap justify-center items-baseline gap-3 md:gap-6 text-white mb-2">
+            <div className="flex flex-wrap justify-center items-baseline gap-3 md:gap-6 text-foreground mb-2">
               <div className="text-center">
                 <span className="text-4xl md:text-6xl font-bold tracking-tighter">
                   {stats.full.years}
@@ -177,7 +177,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
                 </span>
               </div>
               <div className="text-center">
-                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-white/80">
+                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground/80">
                   {stats.full.months}
                 </span>
                 <span className="text-xs md:text-sm text-muted-foreground uppercase font-bold ml-1 block">
@@ -185,7 +185,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
                 </span>
               </div>
               <div className="text-center">
-                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-white/60">
+                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground/60">
                   {stats.full.days}
                 </span>
                 <span className="text-xs md:text-sm text-muted-foreground uppercase font-bold ml-1 block">
@@ -218,7 +218,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
 
       {/* Empty State */}
       {!stats && (
-        <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-white/5 rounded-xl bg-white/[0.02]">
+        <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-foreground/5 rounded-xl bg-foreground/[0.02]">
           Select your birth date above to calculate precise age.
         </div>
       )}
@@ -228,7 +228,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
 
 const StatBox = ({ label, value, delay }: { label: string; value: string; delay?: string }) => (
   <div
-    className={`bg-white/5 p-5 rounded-xl border border-white/5 text-center hover:bg-white/10 transition-colors cursor-default animate-in fade-in fill-mode-backwards ${delay}`}
+    className={`bg-foreground/5 p-5 rounded-xl border border-foreground/5 text-center hover:bg-foreground/10 transition-colors cursor-default animate-in fade-in fill-mode-backwards ${delay}`}
   >
     <div className="text-2xl md:text-3xl font-bold font-mono text-primary/90">{value}</div>
     <div className="text-[10px] md:text-xs text-muted-foreground uppercase mt-2 tracking-wider font-medium">

@@ -10,7 +10,7 @@ const HackerText = dynamic(() => import('./HackerText'));
 const AiTypingText = dynamic(() => import('./ai-typing-text'));
 // import SpiderCanvas from "./spider-canvas";
 import { X, Download } from 'lucide-react';
-import Image from 'next/image';
+import SafeAvatar from '@/components/safe-avatar';
 import { SocialIcon } from '@/lib/social-icon';
 import type { IconMap } from '@/lib/icons/icon-data';
 import {
@@ -36,9 +36,23 @@ interface HeroProps {
   };
   /** 'terminal' restores the typing and decoding effects; the default is a plain, fast hero. */
   uiStyle?: 'clean' | 'terminal';
+  /** Show the "Download CV" button (the page passes true only when a resume exists). */
+  showResume?: boolean;
+  /** Show the row of social links. */
+  showSocials?: boolean;
+  /** Show the "View Projects" button (the page passes false when the Projects section is hidden). */
+  showProjects?: boolean;
 }
 
-export default function Hero({ content, global, icons, uiStyle = 'clean' }: HeroProps) {
+export default function Hero({
+  content,
+  global,
+  icons,
+  uiStyle = 'clean',
+  showResume = true,
+  showSocials = true,
+  showProjects = true,
+}: HeroProps) {
   const avatarUrl = global?.avatarUrl || AVATAR_PLACEHOLDER_URL;
   const firstName = content?.firstName || HERO_DEFAULTS.firstName;
   const lastName = content?.lastName || HERO_DEFAULTS.lastName;
@@ -81,10 +95,10 @@ export default function Hero({ content, global, icons, uiStyle = 'clean' }: Hero
 
             {/* Image Container with Mask - Premium Glass/Modern feel */}
             <div
-              className="relative w-full h-full animate-morphing-blob overflow-hidden border border-primary/30 shadow-[0_0_40px_rgba(16,185,129,0.15)] group-hover:shadow-[0_0_60px_rgba(16,185,129,0.25)] group-hover:border-primary/50 group-hover:scale-[1.02] transition-all duration-700 bg-background/40 cursor-pointer"
+              className="relative w-full h-full animate-morphing-blob overflow-hidden border border-primary/30 shadow-[0_0_40px_color-mix(in_srgb,var(--primary)_15%,transparent)] group-hover:shadow-[0_0_60px_color-mix(in_srgb,var(--primary)_25%,transparent)] group-hover:border-primary/50 group-hover:scale-[1.02] transition-all duration-700 bg-background/40 cursor-pointer"
               onClick={() => setIsModalOpen(true)}
             >
-              <Image
+              <SafeAvatar
                 src={avatarUrl}
                 alt={fullName}
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -126,7 +140,7 @@ export default function Hero({ content, global, icons, uiStyle = 'clean' }: Hero
             >
               {firstName}
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-blue-500 animate-gradient-x">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-info animate-gradient-x">
                 {lastName}
               </span>
             </h1>
@@ -150,85 +164,91 @@ export default function Hero({ content, global, icons, uiStyle = 'clean' }: Hero
           </p>
 
           <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2 md:pt-4">
-            <a href="#projects" className="fire-button group">
-              <span className="relative z-10">View Projects</span>
-            </a>
-
-            <div className="relative group w-full sm:w-auto">
-              {/* Decorative Tech logic: outer brackets */}
-              <div className="absolute hidden terminal:block -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
-              <div className="absolute hidden terminal:block -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
-
-              <a
-                href="/api/resume"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="liquid-button relative px-8 py-4 flex items-center justify-center gap-3 group bg-transparent border border-primary/20 hover:border-primary transition-all duration-500 rounded-lg overflow-hidden"
-              >
-                {/* Magical Liquid Waves */}
-                <div className="wave"></div>
-                <div className="wave"></div>
-                <div className="wave"></div>
-
-                <span className="relative z-10 text-sm font-semibold terminal:text-xs terminal:font-black terminal:tracking-[0.3em] terminal:uppercase text-primary group-hover:text-primary-foreground transition-colors duration-500">
-                  <ByStyle clean="Download CV" terminal="Download_CV" />
-                </span>
-                <div className="relative z-10 w-8 h-px bg-primary/30 group-hover:bg-primary-foreground/30 group-hover:w-12 transition-all duration-500" />
-                <Download className="relative z-10 w-5 h-5 text-primary group-hover:text-primary-foreground transition-all duration-500 group-hover:animate-bounce" />
+            {showProjects && (
+              <a href="#projects" className="fire-button group">
+                <span className="relative z-10">View Projects</span>
               </a>
-            </div>
+            )}
+
+            {showResume && (
+              <div className="relative group w-full sm:w-auto">
+                {/* Decorative Tech logic: outer brackets */}
+                <div className="absolute hidden terminal:block -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
+                <div className="absolute hidden terminal:block -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
+
+                <a
+                  href="/api/resume"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="liquid-button relative px-8 py-4 flex items-center justify-center gap-3 group bg-transparent border border-primary/20 hover:border-primary transition-all duration-500 rounded-lg overflow-hidden"
+                >
+                  {/* Magical Liquid Waves */}
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+
+                  <span className="relative z-10 text-sm font-semibold terminal:text-xs terminal:font-black terminal:tracking-[0.3em] terminal:uppercase text-primary group-hover:text-primary-foreground transition-colors duration-500">
+                    <ByStyle clean="Download CV" terminal="Download_CV" />
+                  </span>
+                  <div className="relative z-10 w-8 h-px bg-primary/30 group-hover:bg-primary-foreground/30 group-hover:w-12 transition-all duration-500" />
+                  <Download className="relative z-10 w-5 h-5 text-primary group-hover:text-primary-foreground transition-all duration-500 group-hover:animate-bounce" />
+                </a>
+              </div>
+            )}
           </div>
 
-          <div className="socialLinks bg-transparent mt-2 md:mt-4">
-            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-              {(global?.socials || GLOBAL_CONTENT_DEFAULTS.socials).map((link) => {
-                const IconComponent = (
-                  <SocialIcon
-                    name={link.icon}
-                    icons={icons}
-                    className="w-5 h-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary"
-                  />
-                );
+          {showSocials && (
+            <div className="socialLinks bg-transparent mt-2 md:mt-4">
+              <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                {(global?.socials || GLOBAL_CONTENT_DEFAULTS.socials).map((link) => {
+                  const IconComponent = (
+                    <SocialIcon
+                      name={link.icon}
+                      icons={icons}
+                      className="w-5 h-5 text-muted-foreground transition-colors duration-300 group-hover:text-primary"
+                    />
+                  );
 
-                return (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={link.label}
-                    className="group relative flex items-center gap-2 px-3 py-2 rounded-lg border border-border/20 bg-card/20
+                  return (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={link.label}
+                      className="group relative flex items-center gap-2 px-3 py-2 rounded-lg border border-border/20 bg-card/20
                                overflow-hidden transition-all duration-500 ease-out
-                               hover:w-auto hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_25px_rgba(16,185,129,0.2)]"
-                  >
-                    <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                      {IconComponent}
-                    </div>
+                               hover:w-auto hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_25px_color-mix(in_srgb,var(--primary)_20%,transparent)]"
+                    >
+                      <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                        {IconComponent}
+                      </div>
 
-                    <div className="flex items-center max-w-0 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:max-w-[200px] group-hover:ml-1">
-                      <span className="text-sm font-medium text-foreground whitespace-nowrap opacity-0 transition-opacity duration-300 delay-75 group-hover:opacity-100 group-hover:text-primary font-bold terminal:font-mono">
-                        {link.label}
-                      </span>
-                    </div>
+                      <div className="flex items-center max-w-0 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:max-w-[200px] group-hover:ml-1">
+                        <span className="text-sm font-medium text-foreground whitespace-nowrap opacity-0 transition-opacity duration-300 delay-75 group-hover:opacity-100 group-hover:text-primary font-bold terminal:font-mono">
+                          {link.label}
+                        </span>
+                      </div>
 
-                    <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/0 transition-all duration-300 group-hover:border-primary/50" />
-                    <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary/0 transition-all duration-300 group-hover:border-primary/50" />
-                  </a>
-                );
-              })}
+                      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/0 transition-all duration-300 group-hover:border-primary/50" />
+                      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary/0 transition-all duration-300 group-hover:border-primary/50" />
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Full Size Image Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-scrim/95 p-4 animate-in fade-in duration-200"
           onClick={() => setIsModalOpen(false)}
         >
           <button
-            className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-white/10 hover:bg-primary/40 rounded-full text-white transition-colors border border-white/20 z-[110]"
+            className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-on-scrim/10 hover:bg-primary/40 rounded-full text-on-scrim transition-colors border border-on-scrim/20 z-[110]"
             onClick={(e) => {
               e.stopPropagation();
               setIsModalOpen(false);
@@ -241,7 +261,7 @@ export default function Hero({ content, global, icons, uiStyle = 'clean' }: Hero
             className="relative w-full h-[60vh] sm:h-[75vh] md:h-[90vh] max-w-6xl overflow-hidden animate-in fade-in zoom-in-95 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
+            <SafeAvatar
               src={avatarUrl}
               alt={`${fullName} Full Size`}
               className="object-contain"

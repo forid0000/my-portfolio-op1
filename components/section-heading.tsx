@@ -55,7 +55,7 @@ export default function SectionHeading({
       >
         <span className="text-primary">{prefix}</span>
         <span className="text-muted-foreground">:</span>
-        <span className="text-blue-500">~/{path}</span>
+        <span className="text-info">~/{path}</span>
         <span className="text-muted-foreground">$</span>
       </div>
     </div>

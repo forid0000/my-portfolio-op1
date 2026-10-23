@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import { getClientDeviceInfo } from '@/lib/device-info';
 import { getVisitInfo } from '@/lib/visit-tracker';
 import { CONTACT_DEFAULTS } from '@/lib/content-defaults';
+import { ByStyle } from '@/components/by-style';
+import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 
 // Plain validation (no form/schema library: this form ships to every visitor, so
 // the page stays light). The server re-validates everything in /api/contact.
@@ -48,7 +50,7 @@ function validate(v: FormValues): FormErrors {
   if (!/^\+?[0-9\s\-()]{7,20}$/.test(v.phone.trim()))
     errors.phone = 'Please enter a valid phone number.';
   if (!v.purpose) errors.purpose = 'Please select a purpose.';
-  if (v.message.trim().length < 15) errors.message = 'Payload must be at least 15 characters long.';
+  if (v.message.trim().length < 15) errors.message = 'Please write at least 15 characters.';
   return errors;
 }
 
@@ -96,6 +98,7 @@ export default function ContactForm({ content }: ContactFormProps) {
     toast.success(`${type} copied to clipboard!`);
   };
 
+  const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
@@ -116,7 +119,16 @@ export default function ContactForm({ content }: ContactFormProps) {
     setSubmitted(true);
     const found = validate(values);
     setErrors(found);
-    if (Object.keys(found).length === 0) void onSubmit(values);
+    if (Object.keys(found).length === 0) {
+      void onSubmit(values);
+      return;
+    }
+    // Outline the fields at fault and scroll to the first one (the messages are already shown).
+    const issues: FieldIssue[] = (Object.keys(found) as (keyof FormValues)[]).map((key) => ({
+      path: [key],
+      message: found[key] ?? '',
+    }));
+    reportFieldIssues(issues, values, formRef.current ?? document);
   };
 
   const onSubmit = async (data: FormValues) => {
@@ -185,7 +197,7 @@ export default function ContactForm({ content }: ContactFormProps) {
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
                 {contactData.heading}
                 <br />
-                <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-blue-500">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-info">
                   {contactData.highlight}
                 </span>
               </h2>
@@ -198,7 +210,7 @@ export default function ContactForm({ content }: ContactFormProps) {
             <div className="grid sm:grid-cols-2 gap-4 pt-6 border-t border-border/30">
               <div
                 onClick={() => handleCopy(contactData.email, 'Email')}
-                className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-white/5 transition-colors"
+                className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-foreground/5 transition-colors"
                 role="button"
                 tabIndex={0}
               >
@@ -219,18 +231,18 @@ export default function ContactForm({ content }: ContactFormProps) {
                   onClick={() =>
                     handleCopy(contactData.phone || contactData.whatsappLink, 'Phone Number')
                   }
-                  className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-white/5 transition-colors"
+                  className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-foreground/5 transition-colors"
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3">
-                    <Phone className="w-5 h-5 text-blue-500" />
+                  <div className="w-10 h-10 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center mb-3">
+                    <Phone className="w-5 h-5 text-info" />
                   </div>
                   <h4 className="font-semibold text-foreground flex items-center justify-between">
                     {contactData.phoneLabel}
                     <Copy className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </h4>
-                  <p className="text-sm text-muted-foreground terminal:font-mono group-hover:text-blue-500 transition-colors">
+                  <p className="text-sm text-muted-foreground terminal:font-mono group-hover:text-info transition-colors">
                     {contactData.whatsappLink || contactData.phone}
                   </p>
                 </div>
@@ -251,15 +263,19 @@ export default function ContactForm({ content }: ContactFormProps) {
                     <CheckCircle className="w-10 h-10 text-primary" />
                   </div>
                   <h3 className="text-3xl font-bold tracking-tight text-foreground mb-4">
-                    Transmission Sent
+                    <ByStyle clean="Message sent" terminal="Transmission Sent" />
                   </h3>
                   <p className="text-muted-foreground text-lg max-w-md">
-                    Your payload has been securely routed. I'll analyze the data and get back to you
-                    within 24 hours.
+                    <ByStyle
+                      clean="Thank you for getting in touch. I will read your message and reply within 24 hours."
+                      terminal="Your payload has been securely routed. I'll analyze the data and get back to you within 24 hours."
+                    />
                   </p>
                 </div>
               ) : (
                 <form
+                  ref={formRef}
+                  noValidate
                   onSubmit={handleSubmit}
                   className="space-y-5 relative z-10 animate-fade-in-up"
                 >
@@ -276,15 +292,14 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="text"
                         id="fullName"
+                        data-field="fullName"
+                        aria-invalid={errors.fullName ? true : undefined}
                         value={values.fullName}
                         onChange={(e) => setField('fullName')(e.target.value)}
                         placeholder="Jane Doe"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
-                      {errors.fullName && (
-                        <p className="text-red-400 text-xs mt-1">{errors.fullName}</p>
-                      )}
                     </div>
 
                     {/* Email */}
@@ -299,13 +314,14 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="email"
                         id="email"
+                        data-field="email"
+                        aria-invalid={errors.email ? true : undefined}
                         value={values.email}
                         onChange={(e) => setField('email')(e.target.value)}
                         placeholder="jane.doe@example.com"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
-                      {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
                     </div>
 
                     {/* Phone */}
@@ -320,13 +336,14 @@ export default function ContactForm({ content }: ContactFormProps) {
                       <input
                         type="tel"
                         id="phone"
+                        data-field="phone"
+                        aria-invalid={errors.phone ? true : undefined}
                         value={values.phone}
                         onChange={(e) => setField('phone')(e.target.value)}
                         placeholder="+1 555 010 0100"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
-                      {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
                     </div>
 
                     {/* Location */}
@@ -344,7 +361,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                         value={values.location}
                         onChange={(e) => setField('location')(e.target.value)}
                         placeholder="City, Country"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
                         disabled={status === 'SENDING'}
                       />
                     </div>
@@ -357,37 +374,31 @@ export default function ContactForm({ content }: ContactFormProps) {
                       Purpose of Contact *
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        'Project Inquiry',
-                        'Job Opportunity',
-                        'Architecture Consultation',
-                        'General Chat',
-                      ].map((option) => (
-                        <label
-                          key={option}
-                          className={`cursor-pointer flex items-center justify-center text-center px-4 py-3 rounded-xl border text-sm transition-all duration-300 select-none
+                      {['Project Inquiry', 'Job Opportunity', 'Consultation', 'General Chat'].map(
+                        (option) => (
+                          <label
+                            key={option}
+                            className={`cursor-pointer flex items-center justify-center text-center px-4 py-3 rounded-xl border text-sm transition-all duration-300 select-none
                               ${
                                 selectedPurpose === option
-                                  ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                                  : 'bg-black/40 border-white/10 text-foreground/70 hover:bg-white/10 hover:text-foreground'
+                                  ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_30%,transparent)]'
+                                  : 'bg-scrim/40 border-foreground/10 text-foreground/70 hover:bg-foreground/10 hover:text-foreground'
                               }
                             `}
-                        >
-                          <input
-                            type="radio"
-                            value={option}
-                            className="sr-only"
-                            checked={values.purpose === option}
-                            onChange={() => setField('purpose')(option)}
-                            disabled={status === 'SENDING'}
-                          />
-                          {option}
-                        </label>
-                      ))}
+                          >
+                            <input
+                              type="radio"
+                              value={option}
+                              className="sr-only"
+                              checked={values.purpose === option}
+                              onChange={() => setField('purpose')(option)}
+                              disabled={status === 'SENDING'}
+                            />
+                            {option}
+                          </label>
+                        )
+                      )}
                     </div>
-                    {errors.purpose && (
-                      <p className="text-red-400 text-xs mt-1">{errors.purpose}</p>
-                    )}
                   </div>
 
                   {/* Message Payload */}
@@ -398,7 +409,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                     >
                       <span className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4 text-primary" />
-                        Message Payload *
+                        <ByStyle clean="Message *" terminal="Message Payload *" />
                       </span>
                       <span className="text-xs text-muted-foreground terminal:font-mono">
                         Min 15 chars
@@ -406,23 +417,28 @@ export default function ContactForm({ content }: ContactFormProps) {
                     </label>
                     <textarea
                       id="message"
+                      data-field="message"
+                      aria-invalid={errors.message ? true : undefined}
                       value={values.message}
                       onChange={(e) => setField('message')(e.target.value)}
                       rows={5}
-                      placeholder="Describe your requirements, tech stack preferences, and expected timeline..."
-                      className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30 resize-y min-h-[140px]"
+                      placeholder="Tell me a little about what you need and when you need it..."
+                      className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-4 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30 resize-y min-h-[140px]"
                       disabled={status === 'SENDING'}
                     />
-                    {errors.message && (
-                      <p className="text-red-400 text-xs mt-1">{errors.message}</p>
-                    )}
                   </div>
 
                   {status === 'ERROR' && (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-fade-in-up">
-                      <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                      <div className="text-sm text-red-400">
-                        <strong>Connection Error:</strong> {errorMessage}
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-start gap-3 animate-fade-in-up">
+                      <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                      <div className="text-sm text-destructive">
+                        <strong>
+                          <ByStyle
+                            clean="Could not send your message:"
+                            terminal="Connection Error:"
+                          />
+                        </strong>{' '}
+                        {errorMessage}
                       </div>
                     </div>
                   )}
@@ -431,19 +447,23 @@ export default function ContactForm({ content }: ContactFormProps) {
                     <button
                       type="submit"
                       disabled={status === 'SENDING'}
-                      className="relative group px-8 py-4 bg-foreground text-background hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden w-full sm:w-auto"
+                      className="relative group px-8 py-4 bg-foreground text-background hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_30px_color-mix(in_srgb,var(--primary)_30%,transparent)] font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden w-full sm:w-auto"
                     >
-                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                      <div className="absolute inset-0 bg-background/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
                       <div className="flex items-center justify-center gap-2 relative z-10">
                         {status === 'SENDING' ? (
                           <>
                             <div className="w-5 h-5 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                            <span>Routing Payload...</span>
+                            <span>
+                              <ByStyle clean="Sending..." terminal="Routing Payload..." />
+                            </span>
                           </>
                         ) : (
                           <>
                             <Send className="w-5 h-5" />
-                            <span className="tracking-wide">Launch Transmission</span>
+                            <span className="tracking-wide">
+                              <ByStyle clean="Send message" terminal="Launch Transmission" />
+                            </span>
                           </>
                         )}
                       </div>

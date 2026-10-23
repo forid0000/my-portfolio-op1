@@ -21,11 +21,7 @@ export default function TestimonialsCMS() {
       itemNoun="Testimonial"
       emptyItem={() => ({ name: '', title: '', company: '', quote: '' })}
       getItemLabel={(item) => item.name}
-      validateItem={(item) =>
-        !item.name?.trim() || !item.quote?.trim()
-          ? 'Name and Quote are required for every testimonial.'
-          : null
-      }
+      requiredFields={['name', 'quote']}
       renderFields={(item, onChange) => (
         <div className="space-y-4">
           <SectionImageUploader

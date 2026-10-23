@@ -101,14 +101,14 @@ function markdownToHtml(md: string): string {
 }
 
 const TAG_PALETTE = [
-  'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-  'text-sky-500 bg-sky-500/10 border-sky-500/20',
-  'text-violet-500 bg-violet-500/10 border-violet-500/20',
-  'text-amber-500 bg-amber-500/10 border-amber-500/20',
-  'text-rose-500 bg-rose-500/10 border-rose-500/20',
-  'text-teal-500 bg-teal-500/10 border-teal-500/20',
-  'text-pink-500 bg-pink-500/10 border-pink-500/20',
-  'text-orange-500 bg-orange-500/10 border-orange-500/20',
+  'text-chart-1 bg-chart-1/10 border-chart-1/20',
+  'text-chart-2 bg-chart-2/10 border-chart-2/20',
+  'text-chart-3 bg-chart-3/10 border-chart-3/20',
+  'text-chart-4 bg-chart-4/10 border-chart-4/20',
+  'text-chart-5 bg-chart-5/10 border-chart-5/20',
+  'text-chart-6 bg-chart-6/10 border-chart-6/20',
+  'text-chart-7 bg-chart-7/10 border-chart-7/20',
+  'text-chart-8 bg-chart-8/10 border-chart-8/20',
 ];
 
 function tagStyle(tag: string): string {
@@ -1671,13 +1671,13 @@ ${meta ? `<div class="meta">${meta}</div>` : ''}
                           <span className="text-primary/35">### </span>Heading 3
                         </div>
                         <div className="text-muted-foreground/20">
-                          <span className="text-emerald-500/30">**bold**</span>
+                          <span className="text-primary/30">**bold**</span>
                           <span className="mx-2 text-border/40">·</span>
-                          <span className="text-sky-500/30">_italic_</span>
+                          <span className="text-info/30">_italic_</span>
                           <span className="mx-2 text-border/40">·</span>
                           <span className="text-muted-foreground/20">~~strike~~</span>
                           <span className="mx-2 text-border/40">·</span>
-                          <span className="text-amber-500/30">`code`</span>
+                          <span className="text-warning/30">`code`</span>
                         </div>
                         <div className="text-muted-foreground/20">
                           <span className="text-primary/30">- item</span>
@@ -1686,12 +1686,12 @@ ${meta ? `<div class="meta">${meta}</div>` : ''}
                           <span className="mx-2 text-border/40">·</span>
                           <span className="text-primary/30">- [ ] task</span>
                           <span className="mx-2 text-border/40">·</span>
-                          <span className="text-violet-500/30">&gt; blockquote</span>
+                          <span className="text-secondary/30">&gt; blockquote</span>
                         </div>
                         <div className="text-muted-foreground/20">
-                          <span className="text-sky-500/30">[text](url)</span>
+                          <span className="text-info/30">[text](url)</span>
                           <span className="mx-2 text-border/40">·</span>
-                          <span className="text-rose-500/30">![alt](img-url)</span>
+                          <span className="text-chart-8/30">![alt](img-url)</span>
                           <span className="mx-2 text-border/40">·</span>
                           <span className="text-muted-foreground/18">--- (divider)</span>
                         </div>

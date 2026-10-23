@@ -33,11 +33,7 @@ export default function EducationCMS() {
         achievements: [],
       })}
       getItemLabel={(item) => [item.degree, item.institution].filter(Boolean).join(' - ')}
-      validateItem={(item) =>
-        !item.institution?.trim() || !item.degree?.trim()
-          ? 'Institution and Degree are required for every entry.'
-          : null
-      }
+      requiredFields={['institution', 'degree']}
       renderFields={(item, onChange) => (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

@@ -51,7 +51,7 @@ export function SortableItem({ id, children, className, dragHandleClassName }: S
         type="button"
         data-dnd-handle="true"
         aria-label="Drag to reorder"
-        className={`absolute text-gray-500 hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing ${dragHandleClassName} ${dragHandleClassName.includes('absolute') ? '' : 'absolute'}`}
+        className={`absolute text-muted-foreground hover:text-foreground/80 transition-colors cursor-grab active:cursor-grabbing ${dragHandleClassName} ${dragHandleClassName.includes('absolute') ? '' : 'absolute'}`}
         {...attributes}
         {...listeners}
       >

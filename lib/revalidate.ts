@@ -48,3 +48,16 @@ export function revalidateSiteChrome() {
   revalidatePath('/kits', 'layout');
   revalidatePath('/articles', 'layout');
 }
+
+/**
+ * Refresh the article index and one article page after a write. `slug` is the article's current
+ * address; pass the previous one too when it changed so the old page stops being served.
+ */
+export function revalidateArticleIndex(...slugs: (string | null | undefined)[]) {
+  revalidatePath('/articles');
+  revalidatePath('/articles/rss.xml');
+  revalidatePath('/sitemap.xml');
+  for (const slug of new Set(slugs)) {
+    if (slug) revalidatePath(`/articles/${slug}`);
+  }
+}

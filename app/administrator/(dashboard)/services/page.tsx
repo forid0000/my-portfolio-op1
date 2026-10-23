@@ -36,7 +36,7 @@ export default function ServicesCMS() {
         ctaLink: '',
       })}
       getItemLabel={(item) => item.title}
-      validateItem={(item) => (!item.title?.trim() ? 'Title is required for every service.' : null)}
+      requiredFields={['title']}
       renderFields={(item, onChange) => (
         <div className="space-y-4">
           <SectionImageUploader

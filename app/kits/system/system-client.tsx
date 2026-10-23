@@ -180,7 +180,7 @@ export default function SystemClient() {
         {/* 1. Network Identity */}
         <div className="info-card col-span-1 md:col-span-8">
           <div className="flex items-center gap-3 mb-6 border-b border-border/20 pb-4">
-            <Globe className="w-5 h-5 text-blue-400" />
+            <Globe className="w-5 h-5 text-info" />
             <h2 className="text-lg font-bold">Network & Latency</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -189,7 +189,7 @@ export default function SystemClient() {
             <InfoItem
               label="Ping"
               value={ping ? `${ping} ms` : '...'}
-              className={ping && ping < 100 ? 'text-green-500' : 'text-yellow-500'}
+              className={ping && ping < 100 ? 'text-success' : 'text-warning'}
             />
             <InfoItem label="Type" value={sysData?.netAPI?.type} loading={loading} />
             <InfoItem label="Speed (Est.)" value={sysData?.netAPI?.downlink} loading={loading} />
@@ -211,7 +211,7 @@ export default function SystemClient() {
         {/* 2. Security Analysis */}
         <div className="info-card col-span-1 md:col-span-4 border-l-4 border-l-primary/50">
           <div className="flex items-center gap-3 mb-6 border-b border-border/20 pb-4">
-            <Shield className="w-5 h-5 text-red-400" />
+            <Shield className="w-5 h-5 text-destructive" />
             <h2 className="text-lg font-bold">Security Analysis</h2>
           </div>
           <div className="space-y-4">
@@ -243,15 +243,15 @@ export default function SystemClient() {
               {loading ? (
                 <span className="text-xs text-muted-foreground">Checking...</span>
               ) : netData?.failed || tzMatch === null ? (
-                <div className="flex items-center gap-2 text-gray-500 text-xs font-bold">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs font-bold">
                   UNKNOWN
                 </div>
               ) : tzMatch === false ? (
-                <div className="flex items-center gap-2 text-yellow-500 text-xs font-bold">
+                <div className="flex items-center gap-2 text-warning text-xs font-bold">
                   <AlertTriangle className="w-3 h-3" /> MISMATCH
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-green-500 text-xs font-bold">
+                <div className="flex items-center gap-2 text-success text-xs font-bold">
                   <CheckCircle className="w-3 h-3" /> VERIFIED
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function SystemClient() {
         {/* 4. Power & Display */}
         <div className="info-card col-span-1 md:col-span-6">
           <div className="flex items-center gap-3 mb-6 border-b border-border/20 pb-4">
-            <Monitor className="w-5 h-5 text-purple-400" />
+            <Monitor className="w-5 h-5 text-secondary" />
             <h2 className="text-lg font-bold">Display & Power</h2>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -312,7 +312,7 @@ export default function SystemClient() {
         {/* 5. Browser Environment */}
         <div className="info-card col-span-1 md:col-span-6">
           <div className="flex items-center gap-3 mb-6 border-b border-border/20 pb-4">
-            <Fingerprint className="w-5 h-5 text-amber-400" />
+            <Fingerprint className="w-5 h-5 text-warning" />
             <h2 className="text-lg font-bold">Browser Environment</h2>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -336,7 +336,7 @@ export default function SystemClient() {
         {/* 6. Visit History */}
         <div className="info-card col-span-1 md:col-span-6">
           <div className="flex items-center gap-3 mb-6 border-b border-border/20 pb-4">
-            <History className="w-5 h-5 text-emerald-400" />
+            <History className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold">Visit History</h2>
           </div>
           <div className="grid grid-cols-2 gap-6">
@@ -368,7 +368,7 @@ const InfoItem = ({ label, value, loading, highlight, className }: any) => (
   <div className="flex flex-col">
     <span className="data-label">{label}</span>
     {loading ? (
-      <div className="h-5 w-16 bg-white/5 rounded animate-pulse mt-1" />
+      <div className="h-5 w-16 bg-foreground/5 rounded animate-pulse mt-1" />
     ) : (
       <span className={`data-value ${highlight ? 'text-primary' : ''} ${className}`}>
         {value || 'Unknown'}
@@ -383,13 +383,16 @@ const SecurityRow = ({ label, isDetected, loading, failed }: any) => (
     {loading ? (
       <span className="text-xs text-muted-foreground animate-pulse">Scanning...</span>
     ) : failed ? (
-      <span className="text-gray-500 text-xs font-bold opacity-70" title="API blocked or failed">
+      <span
+        className="text-muted-foreground text-xs font-bold opacity-70"
+        title="API blocked or failed"
+      >
         UNKNOWN
       </span>
     ) : isDetected ? (
-      <span className="text-red-500 text-xs font-bold">DETECTED</span>
+      <span className="text-destructive text-xs font-bold">DETECTED</span>
     ) : (
-      <span className="text-green-500/70 text-xs font-bold">SAFE</span>
+      <span className="text-success/70 text-xs font-bold">SAFE</span>
     )}
   </div>
 );

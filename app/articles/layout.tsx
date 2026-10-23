@@ -1,27 +1,28 @@
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { getGlobalContent, toHeaderBrand, toNavToggles } from '@/lib/site';
-import { getLayoutSections } from '@/lib/sections-registry';
+import { getGlobalContent, toHeaderBrand } from '@/lib/site';
+import { getChrome, navFor } from '@/lib/chrome';
+import { notFound } from 'next/navigation';
+import { getLayoutSections, isSectionEnabled } from '@/lib/sections-registry';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 import { getTheme } from '@/lib/theme';
 import { resolveIconMap } from '@/lib/icons/resolve';
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
-  const [global, sections, avatarUrl, theme] = await Promise.all([
+  const [global, sections, avatarUrl, theme, chrome] = await Promise.all([
     getGlobalContent(),
     getLayoutSections(),
     getActiveAvatarUrl(),
     getTheme(),
+    getChrome(),
   ]);
+  if (!isSectionEnabled(sections, 'articles')) notFound();
+  const nav = navFor(chrome, sections);
   const icons = await resolveIconMap(global.footerSocials.map((s) => s.icon));
   return (
     // bg-background commented out to remove solid background color
     <div className="min-h-screen  flex flex-col font-sans selection:bg-primary/20">
-      <Header
-        brand={toHeaderBrand(global, avatarUrl)}
-        toggles={toNavToggles(sections)}
-        uiStyle={theme.uiStyle}
-      />
+      <Header brand={toHeaderBrand(global, avatarUrl)} nav={nav} uiStyle={theme.uiStyle} />
       <main className="flex-1 pt-20 pb-16 relative">
         {/* Cyber Grid Background for the Blog Section */}
         <div
@@ -34,7 +35,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         />
         {children}
       </main>
-      <Footer content={global} icons={icons} />
+      <Footer content={global} icons={icons} nav={nav} show={chrome.footer} />
     </div>
   );
 }

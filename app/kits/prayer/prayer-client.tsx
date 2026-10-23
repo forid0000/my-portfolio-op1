@@ -478,9 +478,9 @@ export default function PrayerClient() {
           </div>
           <div className="flex items-center gap-1.5 bg-secondary/20 px-2 py-1 rounded text-[10px] md:text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {isSynced ? (
-              <Wifi className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" />
+              <Wifi className="w-3 h-3 md:w-4 md:h-4 text-primary" />
             ) : (
-              <WifiOff className="w-3 h-3 md:w-4 md:h-4 text-red-500" />
+              <WifiOff className="w-3 h-3 md:w-4 md:h-4 text-destructive" />
             )}
             {isSynced ? 'LIVE' : 'SYS'}
           </div>
@@ -492,14 +492,14 @@ export default function PrayerClient() {
           <div
             className="absolute inset-0 rounded-full transition-all duration-1000 ease-linear"
             style={{
-              background: `conic-gradient(${status?.isForbidden ? '#ef4444' : '#10b981'} ${status?.progress || 0}%, transparent 0)`,
+              background: `conic-gradient(${status?.isForbidden ? 'var(--destructive)' : 'var(--success)'} ${status?.progress || 0}%, transparent 0)`,
               maskImage: 'radial-gradient(transparent 68%, black 69%)',
               WebkitMaskImage: 'radial-gradient(transparent 68%, black 69%)',
             }}
           />
           <div className="flex flex-col items-center z-10 text-center">
             <span
-              className={`text-[9px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-3 ${status?.isForbidden ? 'text-red-500' : 'text-emerald-500'}`}
+              className={`text-[9px] md:text-xs font-bold uppercase tracking-widest mb-1 md:mb-3 ${status?.isForbidden ? 'text-destructive' : 'text-primary'}`}
             >
               {status?.isForbidden ? 'FORBIDDEN' : 'REMAINING'}
             </span>
@@ -547,30 +547,30 @@ export default function PrayerClient() {
                 ))}
               </optgroup>
             </select>
-            <MapPin className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 mr-2" />
+            <MapPin className="w-3 h-3 md:w-4 md:h-4 text-primary mr-2" />
           </div>
-          {geoError && <p className="text-[10px] md:text-xs text-red-400">{geoError}</p>}
+          {geoError && <p className="text-[10px] md:text-xs text-destructive">{geoError}</p>}
 
           {/* Detailed Weather Stats */}
           {weather && (
             <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs font-bold text-muted-foreground bg-secondary/5 px-4 py-2 rounded-xl border border-border/5">
               <div className="flex items-center gap-1.5">
-                <CloudSun className="w-3 h-3 md:w-4 md:h-4 text-yellow-500" />
+                <CloudSun className="w-3 h-3 md:w-4 md:h-4 text-warning" />
                 <span className="text-foreground">{weather.temp}°</span>
                 <span className="font-normal opacity-70">({weather.desc})</span>
               </div>
               <div className="w-px h-3 bg-border/20" />
               <div className="flex items-center gap-1.5">
-                <Thermometer className="w-3 h-3 md:w-4 md:h-4 text-orange-400" />
+                <Thermometer className="w-3 h-3 md:w-4 md:h-4 text-warning" />
                 <span>Feel {weather.feelsLike}°</span>
               </div>
               <div className="w-px h-3 bg-border/20 hidden md:block" />
               <div className="hidden md:flex items-center gap-1.5">
-                <Droplets className="w-3 h-3 md:w-4 md:h-4 text-blue-400" />
+                <Droplets className="w-3 h-3 md:w-4 md:h-4 text-info" />
                 <span>{weather.humidity}%</span>
               </div>
               <div className="hidden md:flex items-center gap-1.5">
-                <Wind className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                <Wind className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground" />
                 <span>{weather.windSpeed}km</span>
               </div>
             </div>
@@ -586,11 +586,11 @@ export default function PrayerClient() {
             return (
               <div
                 key={`${event.id}-${i}`}
-                className={`flex items-center justify-between px-4 md:px-6 rounded-xl border border-transparent transition-all duration-500 ${isCenter ? 'bg-emerald-500/10 border-emerald-500/20 py-3 md:py-5 scale-100 opacity-100 shadow-md' : 'py-1.5 md:py-3 scale-95 opacity-50 grayscale'} ${event.type === 'forbidden' && isCenter ? 'bg-red-500/10 border-red-500/20' : ''}`}
+                className={`flex items-center justify-between px-4 md:px-6 rounded-xl border border-transparent transition-all duration-500 ${isCenter ? 'bg-primary/10 border-primary/20 py-3 md:py-5 scale-100 opacity-100 shadow-md' : 'py-1.5 md:py-3 scale-95 opacity-50 grayscale'} ${event.type === 'forbidden' && isCenter ? 'bg-destructive/10 border-destructive/20' : ''}`}
               >
                 <div className="flex items-center gap-3 md:gap-5">
                   <div
-                    className={`p-1.5 md:p-3 rounded-lg ${isCenter ? (event.type === 'forbidden' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white') : 'bg-secondary/20'}`}
+                    className={`p-1.5 md:p-3 rounded-lg ${isCenter ? (event.type === 'forbidden' ? 'bg-destructive text-primary-foreground' : 'bg-primary text-primary-foreground') : 'bg-secondary/20'}`}
                   >
                     <event.icon className="w-3.5 h-3.5 md:w-6 md:h-6" />
                   </div>

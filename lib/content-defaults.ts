@@ -217,6 +217,22 @@ export const SECTION_TEXT_DEFAULTS = {
   terminalPrefix: DEFAULT_TERMINAL_PREFIX,
 };
 
+/** Wording of the /articles pages. Editable in Admin -> Section Texts. */
+export const ARTICLE_TEXT_DEFAULTS = {
+  articlesBadge: 'Latest writing',
+  articlesHeading: 'Articles',
+  articlesSubtext: 'Thoughts, stories and things I have learned along the way.',
+  articlesRecentUploads: 'All articles',
+  articlesEmptyAPI: 'No articles yet. Check back soon.',
+  articlesGoBack: 'All articles',
+  articlesAuthor: 'Written by',
+  articlesReadTime: 'min read',
+  articlesEnjoyed: 'Enjoyed this article?',
+  articlesDiscuss: 'Share it with someone who might like it.',
+  articlesDiscussBtn: 'Share',
+  articlesEndOfFile: '',
+};
+
 export const SYSTEM_DEFAULTS = {
   seoTitle: 'Your Name - Your Profession',
   seoDescription:

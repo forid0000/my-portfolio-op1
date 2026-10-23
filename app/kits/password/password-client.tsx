@@ -270,13 +270,13 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
   if (!mounted) return null;
 
   const strengthColor = [
-    'bg-white/5',
-    'bg-red-500',
-    'bg-orange-500',
-    'bg-yellow-500',
-    'bg-lime-500',
-    'bg-green-500',
-    'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]',
+    'bg-foreground/5',
+    'bg-destructive',
+    'bg-warning',
+    'bg-warning',
+    'bg-success',
+    'bg-success',
+    'bg-primary shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_50%,transparent)]',
   ];
   const strengthText = ['Empty', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong', 'Unbreakable'];
 
@@ -291,7 +291,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
         </h2>
 
         {/* Mode Switcher */}
-        <div className="flex bg-black/40 p-1 rounded-lg border border-white/10 w-full lg:w-auto overflow-x-auto">
+        <div className="flex bg-scrim/40 p-1 rounded-lg border border-foreground/10 w-full lg:w-auto overflow-x-auto">
           <Tab
             active={mode === 'random'}
             onClick={() => setMode('random')}
@@ -326,11 +326,11 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
               value={output}
               onChange={handleManualInput}
               placeholder="Type to analyze..."
-              className="w-full bg-black/40 border border-white/10 rounded-xl p-6 text-center font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none placeholder:text-white/10"
+              className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-6 text-center font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none placeholder:text-foreground/10"
               autoFocus
             />
           ) : (
-            <div className="bg-black/40 border border-white/10 rounded-xl p-6 text-center break-all font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] flex items-center justify-center">
+            <div className="bg-scrim/40 border border-foreground/10 rounded-xl p-6 text-center break-all font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] flex items-center justify-center">
               {output}
             </div>
           )}
@@ -339,7 +339,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
             {mode !== 'analyze' && (
               <button
                 onClick={generate}
-                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors opacity-0 group-hover:opacity-100"
+                className="p-2 bg-foreground/10 hover:bg-foreground/20 rounded-lg text-foreground transition-colors opacity-0 group-hover:opacity-100"
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
@@ -347,7 +347,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
             {output && (
               <button
                 onClick={copyToClipboard}
-                className={`p-2 rounded-lg text-white transition-all duration-300 ${copied ? 'bg-green-500' : 'bg-primary hover:bg-primary/80 opacity-0 group-hover:opacity-100'}`}
+                className={`p-2 rounded-lg text-primary-foreground transition-all duration-300 ${copied ? 'bg-success' : 'bg-primary hover:bg-primary/80 opacity-0 group-hover:opacity-100'}`}
               >
                 {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               </button>
@@ -359,13 +359,11 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
         <div className="space-y-2">
           <div className="flex justify-between text-xs uppercase font-bold text-muted-foreground">
             <span>Security Level</span>
-            <span
-              className={strength >= 5 ? 'text-emerald-400' : strength >= 3 ? 'text-primary' : ''}
-            >
+            <span className={strength >= 5 ? 'text-primary' : strength >= 3 ? 'text-primary' : ''}>
               {strengthText[strength]}
             </span>
           </div>
-          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-foreground/5 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-500 ease-out ${strengthColor[strength]}`}
               style={{ width: `${(Math.max(strength, 0) / 6) * 100}%` }}
@@ -374,7 +372,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
         </div>
 
         {/* CONTROLS */}
-        <div className="pt-6 border-t border-white/5 animate-in fade-in slide-in-from-bottom-2">
+        <div className="pt-6 border-t border-foreground/5 animate-in fade-in slide-in-from-bottom-2">
           {/* 1. RANDOM MODE CONTROLS */}
           {mode === 'random' && (
             <div className="grid md:grid-cols-2 gap-8">
@@ -391,7 +389,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                     onChange={(e) =>
                       setLength(Math.min(128, Math.max(4, parseInt(e.target.value) || 0)))
                     }
-                    className="w-16 bg-black/20 border border-white/10 rounded px-2 py-1 text-right font-mono text-primary focus:border-primary outline-none"
+                    className="w-16 bg-scrim/20 border border-foreground/10 rounded px-2 py-1 text-right font-mono text-primary focus:border-primary outline-none"
                   />
                 </div>
                 <input
@@ -400,7 +398,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                   max="64"
                   value={length}
                   onChange={(e) => setLength(parseInt(e.target.value))}
-                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-2 bg-foreground/10 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -444,7 +442,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                   max="10"
                   value={wordCount}
                   onChange={(e) => setWordCount(parseInt(e.target.value))}
-                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-2 bg-foreground/10 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -457,12 +455,12 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">
                     Separator
                   </label>
-                  <div className="flex bg-black/20 rounded-lg p-1 border border-white/5">
+                  <div className="flex bg-scrim/20 rounded-lg p-1 border border-foreground/5">
                     {['-', '_', '.', ' '].map((sep) => (
                       <button
                         key={sep === ' ' ? 'space' : sep}
                         onClick={() => setSeparator(sep)}
-                        className={`flex-1 py-1 rounded text-sm font-mono font-bold transition-all ${separator === sep ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-white/5'}`}
+                        className={`flex-1 py-1 rounded text-sm font-mono font-bold transition-all ${separator === sep ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-foreground/5'}`}
                       >
                         {sep === ' ' ? 'SPC' : sep}
                       </button>
@@ -488,7 +486,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
 const Tab = ({ active, onClick, icon, label }: any) => (
   <button
     onClick={onClick}
-    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${active ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-white'}`}
+    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${active ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
   >
     {icon} {label}
   </button>
@@ -497,11 +495,11 @@ const Tab = ({ active, onClick, icon, label }: any) => (
 const Toggle = ({ label, checked, onChange }: any) => (
   <button
     onClick={onChange}
-    className={`flex items-center justify-between p-3 rounded-lg border text-xs font-bold uppercase transition-all ${checked ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-white/5 border-white/5 text-muted-foreground hover:bg-white/10'}`}
+    className={`flex items-center justify-between p-3 rounded-lg border text-xs font-bold uppercase transition-all ${checked ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-foreground/5 border-foreground/5 text-muted-foreground hover:bg-foreground/10'}`}
   >
     {label}
     <div
-      className={`w-3 h-3 rounded-full border ${checked ? 'bg-primary border-primary' : 'border-white/30'}`}
+      className={`w-3 h-3 rounded-full border ${checked ? 'bg-primary border-primary' : 'border-foreground/30'}`}
     />
   </button>
 );

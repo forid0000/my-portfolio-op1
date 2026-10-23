@@ -65,7 +65,7 @@ export default function About({
                 {whatIDo.map(({ title, desc }) => (
                   <li
                     key={title}
-                    className="group relative bg-card/20 p-4 rounded-lg border border-border/30 hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all duration-500 overflow-hidden"
+                    className="group relative bg-card/20 p-4 rounded-lg border border-border/30 hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_0_20px_color-mix(in_srgb,var(--primary)_10%,transparent)] transition-all duration-500 overflow-hidden"
                   >
                     {/* Hover Glow Effect */}
                     <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -98,7 +98,7 @@ export default function About({
               style={{ animationDelay: '0.2s' }}
             >
               {/* Stats Panel with SCANNER Effect */}
-              <div className="bg-card/30 border border-border/30 rounded-xl p-6 relative overflow-hidden group hover:border-primary/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] transition-all duration-500">
+              <div className="bg-card/30 border border-border/30 rounded-xl p-6 relative overflow-hidden group hover:border-primary/40 hover:shadow-[0_0_30px_color-mix(in_srgb,var(--primary)_10%,transparent)] transition-all duration-500">
                 {/* Removed Scanner Animation */}
 
                 <h3 className="text-sm font-semibold terminal:font-mono terminal:text-xs terminal:uppercase terminal:tracking-widest text-muted-foreground mb-6 flex items-center gap-2 relative z-10">
@@ -119,9 +119,9 @@ export default function About({
                       <div className="hidden terminal:block h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
                         <div
                           style={{ width: i === 2 ? '100%' : '75%' }}
-                          className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)] relative animate-bar-fill"
+                          className="h-full bg-primary shadow-[0_0_10px_color-mix(in_srgb,var(--primary)_50%,transparent)] relative animate-bar-fill"
                         >
-                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/50 animate-pulse" />
+                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-foreground/50 animate-pulse" />
                         </div>
                       </div>
                     </div>

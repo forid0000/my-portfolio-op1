@@ -36,7 +36,7 @@ const InteractiveCard = ({
   return (
     <div
       style={{ animationDelay: `${(index % 6) * 0.05}s` }}
-      className="animate-fade-in-up relative group block overflow-hidden bg-muted/5 rounded-2xl md:rounded-[2rem] border border-white/5 cursor-pointer break-inside-avoid shadow-lg shadow-black/10 transition-all duration-500 hover:shadow-[0_0_40px_rgba(var(--primary),0.2)] hover:border-primary/50 hover:-translate-y-2 hover:scale-[1.02]"
+      className="animate-fade-in-up relative group block overflow-hidden bg-muted/5 rounded-2xl md:rounded-[2rem] border border-on-scrim/5 cursor-pointer break-inside-avoid shadow-lg shadow-black/10 transition-all duration-500 hover:shadow-[0_0_40px_color-mix(in_srgb,var(--primary)_20%,transparent)] hover:border-primary/50 hover:-translate-y-2 hover:scale-[1.02]"
       onClick={onClick}
     >
       <div
@@ -60,12 +60,12 @@ const InteractiveCard = ({
 
       {/* Advanced Glassmorphism Overlay */}
       <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out z-20">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-md -z-10" />
+        <div className="absolute inset-0 bg-scrim/60 backdrop-blur-md -z-10" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-        <p className="text-white font-bold text-sm md:text-base leading-tight mb-1 drop-shadow-md transform transition-transform duration-500 delay-75 group-hover:translate-x-1">
+        <p className="text-on-scrim font-bold text-sm md:text-base leading-tight mb-1 drop-shadow-md transform transition-transform duration-500 delay-75 group-hover:translate-x-1">
           {item.alt}
         </p>
-        <div className="flex items-center text-white/70 text-[10px] md:text-xs transform transition-transform duration-500 delay-100 group-hover:translate-x-1">
+        <div className="flex items-center text-on-scrim/70 text-[10px] md:text-xs transform transition-transform duration-500 delay-100 group-hover:translate-x-1">
           <Calendar className="w-3 h-3 mr-1.5 opacity-70 text-primary" />
           {new Date(item.date).toLocaleDateString(undefined, {
             year: 'numeric',
@@ -199,14 +199,14 @@ export default function AchievementsGallery({
           </p>
 
           {categories.length > 1 && (
-            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 p-1.5 bg-muted/10 rounded-full border border-white/5 backdrop-blur-sm shadow-inner max-w-fit mx-auto">
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 p-1.5 bg-muted/10 rounded-full border border-foreground/5 backdrop-blur-sm shadow-inner max-w-fit mx-auto">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => handleTabSwitch(cat)}
                   className={`relative px-5 py-2 md:px-6 md:py-2.5 text-xs md:text-sm font-bold rounded-full uppercase tracking-widest transition-all duration-500 overflow-hidden ${
                     activeTab === cat
-                      ? 'text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)]'
+                      ? 'text-primary-foreground shadow-[0_0_20px_color-mix(in_srgb,var(--primary)_30%,transparent)]'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -279,9 +279,9 @@ export default function AchievementsGallery({
         onOpenChange={(open) => !open && setSelectedIndex(null)}
       >
         <DialogContent
-          className="max-w-full w-full max-h-screen h-screen flex flex-col justify-center items-center p-0 border-none bg-black/95 z-[999] outline-none overflow-hidden backdrop-blur-xl"
+          className="max-w-full w-full max-h-screen h-screen flex flex-col justify-center items-center p-0 border-none bg-scrim/95 z-[999] outline-none overflow-hidden backdrop-blur-xl"
           showCloseButton={false} // Custom exit button for expert feel
-          overlayClassName="bg-black/90 backdrop-blur-xl transition-all duration-500"
+          overlayClassName="bg-scrim/90 backdrop-blur-xl transition-all duration-500"
         >
           <DialogTitle className="sr-only">Image Immersive View</DialogTitle>
 
@@ -294,14 +294,14 @@ export default function AchievementsGallery({
           >
             {/* Top Bar Navigation HUD */}
             <div className="absolute top-0 inset-x-0 h-24 flex items-center justify-between px-6 z-50 pointer-events-none">
-              <div className="bg-white/10 border border-white/10 px-4 py-2 rounded-full pointer-events-auto">
-                <span className="text-[10px] terminal:font-mono text-white/50 tracking-widest uppercase">
+              <div className="bg-on-scrim/10 border border-on-scrim/10 px-4 py-2 rounded-full pointer-events-auto">
+                <span className="text-[10px] terminal:font-mono text-on-scrim/50 tracking-widest uppercase">
                   {selectedIndex !== null ? `${selectedIndex + 1} / ${currentGallery.length}` : ''}
                 </span>
               </div>
               <button
                 onClick={() => setSelectedIndex(null)}
-                className="group w-12 h-12 flex items-center justify-center rounded-full bg-white/10 border border-white/10 text-white hover:bg-white hover:text-black transition-all duration-500 pointer-events-auto shadow-2xl"
+                className="group w-12 h-12 flex items-center justify-center rounded-full bg-on-scrim/10 border border-on-scrim/10 text-on-scrim hover:bg-on-scrim hover:text-scrim transition-all duration-500 pointer-events-auto shadow-2xl"
               >
                 <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
               </button>
@@ -311,7 +311,7 @@ export default function AchievementsGallery({
             <div className="absolute inset-y-0 left-6 flex items-center z-40 pointer-events-none">
               <button
                 onClick={handlePrev}
-                className="flex w-12 h-12 md:w-16 md:h-16 items-center justify-center rounded-full bg-white/10 border border-white/10 text-white hover:bg-primary hover:text-primary-foreground hover:scale-110 active:scale-95 transition-all duration-500 pointer-events-auto shadow-2xl"
+                className="flex w-12 h-12 md:w-16 md:h-16 items-center justify-center rounded-full bg-on-scrim/10 border border-on-scrim/10 text-on-scrim hover:bg-primary hover:text-primary-foreground hover:scale-110 active:scale-95 transition-all duration-500 pointer-events-auto shadow-2xl"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
@@ -320,7 +320,7 @@ export default function AchievementsGallery({
             <div className="absolute inset-y-0 right-6 flex items-center z-40 pointer-events-none">
               <button
                 onClick={handleNext}
-                className="flex w-12 h-12 md:w-16 md:h-16 items-center justify-center rounded-full bg-white/10 border border-white/10 text-white hover:bg-primary hover:text-primary-foreground hover:scale-110 active:scale-95 transition-all duration-500 pointer-events-auto shadow-2xl"
+                className="flex w-12 h-12 md:w-16 md:h-16 items-center justify-center rounded-full bg-on-scrim/10 border border-on-scrim/10 text-on-scrim hover:bg-primary hover:text-primary-foreground hover:scale-110 active:scale-95 transition-all duration-500 pointer-events-auto shadow-2xl"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
@@ -338,7 +338,7 @@ export default function AchievementsGallery({
                 </div>
 
                 <div
-                  className="relative max-w-[95vw] max-h-[75vh] flex flex-col justify-center rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10 group/img ring-1 ring-white/5 transition-transform duration-500 hover:scale-[1.01]"
+                  className="relative max-w-[95vw] max-h-[75vh] flex flex-col justify-center rounded-2xl md:rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-on-scrim/10 group/img ring-1 ring-on-scrim/5 transition-transform duration-500 hover:scale-[1.01]"
                   style={{ aspectRatio: `${selectedImage.width} / ${selectedImage.height}` }}
                 >
                   <Image
@@ -354,8 +354,8 @@ export default function AchievementsGallery({
 
                 {/* Metadata Info HUD - Advanced Glassmorphism */}
                 <div className="mt-8 md:mt-10 text-center relative z-20">
-                  <div className="bg-black/40 backdrop-blur-md border border-white/10 px-10 py-5 rounded-[2.5rem] flex flex-col items-center shadow-[0_0_30px_rgba(0,0,0,0.5)] transform transition-transform duration-500 hover:scale-105 hover:bg-black/50 hover:border-primary/30">
-                    <h3 className="text-white font-black text-xl md:text-3xl tracking-tighter italic uppercase mb-2 drop-shadow-md">
+                  <div className="bg-scrim/40 backdrop-blur-md border border-on-scrim/10 px-10 py-5 rounded-[2.5rem] flex flex-col items-center shadow-[0_0_30px_rgba(0,0,0,0.5)] transform transition-transform duration-500 hover:scale-105 hover:bg-scrim/50 hover:border-primary/30">
+                    <h3 className="text-on-scrim font-black text-xl md:text-3xl tracking-tighter italic uppercase mb-2 drop-shadow-md">
                       {selectedImage.alt}
                     </h3>
                     <div className="flex items-center gap-4 text-[10px] md:text-xs font-black tracking-[0.4em] uppercase text-primary drop-shadow-md">
@@ -373,7 +373,7 @@ export default function AchievementsGallery({
                         {selectedImage.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] uppercase tracking-widest text-white/80 backdrop-blur-md shadow-sm"
+                            className="px-3 py-1 bg-on-scrim/10 border border-on-scrim/20 rounded-full text-[10px] uppercase tracking-widest text-on-scrim/80 backdrop-blur-md shadow-sm"
                           >
                             {tag}
                           </span>
@@ -386,7 +386,7 @@ export default function AchievementsGallery({
             )}
 
             {/* Mobile swipe hint */}
-            <div className="absolute bottom-6 md:hidden text-white/30 text-[10px] font-bold tracking-widest uppercase animate-pulse">
+            <div className="absolute bottom-6 md:hidden text-on-scrim/30 text-[10px] font-bold tracking-widest uppercase animate-pulse">
               Swipe or tap arrows · ESC to close
             </div>
           </div>

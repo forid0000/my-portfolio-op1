@@ -13,6 +13,7 @@ import { extractApiErrorMessage } from '@/lib/utils';
 import {
   KITS_DEFAULTS,
   KITS_COLOR_MAP,
+  KITS_COLOR_LABELS,
   mergeKitsContent,
   type KitsContent,
   type KitTool,
@@ -256,7 +257,7 @@ export default function KitsCMS() {
                               >
                                 {Object.keys(KITS_COLOR_MAP).map((colorName) => (
                                   <option key={colorName} value={colorName}>
-                                    {colorName}
+                                    {KITS_COLOR_LABELS[colorName] ?? colorName}
                                   </option>
                                 ))}
                               </select>

@@ -33,13 +33,9 @@ import {
 import { getSiteIdentity } from '@/lib/identity';
 import { resolveIconMap } from '@/lib/icons/resolve';
 import { SITE_URL } from '@/lib/site-config';
-import {
-  GLOBAL_DEFAULTS,
-  mergeGlobal,
-  toHeaderBrand,
-  toNavToggles,
-  type GlobalContent,
-} from '@/lib/site';
+import { GLOBAL_DEFAULTS, mergeGlobal, toHeaderBrand, type GlobalContent } from '@/lib/site';
+import { getChrome, navFor } from '@/lib/chrome';
+import { hasActiveResume } from '@/lib/resume';
 import { FLOATING_DEFAULTS, mergeFloating, type FloatingContent } from '@/lib/floating';
 import {
   getLayoutSections,
@@ -218,7 +214,12 @@ export default async function Home() {
   // serverless-function + redirect round-trip that was sitting on the LCP path).
   // On-demand revalidation (the avatars save route) refreshes it when the
   // active avatar changes, so baking it in stays correct.
-  const [resolvedAvatarUrl, theme] = await Promise.all([getActiveAvatarUrl(), getTheme()]);
+  const [resolvedAvatarUrl, theme, chrome, resumeAvailable] = await Promise.all([
+    getActiveAvatarUrl(),
+    getTheme(),
+    getChrome(),
+    hasActiveResume(),
+  ]);
   globalContent.avatarUrl = resolvedAvatarUrl;
 
   // schema.org ProfilePage, built from CMS content (nothing hardcoded): the
@@ -254,7 +255,7 @@ export default async function Home() {
   };
 
   // The dynamic rendering pipeline: sort ascending by `order`, filter out
-  // isEnabled: false, and exclude the route-level `kits` entry - all handled
+  // isEnabled: false, and exclude the route-level entries (`kits`, `articles`) - all handled
   // by getRenderableSections(). What's left is looked up in
   // SECTION_COMPONENT_MAP and rendered in that precise sequence. Adding a
   // brand new section to the product is "one SECTION_REGISTRY entry, one
@@ -275,7 +276,16 @@ export default async function Home() {
   // sections just need `content`) that no single uniform prop object could
   // express. Every key here has a matching entry in SECTION_COMPONENT_MAP.
   const sectionProps: Record<string, Record<string, unknown>> = {
-    hero: { content: heroContent, global: globalContent, icons, uiStyle: theme.uiStyle },
+    hero: {
+      content: heroContent,
+      global: globalContent,
+      icons,
+      uiStyle: theme.uiStyle,
+      // The CV button needs an uploaded resume; the social row can be switched off.
+      showResume: chrome.hero.resume && resumeAvailable,
+      showSocials: chrome.hero.socials,
+      showProjects: isSectionEnabled(sections, 'projects'),
+    },
     about: {
       content: aboutContent,
       heading: sectionTexts.aboutHeading,
@@ -335,7 +345,7 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <Header
         brand={toHeaderBrand(globalContent)}
-        toggles={toNavToggles(sections)}
+        nav={navFor(chrome, sections)}
         uiStyle={theme.uiStyle}
       />
       {renderableSections.map((section) => {
@@ -347,8 +357,13 @@ export default async function Home() {
           </Fragment>
         );
       })}
-      <Footer content={globalContent} icons={icons} />
-      <FloatingContact content={floatingContent} icons={icons} />
+      <Footer
+        content={globalContent}
+        icons={icons}
+        nav={navFor(chrome, sections)}
+        show={chrome.footer}
+      />
+      {chrome.floatingContact && <FloatingContact content={floatingContent} icons={icons} />}
     </main>
   );
 }

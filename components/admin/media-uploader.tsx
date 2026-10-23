@@ -27,6 +27,10 @@ interface MediaUploaderProps {
   onChange: (next: MediaItem[]) => void;
   label?: string;
   max?: number;
+  /** Pictures only, even in a scope that also allows video (an article's cover). */
+  imagesOnly?: boolean;
+  /** Replaces the "first is the main cover" hint under the label. */
+  hint?: string;
 }
 
 interface Pending {
@@ -74,8 +78,10 @@ export function MediaUploader({
   onChange,
   label = 'Pictures and videos',
   max = MAX_MEDIA_PER_ITEM,
+  imagesOnly = false,
+  hint,
 }: MediaUploaderProps) {
-  const allowVideo = MEDIA_SCOPES[scope].allowVideo;
+  const allowVideo = MEDIA_SCOPES[scope].allowVideo && !imagesOnly;
   const sensors = useSafeDndSensors();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -270,7 +276,7 @@ export function MediaUploader({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <label className="text-sm font-medium text-gray-300">{label}</label>
         <span className="text-xs text-gray-500">
-          {total}/{max} · first is the main cover · drag to reorder
+          {total}/{max} · {hint ?? 'first is the main cover · drag to reorder'}
         </span>
       </div>
 

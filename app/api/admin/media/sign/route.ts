@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { CloudinaryNotConnectedError, signUpload } from '@/lib/media-server';
+import { MEDIA_SCOPE_NAMES, type MediaScope } from '@/lib/media-types';
 
 const signSchema = z.object({
-  scope: z.enum(['avatars', 'projects', 'certifications', 'testimonials', 'services']),
+  scope: z.enum(MEDIA_SCOPE_NAMES as [MediaScope, ...MediaScope[]]),
   kind: z.enum(['image', 'video']),
 });
 

@@ -5,6 +5,7 @@ import './globals.css';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
 import { getTheme, themeToCssVars } from '@/lib/theme';
+import { isDarkColor } from '@/lib/color';
 import { safeJsonLd } from '@/lib/json-ld';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 
@@ -129,6 +130,8 @@ export default async function RootLayout({
     getActiveAvatarUrl(),
   ]);
   const geo = getGeoMeta();
+  // `dark:` utilities and the toaster must agree with the palette the owner chose.
+  const isDark = isDarkColor(theme.background);
 
   // === STRUCTURED DATA (JSON-LD) ===
   // Built from CMS content (hero name/title, global brand + socials), never hardcoded.
@@ -169,7 +172,7 @@ export default async function RootLayout({
       lang="en"
       suppressHydrationWarning
       data-ui={theme.uiStyle}
-      className={`dark ${notoBengali.variable} ${notoArabic.variable} ${notoDevanagari.variable}`}
+      className={`${isDark ? 'dark ' : ''}${notoBengali.variable} ${notoArabic.variable} ${notoDevanagari.variable}`}
     >
       <head>
         {/* Admin-customizable theme: overrides CSS variables defined in globals.css */}
@@ -192,7 +195,13 @@ export default async function RootLayout({
           <DotWeave />
         </div>
 
-        <Toaster position="top-center" theme="dark" richColors closeButton duration={3000} />
+        <Toaster
+          position="top-center"
+          theme={isDark ? 'dark' : 'light'}
+          richColors
+          closeButton
+          duration={3000}
+        />
         <SpeedInsights />
 
         {/* Google Analytics can go here if needed */}

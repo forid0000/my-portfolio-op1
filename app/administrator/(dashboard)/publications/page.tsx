@@ -29,9 +29,7 @@ export default function PublicationsCMS() {
         description: '',
       })}
       getItemLabel={(item) => item.title}
-      validateItem={(item) =>
-        !item.title?.trim() ? 'Title is required for every publication.' : null
-      }
+      requiredFields={['title']}
       renderFields={(item, onChange) => (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

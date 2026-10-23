@@ -50,10 +50,10 @@ interface SectionRegistryEntry {
 }
 
 /**
- * The canonical list of built-in sections, in default render order. `kits` is
- * a route-level toggle (nav link + the entire /kits tree), not a section
- * stacked into the homepage flow - it has a registry entry so it's manageable
- * from the same admin board, but has no entry in SECTION_COMPONENT_MAP and is
+ * The canonical list of built-in sections, in default render order. `kits` and `articles` are
+ * route-level toggles (nav link + the entire /kits or /articles tree), not sections
+ * stacked into the homepage flow - they have a registry entry so they're manageable
+ * from the same admin board, but have no entry in SECTION_COMPONENT_MAP and are
  * excluded from the render loop by getRenderableSections().
  */
 export const SECTION_REGISTRY: SectionRegistryEntry[] = [
@@ -73,7 +73,14 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
   { id: 'gallery', label: 'Gallery', order: 13, isSystemConfig: true },
   { id: 'contact', label: 'Contact', order: 14, isSystemConfig: true },
   { id: 'kits', label: 'Kits (/kits)', order: 15, isSystemConfig: true },
+  { id: 'articles', label: 'Articles (/articles)', order: 16, isSystemConfig: true },
 ];
+
+/**
+ * Entries that switch a whole route on or off (nav link + the pages themselves) instead of
+ * adding a block to the homepage stack.
+ */
+export const ROUTE_LEVEL_SECTIONS = new Set(['kits', 'articles']);
 
 export function getRegistryEntry(id: string): SectionRegistryEntry | undefined {
   return SECTION_REGISTRY.find((r) => r.id === id);
@@ -87,8 +94,8 @@ export const SECTION_DEFAULTS: PortfolioSectionConfig[] = SECTION_REGISTRY.map((
 }));
 
 /**
- * Canonical id -> public component map. Every id here (except `kits`, which
- * is route-level) must have a matching entry in app/page.tsx's `sectionProps`
+ * Canonical id -> public component map. Every id here (the route-level
+ * entries `kits` and `articles` aside) must have a matching entry in app/page.tsx's `sectionProps`
  * lookup, since these components take heterogeneous props (Hero needs
  * `global`, Projects needs `githubUrl`, the five collection-backed sections
  * just need `content`) that a single uniform prop shape can't express.
@@ -173,7 +180,7 @@ export async function getLayoutSections(): Promise<PortfolioSectionConfig[]> {
 /**
  * The rendering pipeline: sort ascending by `order` (already true coming out
  * of mergeLayoutSections, re-asserted here defensively), filter out disabled
- * sections, and exclude the route-level `kits` entry - it controls nav/routing,
+ * sections, and exclude the route-level entries (`kits`, `articles`) - they control nav/routing,
  * not a position in the vertical page stack.
  */
 export function getRenderableSections(
@@ -181,7 +188,7 @@ export function getRenderableSections(
 ): PortfolioSectionConfig[] {
   return [...sections]
     .sort((a, b) => a.order - b.order)
-    .filter((s) => s.isEnabled && s.id !== 'kits');
+    .filter((s) => s.isEnabled && !ROUTE_LEVEL_SECTIONS.has(s.id));
 }
 
 export function isSectionEnabled(sections: PortfolioSectionConfig[], id: string): boolean {

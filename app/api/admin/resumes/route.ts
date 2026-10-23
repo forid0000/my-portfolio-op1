@@ -4,6 +4,7 @@ import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import mongoose from 'mongoose';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { revalidatePublicContent } from '@/lib/revalidate';
 
 const resumeUploadSchema = z.object({
   name: z.string().min(1).max(255),
@@ -79,6 +80,8 @@ export async function POST(request: Request) {
     };
 
     const result = await collection.insertOne(doc);
+    // The hero's CV button appears only while a resume is active.
+    revalidatePublicContent();
     return NextResponse.json({ success: true, id: result.insertedId });
   } catch (error: any) {
     return NextResponse.json(
@@ -124,6 +127,7 @@ export async function PATCH(request: Request) {
       }
       await collection.updateMany({}, { $set: { isActive: false, updatedAt: new Date() } });
       await collection.updateOne({ _id: oid }, { $set: { isActive: true, updatedAt: new Date() } });
+      revalidatePublicContent();
       return NextResponse.json({ success: true });
     }
 
@@ -158,6 +162,7 @@ export async function DELETE(request: Request) {
     const collection = db.connection.client.db('portfolio_cms').collection('resumes');
 
     await collection.deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    revalidatePublicContent();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(

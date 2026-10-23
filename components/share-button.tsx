@@ -35,7 +35,7 @@ export default function ShareButton({ slug }: ShareButtonProps) {
       title="Copy link to clipboard"
     >
       {copied ? (
-        <Check className="w-4 h-4 text-green-500 animate-in zoom-in spin-in-90" />
+        <Check className="w-4 h-4 text-success animate-in zoom-in spin-in-90" />
       ) : (
         <Share2 className="w-4 h-4" />
       )}

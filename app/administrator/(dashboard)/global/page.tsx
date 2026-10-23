@@ -15,6 +15,7 @@ import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { IconPicker } from '@/components/admin/icon-picker';
 import { extractApiErrorMessage, utcOffsetLabel } from '@/lib/utils';
+import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
 
 interface SocialLink {
@@ -175,31 +176,28 @@ export default function GlobalCMS() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!data.brandName.trim()) {
-      toast.error('Validation Error: Brand Name cannot be empty.');
-      return;
-    }
-    for (const link of data.socials) {
-      if (!link.label.trim() || !link.href.trim()) {
-        toast.error('Validation Error: All Global Social Links must have a Label and URL.');
-        return;
-      }
-    }
-    for (const link of data.footerSocials) {
-      if (!link.label.trim() || !link.href.trim()) {
-        toast.error('Validation Error: All Footer Social Links must have a Label and URL.');
-        return;
-      }
-    }
-
-    setSaving(true);
-
+    // Check before sending, and show exactly which field needs attention.
     const payload = {
       ...data,
       socials: data.socials.map(({ _dndId, ...rest }) => rest),
       footerSocials: data.footerSocials.map(({ _dndId, ...rest }) => rest),
     };
+    const required = { code: 'too_small', origin: 'string', minimum: 1, message: 'Required' };
+    const issues: FieldIssue[] = [];
+    if (!data.brandName.trim()) issues.push({ ...required, path: ['brandName'] });
+    (['socials', 'footerSocials'] as const).forEach((list) =>
+      data[list].forEach((link, i) => {
+        if (!link.label.trim()) issues.push({ ...required, path: [list, i, 'label'] });
+        if (!link.href.trim()) issues.push({ ...required, path: [list, i, 'href'] });
+      })
+    );
+    if (issues.length) {
+      const { summary } = reportFieldIssues(issues, payload);
+      toast.error('Please fix the highlighted fields', { description: summary });
+      return;
+    }
+
+    setSaving(true);
 
     try {
       const res = await fetch('/api/admin/content/global', {
@@ -304,6 +302,7 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.brandName || ''}
+                  data-field="brandName"
                   onChange={(e) => handleFieldChange('brandName', e.target.value)}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 transition-all font-mono text-sm"
                 />
@@ -315,6 +314,7 @@ export default function GlobalCMS() {
                 </label>
                 <textarea
                   value={data.footerText || ''}
+                  data-field="footerText"
                   onChange={(e) => handleFieldChange('footerText', e.target.value)}
                   rows={2}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-gray-300 focus:outline-none focus:border-emerald-500 transition-all resize-y leading-relaxed font-mono text-sm"
@@ -328,6 +328,7 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.copyrightName || ''}
+                  data-field="copyrightName"
                   onChange={(e) => handleFieldChange('copyrightName', e.target.value)}
                   placeholder={GLOBAL_CONTENT_DEFAULTS.copyrightName}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 transition-all font-mono text-sm"
@@ -350,6 +351,7 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.headerName || ''}
+                  data-field="headerName"
                   onChange={(e) => handleFieldChange('headerName', e.target.value)}
                   placeholder={GLOBAL_CONTENT_DEFAULTS.headerName}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
@@ -360,6 +362,7 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.headerTag || ''}
+                  data-field="headerTag"
                   onChange={(e) => handleFieldChange('headerTag', e.target.value)}
                   placeholder={GLOBAL_CONTENT_DEFAULTS.headerTag}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
@@ -373,12 +376,15 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.githubProfileUrl || ''}
+                  data-field="githubProfileUrl"
                   onChange={(e) => handleFieldChange('githubProfileUrl', e.target.value)}
                   placeholder="https://... (Behance, Dribbble, GitHub, your own site)"
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Used by the Projects "all_repositories" button.
+                  Optional. Used by the Projects &quot;view all&quot; button. If this (or a social
+                  link) points to github.com/your-name, your public GitHub picture is used as your
+                  profile picture until you upload one.
                 </p>
               </div>
               <div>
@@ -388,6 +394,7 @@ export default function GlobalCMS() {
                 <input
                   type="text"
                   value={data.locationLabel || ''}
+                  data-field="locationLabel"
                   onChange={(e) => handleFieldChange('locationLabel', e.target.value)}
                   placeholder={GLOBAL_CONTENT_DEFAULTS.locationLabel}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
@@ -397,6 +404,7 @@ export default function GlobalCMS() {
                 <label className="block text-sm font-medium text-gray-400 mb-1">Time Zone</label>
                 <select
                   value={data.timeZone || GLOBAL_CONTENT_DEFAULTS.timeZone}
+                  data-field="timeZone"
                   onChange={(e) => handleFieldChange('timeZone', e.target.value)}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
                 >
@@ -461,6 +469,7 @@ export default function GlobalCMS() {
                           <input
                             type="text"
                             value={link.label || ''}
+                            data-field={`socials.${idx}.label`}
                             onChange={(e) =>
                               handleSocialChange('socials', idx, 'label', e.target.value)
                             }
@@ -472,6 +481,7 @@ export default function GlobalCMS() {
                           <input
                             type="text"
                             value={link.href || ''}
+                            data-field={`socials.${idx}.href`}
                             onChange={(e) =>
                               handleSocialChange('socials', idx, 'href', e.target.value)
                             }
@@ -533,6 +543,7 @@ export default function GlobalCMS() {
                         <input
                           type="text"
                           value={link.label || ''}
+                          data-field={`footerSocials.${idx}.label`}
                           onChange={(e) =>
                             handleSocialChange('footerSocials', idx, 'label', e.target.value)
                           }
@@ -542,6 +553,7 @@ export default function GlobalCMS() {
                         <input
                           type="text"
                           value={link.href || ''}
+                          data-field={`footerSocials.${idx}.href`}
                           onChange={(e) =>
                             handleSocialChange('footerSocials', idx, 'href', e.target.value)
                           }

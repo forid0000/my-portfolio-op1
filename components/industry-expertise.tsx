@@ -60,24 +60,11 @@ const CORNERS = [
 ];
 
 /**
- * Per-card accent colour, indexed to the items. 400-range shades so the
- * spectrum stays legible against the dark background; emerald leads to match
- * the site's primary.
+ * Per-card accent colour, indexed to the items: the theme's chart palette (twelve hues spread
+ * around the wheel, starting at the brand colour), so cards follow whatever palette is chosen
+ * in Admin -> Appearance.
  */
-const COLORS = [
-  '#34d399', // emerald-400
-  '#22d3ee', // cyan-400
-  '#a78bfa', // violet-400
-  '#fb923c', // orange-400
-  '#60a5fa', // blue-400
-  '#f472b6', // pink-400
-  '#2dd4bf', // teal-400
-  '#fbbf24', // amber-400
-  '#f87171', // red-400
-  '#818cf8', // indigo-400
-  '#4ade80', // green-400
-  '#facc15', // yellow-400
-];
+const COLORS = Array.from({ length: 12 }, (_, i) => `var(--chart-${i + 1})`);
 
 interface IndustryExpertiseProps {
   heading?: string;

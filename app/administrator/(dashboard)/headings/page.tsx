@@ -5,34 +5,30 @@ import { toast } from 'sonner';
 import { Loader2, Save, Type, AlertCircle } from 'lucide-react';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { extractApiErrorMessage } from '@/lib/utils';
-import { DEFAULT_DEVTO_USERNAME } from '@/lib/content-defaults';
+import {
+  ARTICLE_TEXT_DEFAULTS,
+  CONTACT_DEFAULTS,
+  DEFAULT_DEVTO_USERNAME,
+  SECTION_TEXT_DEFAULTS,
+} from '@/lib/content-defaults';
 
+// The same wording the public pages fall back to, so opening this page on a new site and saving
+// never replaces the neutral defaults with anything else.
 const DEFAULTS = {
-  galleryHeading: 'Captured',
-  galleryHighlight: 'Moments',
-  gallerySubtext: 'A randomized visual timeline of technical growth and personal milestones.',
-  roadmapHeading: 'System',
-  roadmapHighlight: 'Evolution_Path',
-  projectsHeading: 'My Projects',
-  skillsHeading: 'My technical arsenal...',
-  experienceHeading: 'Experience',
-  aboutHeading: 'About Me',
-  contactHeading: 'Initiate Connection',
-  contactHighlight: '',
-  contactSubtext: 'Send a message and I will get back to you as soon as I can.',
-  articlesBadge: 'Fetching Articles From Online...',
-  articlesHeading: 'articles',
-  articlesSubtext: 'Documenting my journey through code, infrastructure, and bugs.',
-  articlesRecentUploads: 'Recent Uploads',
-  articlesEmptyAPI: 'No packets received. API might be down.',
-  articlesGoBack: 'cd .. || go back',
-  articlesAuthor: 'AUTHOR',
-  articlesReadTime: 'min read',
-  articlesEnjoyed: 'Enjoyed this article?',
-  articlesDiscuss: 'Join the discussion on Dev.to or share it with others.',
-  articlesDiscussBtn: 'Discuss',
-  articlesEndOfFile: '// END_OF_FILE',
-  devToUsername: DEFAULT_DEVTO_USERNAME,
+  galleryHeading: SECTION_TEXT_DEFAULTS.galleryHeading,
+  galleryHighlight: SECTION_TEXT_DEFAULTS.galleryHighlight,
+  gallerySubtext: SECTION_TEXT_DEFAULTS.gallerySubtext,
+  roadmapHeading: SECTION_TEXT_DEFAULTS.roadmapHeading,
+  roadmapHighlight: SECTION_TEXT_DEFAULTS.roadmapHighlight,
+  projectsHeading: SECTION_TEXT_DEFAULTS.projectsHeading,
+  skillsHeading: SECTION_TEXT_DEFAULTS.skillsHeading,
+  experienceHeading: SECTION_TEXT_DEFAULTS.experienceHeading,
+  aboutHeading: SECTION_TEXT_DEFAULTS.aboutHeading,
+  contactHeading: CONTACT_DEFAULTS.heading,
+  contactHighlight: CONTACT_DEFAULTS.highlight,
+  contactSubtext: CONTACT_DEFAULTS.subtext,
+  ...ARTICLE_TEXT_DEFAULTS,
+  devToUsername: DEFAULT_DEVTO_USERNAME as string,
   articlesCanonicalTarget: 'devto',
 };
 
@@ -125,12 +121,12 @@ export default function HeadingsPage() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
               <div className="text-sm text-blue-200/80 leading-relaxed">
-                <strong className="text-blue-300">Admin Hint:</strong> Section headings are heavily
-                stylized with the hacker font. Keep them short (max 25 characters) so they don't
-                break the responsive grid on mobile devices. Use underscores instead of spaces for
-                the "Highlight" words (e.g.,{' '}
-                <code className="bg-blue-900/40 px-1 rounded">Evolution_Path</code>) to match the
-                terminal aesthetic.
+                <strong className="text-blue-300">Admin Hint:</strong> Keep headings short (about 25
+                characters) so they do not wrap awkwardly on phones. They can be in any language.
+                The &quot;Highlight&quot; word is shown in the accent color. The prompt-style
+                wording (for example{' '}
+                <code className="bg-blue-900/40 px-1 rounded">hello@portfolio</code>) only appears
+                when the Terminal style is chosen in Appearance.
               </div>
             </div>
           </div>
@@ -340,7 +336,7 @@ export default function HeadingsPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                  Heading (without ~/, e.g., articles)
+                  Heading
                 </label>
                 <input
                   type="text"
@@ -362,7 +358,7 @@ export default function HeadingsPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                  Recent Uploads Text
+                  Heading above the list
                 </label>
                 <input
                   type="text"
@@ -373,7 +369,7 @@ export default function HeadingsPage() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                  Empty API State Text
+                  Text when there are no articles
                 </label>
                 <input
                   type="text"
@@ -390,7 +386,7 @@ export default function HeadingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                  Go Back Button
+                  Back link text
                 </label>
                 <input
                   type="text"

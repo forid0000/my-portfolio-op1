@@ -58,7 +58,7 @@ function PlayBadge({ small }: { small?: boolean }) {
   return (
     <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
       <span
-        className={`flex items-center justify-center rounded-full bg-black/60 text-white ${small ? 'h-7 w-7' : 'h-14 w-14'}`}
+        className={`flex items-center justify-center rounded-full bg-scrim/60 text-foreground ${small ? 'h-7 w-7' : 'h-14 w-14'}`}
       >
         <Play className={small ? 'h-3 w-3' : 'h-6 w-6'} />
       </span>
@@ -139,7 +139,7 @@ export default function MediaGallery({
                 />
                 {isVideo && <PlayBadge small />}
                 {last && (
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-semibold text-white">
+                  <span className="absolute inset-0 flex items-center justify-center bg-scrim/60 text-sm font-semibold text-foreground">
                     +{hidden + 1}
                   </span>
                 )}

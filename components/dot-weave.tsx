@@ -18,7 +18,8 @@ const SPACING = 56;
 const SETTLE_MS = 1800;
 
 const STATIC_GRID_STYLE: React.CSSProperties = {
-  backgroundImage: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 1.25px, transparent 1.75px)',
+  backgroundImage:
+    'radial-gradient(circle, color-mix(in srgb, var(--primary) 40%, transparent) 1.25px, transparent 1.75px)',
   backgroundSize: `${SPACING}px ${SPACING}px`,
   backgroundPosition: `${SPACING / 2}px ${SPACING / 2}px`,
 };
@@ -70,6 +71,11 @@ export default function DotWeave() {
     if (!interactive) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
+    // Canvas cannot read CSS variables, so take the brand colour once from the theme tokens.
+    const brand = getComputedStyle(document.documentElement)
+      .getPropertyValue('--primary-rgb')
+      .trim();
+    const dotColor = `rgb(${brand || '52 211 153'} / 0.4)`;
     if (!canvas || !ctx) return;
 
     let width = 0;
@@ -101,7 +107,7 @@ export default function DotWeave() {
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+      ctx.fillStyle = dotColor;
       for (const p of points) {
         const dx = p.x - currentX;
         const dy = p.y - currentY;

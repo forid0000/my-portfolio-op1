@@ -22,13 +22,25 @@ export interface KitsColorClasses {
 
 export const KITS_COLOR_MAP: Record<string, KitsColorClasses> = {
   primary: { text: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' },
-  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' },
-  blue: { text: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20' },
-  amber: { text: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' },
-  red: { text: 'text-red-400', bg: 'bg-red-400/10', border: 'border-red-400/20' },
-  purple: { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' },
-  cyan: { text: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/20' },
-  pink: { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/20' },
+  emerald: { text: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' },
+  blue: { text: 'text-info', bg: 'bg-info/10', border: 'border-info/20' },
+  amber: { text: 'text-warning', bg: 'bg-warning/10', border: 'border-warning/20' },
+  red: { text: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20' },
+  purple: { text: 'text-secondary', bg: 'bg-secondary/10', border: 'border-secondary/20' },
+  cyan: { text: 'text-chart-4', bg: 'bg-chart-4/10', border: 'border-chart-4/20' },
+  pink: { text: 'text-chart-8', bg: 'bg-chart-8/10', border: 'border-chart-8/20' },
+};
+
+/** What each stored accent name means now that every accent is a theme token (Appearance). */
+export const KITS_COLOR_LABELS: Record<string, string> = {
+  primary: 'Brand color',
+  emerald: 'Brand color (older "green")',
+  blue: 'Info',
+  amber: 'Warning',
+  red: 'Alert',
+  purple: 'Secondary color',
+  cyan: 'Palette color 4',
+  pink: 'Palette color 8',
 };
 
 export interface KitTool {

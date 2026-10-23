@@ -34,11 +34,7 @@ export default function CertificationsCMS() {
         media: [],
       })}
       getItemLabel={(item) => [item.name, item.issuer].filter(Boolean).join(' - ')}
-      validateItem={(item) =>
-        !item.name?.trim() || !item.issuer?.trim()
-          ? 'Name and Issuer are required for every certification.'
-          : null
-      }
+      requiredFields={['name', 'issuer']}
       renderFields={(item, onChange) => (
         <div className="space-y-4">
           <SectionImageUploader

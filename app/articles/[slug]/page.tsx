@@ -21,9 +21,21 @@ import {
 import type { Metadata } from 'next';
 import connectToDatabase from '@/lib/db';
 import { safeJsonLd } from '@/lib/json-ld';
-import { DEFAULT_DEVTO_USERNAME } from '@/lib/content-defaults';
+import { ARTICLE_TEXT_DEFAULTS, DEFAULT_DEVTO_USERNAME } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
 import { SITE_URL } from '@/lib/site-config';
+import {
+  getApprovedComments,
+  getArticleSettings,
+  getArticleTexts,
+  getPublishedArticle,
+  getPublishedArticles,
+  type ArticleView,
+} from '@/lib/articles';
+import { getActiveAvatarUrl } from '@/lib/avatar-cache';
+import { withTransformation } from '@/lib/cloudinary-url';
+import type { ArticleCardItem } from '@/lib/articles-model';
+import NativeArticle from '@/components/articles/native-article';
 // import ShareButton from "@/components/share-button";
 
 // === TYPES ===
@@ -67,6 +79,90 @@ async function getPost(username: string, slug: string): Promise<BlogPost | null>
   }
 }
 
+// === ARTICLES WRITTEN ON THIS SITE ===
+async function nativeMetadata(article: ArticleView): Promise<Metadata> {
+  const identity = await getSiteIdentity();
+  const url = `${SITE_URL}/articles/${article.slug}`;
+  const title = article.seoTitle || article.title;
+  const description = article.seoDescription || article.excerpt;
+  const image = article.cover
+    ? withTransformation(article.cover.src, 'c_fill,g_auto,w_1200,h_630,q_auto,f_jpg')
+    : null;
+  return {
+    title,
+    description,
+    keywords: article.tags.length ? article.tags.join(', ') : undefined,
+    authors: [{ name: identity.personName }],
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: identity.siteName,
+      type: 'article',
+      publishedTime: article.publishedAt ?? undefined,
+      modifiedTime: article.updatedAt,
+      authors: [identity.personName],
+      tags: article.tags,
+      images: image
+        ? [{ url: image, width: 1200, height: 630, alt: article.cover?.alt || title }]
+        : [],
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: image ? [image] : [],
+    },
+    robots: { index: true, follow: true },
+  };
+}
+
+async function renderNative(article: ArticleView) {
+  const [identity, avatar, comments, settings, all, { texts }] = await Promise.all([
+    getSiteIdentity(),
+    getActiveAvatarUrl(),
+    getApprovedComments(article.id),
+    getArticleSettings(),
+    getPublishedArticles(40),
+    getArticleTexts(),
+  ]);
+  const author = { name: identity.personName, image: avatar };
+
+  // Other articles that share a tag come first, then the newest ones.
+  const others = all.filter((a) => a.id !== article.id);
+  const shared = others.filter((a) => a.tags.some((t) => article.tags.includes(t)));
+  const related: ArticleCardItem[] = [...shared, ...others.filter((a) => !shared.includes(a))]
+    .slice(0, 3)
+    .map((a) => ({
+      key: `own-${a.id}`,
+      href: `/articles/${a.slug}`,
+      title: a.title,
+      description: a.excerpt,
+      cover: a.cover
+        ? withTransformation(a.cover.src, 'c_fill,g_auto,w_1200,h_675,q_auto,f_auto')
+        : null,
+      tags: a.tags,
+      publishedAt: a.publishedAt,
+      minutes: a.readingMinutes,
+      reactions: Object.values(a.reactionTotals).reduce((x, y) => x + y, 0),
+      comments: a.commentCount,
+      author,
+      source: 'native' as const,
+    }));
+
+  return (
+    <NativeArticle
+      article={article}
+      author={author}
+      comments={comments}
+      settings={settings}
+      related={related}
+      texts={texts}
+    />
+  );
+}
+
 // === DYNAMIC METADATA ===
 export async function generateMetadata({
   params,
@@ -74,6 +170,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+
+  const native = await getPublishedArticle(slug);
+  if (native) return nativeMetadata(native);
 
   let devToUsername: string = DEFAULT_DEVTO_USERNAME;
   let canonicalTarget: 'devto' | 'self' = 'devto';
@@ -135,14 +234,11 @@ export async function generateMetadata({
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let textContent = {
-    articlesGoBack: 'cd .. || go back',
-    articlesAuthor: 'AUTHOR',
-    articlesReadTime: 'min read',
-    articlesEnjoyed: 'Enjoyed this article?',
-    articlesDiscuss: 'Join the discussion on Dev.to or share it with others.',
-    articlesDiscussBtn: 'Discuss',
-    articlesEndOfFile: '// END_OF_FILE',
+  const native = await getPublishedArticle(slug);
+  if (native) return renderNative(native);
+
+  const textContent = {
+    ...ARTICLE_TEXT_DEFAULTS,
     devToUsername: DEFAULT_DEVTO_USERNAME as string,
     articlesCanonicalTarget: 'devto' as 'devto' | 'self',
   };
@@ -186,12 +282,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div className="flex items-center justify-between mb-8">
         <Link
           href="/articles"
-          className="inline-flex items-center gap-2 text-sm font-mono text-muted-foreground hover:text-primary transition-colors group"
+          className="inline-flex items-center gap-2 text-sm terminal:font-mono text-muted-foreground hover:text-primary transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           {textContent.articlesGoBack}
         </Link>
-        <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-muted-foreground/50">
+        <div className="hidden sm:terminal:flex items-center gap-2 text-xs font-mono text-muted-foreground/50">
           <Terminal className="w-3 h-3" />
           <span>/articles/{slug.substring(0, 20)}...</span>
         </div>
@@ -205,7 +301,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-primary bg-primary/5 border border-primary/20 rounded font-mono"
+                className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-primary bg-primary/5 border border-primary/20 rounded terminal:font-mono"
               >
                 #{tag}
               </span>
@@ -238,7 +334,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <span className="font-bold text-foreground hover:text-primary transition-colors">
                   {post.user.name}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[10px] text-muted-foreground terminal:font-mono">
                   {textContent.articlesAuthor}
                 </span>
               </div>
@@ -266,7 +362,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 href={post.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-red-400 font-mono text-xs bg-red-500/5 px-2 py-1 rounded-full border border-red-500/10 hover:bg-red-500/10 hover:scale-105 transition-all"
+                className="flex items-center gap-1.5 text-destructive terminal:font-mono text-xs bg-destructive/5 px-2 py-1 rounded-full border border-destructive/10 hover:bg-destructive/10 hover:scale-105 transition-all"
               >
                 <Heart className="w-3.5 h-3.5" />
                 <span>{post.public_reactions_count}</span>
@@ -275,7 +371,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 href={`${post.url}#comments`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-blue-400 font-mono text-xs bg-blue-500/5 px-2 py-1 rounded-full border border-blue-500/10 hover:bg-blue-500/10 hover:scale-105 transition-all"
+                className="flex items-center gap-1.5 text-info terminal:font-mono text-xs bg-info/5 px-2 py-1 rounded-full border border-info/10 hover:bg-info/10 hover:scale-105 transition-all"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
                 <span>{post.comments_count}</span>
@@ -324,7 +420,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         {/* === COVER IMAGE === */}
         {post.cover_image && (
-          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_40px_-15px_rgba(var(--primary),0.3)] mb-12 group">
+          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_40px_-15px_color-mix(in_srgb,var(--primary)_30%,transparent)] mb-12 group">
             <Image
               src={post.cover_image}
               alt={post.title}
@@ -334,7 +430,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             />
             {/* Scanline Effect Overlay (Optional aesthetic) */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/10 to-transparent pointer-events-none" />
-            <div className="absolute inset-0 border border-white/5 rounded-2xl mix-blend-overlay pointer-events-none" />
+            <div className="absolute inset-0 border border-foreground/5 rounded-2xl mix-blend-overlay pointer-events-none" />
           </div>
         )}
 
@@ -345,7 +441,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             prose-p:text-muted-foreground prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:underline-offset-4
             prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none prose-code:font-mono prose-code:text-sm
-            prose-pre:bg-black/80 prose-pre:backdrop-blur-xl prose-pre:border prose-pre:border-border/50 prose-pre:shadow-2xl prose-pre:shadow-black/50 prose-pre:rounded-xl
+            prose-pre:bg-scrim/80 prose-pre:backdrop-blur-xl prose-pre:border prose-pre:border-border/50 prose-pre:shadow-2xl prose-pre:shadow-black/50 prose-pre:rounded-xl
             prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:px-6 prose-blockquote:py-3 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-muted-foreground
             [&_blockquote_p:first-of-type]:before:content-none [&_blockquote_p:last-of-type]:after:content-none
             [&_.highlight__panel]:hidden [&_.highlight-action]:hidden [&_.clipboard-button]:hidden [&_button]:hidden
@@ -378,7 +474,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
           </div>
 
-          <div className="mt-8 text-center text-xs text-muted-foreground font-mono opacity-50">
+          <div className="mt-8 text-center text-xs text-muted-foreground terminal:font-mono opacity-50">
             {textContent.articlesEndOfFile}
           </div>
         </div>

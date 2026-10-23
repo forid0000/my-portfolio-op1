@@ -133,9 +133,10 @@ export default function SectionsLayoutBoard() {
                 link.
               </p>
               <p>
-                <strong className="text-blue-300">Kits</strong> is route-level: its toggle controls
-                the nav link and the entire <code>/kits</code> tool suite, not a position in the
-                page stack.
+                <strong className="text-blue-300">Kits</strong> and{' '}
+                <strong className="text-blue-300">Articles</strong> are route-level: their toggles
+                control the nav link and the entire <code>/kits</code> or <code>/articles</code>{' '}
+                pages, not a position in the page stack.
               </p>
             </div>
           </div>

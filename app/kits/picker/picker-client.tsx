@@ -31,7 +31,7 @@ export default function PickerClient({ iconData, accentColor }: PickerClientProp
         </h2>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap bg-white/5 p-1 rounded-lg border border-white/10 gap-1">
+        <div className="flex flex-wrap bg-foreground/5 p-1 rounded-lg border border-foreground/10 gap-1">
           {[
             { id: 'coin', label: 'Coin Flip', icon: Coins },
             { id: 'number', label: 'RNG', icon: Hash },
@@ -43,7 +43,7 @@ export default function PickerClient({ iconData, accentColor }: PickerClientProp
               className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-primary text-primary-foreground shadow-lg'
-                  : 'text-muted-foreground hover:text-white hover:bg-white/5'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
               }`}
             >
               <tab.icon className="w-3 h-3 md:w-4 md:h-4" />
@@ -119,26 +119,26 @@ function CoinView() {
           }}
         >
           {/* FRONT FACE (HEADS) */}
-          <div className="absolute inset-0 backface-hidden rounded-full bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-700 border-[12px] border-yellow-600 shadow-inner flex items-center justify-center">
+          <div className="absolute inset-0 backface-hidden rounded-full bg-gradient-to-br from-warning via-warning to-warning border-[12px] border-warning shadow-inner flex items-center justify-center">
             {/* Decorative rings */}
-            <div className="absolute inset-2 border-2 border-yellow-200/50 rounded-full border-dashed opacity-50"></div>
-            <div className="text-4xl font-black text-yellow-100 drop-shadow-md tracking-wider">
+            <div className="absolute inset-2 border-2 border-warning/50 rounded-full border-dashed opacity-50"></div>
+            <div className="text-4xl font-black text-warning drop-shadow-md tracking-wider">
               HEADS
             </div>
             {/* Shine effect */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/30 to-transparent rounded-full"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-foreground/30 to-transparent rounded-full"></div>
           </div>
 
           {/* BACK FACE (TAILS) */}
           <div
-            className="absolute inset-0 backface-hidden rounded-full bg-gradient-to-br from-zinc-300 via-zinc-500 to-zinc-700 border-[12px] border-zinc-600 shadow-inner flex items-center justify-center"
+            className="absolute inset-0 backface-hidden rounded-full bg-gradient-to-br from-foreground/70 via-muted to-foreground/30 border-[12px] border-border shadow-inner flex items-center justify-center"
             style={{ transform: 'rotateX(180deg)' }}
           >
-            <div className="absolute inset-2 border-2 border-white/20 rounded-full opacity-50"></div>
-            <div className="text-4xl font-black text-white drop-shadow-md tracking-wider">
+            <div className="absolute inset-2 border-2 border-foreground/20 rounded-full opacity-50"></div>
+            <div className="text-4xl font-black text-foreground drop-shadow-md tracking-wider">
               TAILS
             </div>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-white/20 to-transparent rounded-full"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-transparent via-foreground/20 to-transparent rounded-full"></div>
           </div>
 
           {/* EDGE (Approximated for performance) */}
@@ -147,7 +147,7 @@ function CoinView() {
 
         {/* Dynamic Shadow */}
         <div
-          className={`absolute -bottom-24 left-1/2 -translate-x-1/2 bg-black/60 blur-2xl rounded-[100%] transition-all duration-[2000ms] ease-in-out-sine ${
+          className={`absolute -bottom-24 left-1/2 -translate-x-1/2 bg-scrim/60 blur-2xl rounded-[100%] transition-all duration-[2000ms] ease-in-out-sine ${
             isFlipping ? 'w-24 h-4 opacity-30 delay-200' : 'w-48 h-8 opacity-80'
           }`}
         />
@@ -155,7 +155,7 @@ function CoinView() {
 
       <div className="space-y-4">
         <div
-          className={`text-2xl font-bold tracking-widest transition-all duration-500 ${result ? 'text-white scale-110' : 'text-transparent scale-90'}`}
+          className={`text-2xl font-bold tracking-widest transition-all duration-500 ${result ? 'text-foreground scale-110' : 'text-transparent scale-90'}`}
         >
           {result || '...'}
         </div>
@@ -163,7 +163,7 @@ function CoinView() {
         <button
           onClick={flip}
           disabled={isFlipping}
-          className="px-16 py-5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-xl rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(var(--primary),0.3)] disabled:opacity-50 disabled:grayscale disabled:pointer-events-none"
+          className="px-16 py-5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-xl rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_color-mix(in_srgb,var(--primary)_30%,transparent)] disabled:opacity-50 disabled:grayscale disabled:pointer-events-none"
         >
           {isFlipping ? 'Tossing...' : 'FLIP COIN'}
         </button>
@@ -230,14 +230,14 @@ function NumberView() {
   return (
     <div className="grid md:grid-cols-2 gap-8">
       <div className="space-y-6">
-        <div className="p-6 bg-white/5 border border-white/10 rounded-xl space-y-4">
+        <div className="p-6 bg-foreground/5 border border-foreground/10 rounded-xl space-y-4">
           <div className="space-y-2">
             <label className="text-xs uppercase font-bold text-muted-foreground">Minimum</label>
             <input
               type="number"
               value={min}
               onChange={(e) => setMin(Number(e.target.value))}
-              className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-primary outline-none font-mono"
+              className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
             />
           </div>
           <div className="space-y-2">
@@ -246,7 +246,7 @@ function NumberView() {
               type="number"
               value={max}
               onChange={(e) => setMax(Number(e.target.value))}
-              className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-primary outline-none font-mono"
+              className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
             />
           </div>
           <button
@@ -265,7 +265,7 @@ function NumberView() {
               {history.map((num, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1 bg-white/5 rounded-full text-xs font-mono text-white/70 border border-white/5"
+                  className="px-3 py-1 bg-foreground/5 rounded-full text-xs font-mono text-foreground/70 border border-foreground/5"
                 >
                   {num}
                 </span>
@@ -276,11 +276,11 @@ function NumberView() {
       </div>
 
       {/* Display */}
-      <div className="flex items-center justify-center bg-black/20 border border-white/10 rounded-xl min-h-[300px] relative overflow-hidden">
+      <div className="flex items-center justify-center bg-scrim/20 border border-foreground/10 rounded-xl min-h-[300px] relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         {result !== null ? (
           <div className="text-center animate-in zoom-in duration-300">
-            <div className="text-8xl font-bold font-mono text-primary drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+            <div className="text-8xl font-bold font-mono text-primary drop-shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_50%,transparent)]">
               {result}
             </div>
             <div className="text-sm text-muted-foreground mt-4 uppercase tracking-widest">
@@ -354,7 +354,7 @@ function ListView() {
           value={items}
           onChange={(e) => setItems(e.target.value)}
           placeholder={'Imran\nHassan\nFaisal\nNoman\nSaad'}
-          className="flex-1 min-h-[250px] w-full bg-black/40 border border-white/10 rounded-lg p-4 text-white focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none font-mono resize-none leading-relaxed whitespace-pre-wrap"
+          className="flex-1 min-h-[250px] w-full bg-scrim/40 border border-foreground/10 rounded-lg p-4 text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none font-mono resize-none leading-relaxed whitespace-pre-wrap"
         />
         <button
           onClick={pickWinner}
@@ -365,7 +365,7 @@ function ListView() {
         </button>
       </div>
 
-      <div className="flex items-center justify-center bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-xl min-h-[300px] relative overflow-hidden">
+      <div className="flex items-center justify-center bg-gradient-to-br from-foreground/5 to-transparent border border-foreground/10 rounded-xl min-h-[300px] relative overflow-hidden">
         {winner ? (
           <div className="text-center p-8 max-w-full">
             <div
@@ -374,13 +374,13 @@ function ListView() {
               {isRolling ? 'Rolling...' : 'The Winner Is'}
             </div>
             <div
-              className={`text-3xl md:text-5xl font-bold text-white break-words ${isRolling ? 'blur-sm' : 'animate-in zoom-in duration-300'}`}
+              className={`text-3xl md:text-5xl font-bold text-foreground break-words ${isRolling ? 'blur-sm' : 'animate-in zoom-in duration-300'}`}
             >
               {winner}
             </div>
             {!isRolling && (
               <div className="mt-8 flex justify-center">
-                <div className="bg-yellow-500/20 text-yellow-500 p-3 rounded-full border border-yellow-500/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] animate-bounce">
+                <div className="bg-warning/20 text-warning p-3 rounded-full border border-warning/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] animate-bounce">
                   <Trophy className="w-8 h-8" />
                 </div>
               </div>

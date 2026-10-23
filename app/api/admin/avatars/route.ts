@@ -8,6 +8,7 @@ import cloudinary, {
 } from '@/lib/cloudinary';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { getResolvedAvatar } from '@/lib/avatar-cache';
 import {
   AvatarError,
   activateAvatar,
@@ -101,7 +102,9 @@ export async function GET(request: Request) {
       await configureCloudinary();
       docs = await Promise.all(docs.map((doc) => migrateLegacyDoc(collection, doc)));
     }
-    return NextResponse.json({ avatars: docs.map(toAvatarView), cloudinaryConfigured });
+    // What visitors see right now, including the GitHub-picture fallback when nothing is uploaded.
+    const effective = await getResolvedAvatar();
+    return NextResponse.json({ avatars: docs.map(toAvatarView), cloudinaryConfigured, effective });
   } catch (error: any) {
     return NextResponse.json(
       { error: 'Failed to fetch avatars', details: error.message },

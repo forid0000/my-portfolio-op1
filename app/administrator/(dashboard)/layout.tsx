@@ -35,8 +35,11 @@ import {
   Rocket,
   Newspaper,
   ListOrdered,
+  PanelTop,
+  PenLine,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/admin/command-palette';
+import FieldErrorBridge from '@/components/admin/field-error-bridge';
 import { OnboardingProvider, TourLauncher } from '@/components/admin/onboarding/provider';
 
 type NavItem = {
@@ -69,6 +72,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/administrator/tech-stacks', label: 'Tech Stacks', icon: Layers },
       { href: '/administrator/services', label: 'Services', icon: Rocket },
       { href: '/administrator/projects', label: 'Projects', icon: Code },
+      { href: '/administrator/articles', label: 'Articles', icon: PenLine },
       { href: '/administrator/publications', label: 'Publications', icon: Newspaper },
       { href: '/administrator/testimonials', label: 'Testimonials', icon: Quote },
       { href: '/administrator/roadmap', label: 'Roadmap', icon: Map },
@@ -81,6 +85,7 @@ const NAV_GROUPS: NavGroup[] = [
     tour: 'nav-customize',
     items: [
       { href: '/administrator/sections', label: 'Sections & Layout', icon: ListOrdered },
+      { href: '/administrator/navigation', label: 'Navigation & Visibility', icon: PanelTop },
       { href: '/administrator/appearance', label: 'Appearance', icon: Palette },
       { href: '/administrator/global', label: 'Global Settings', icon: Settings },
       { href: '/administrator/headings', label: 'Section Texts', icon: Type },
@@ -268,6 +273,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <OnboardingProvider setMenuOpen={setIsMobileMenuOpen}>
+      <FieldErrorBridge />
       <div className="admin-accent flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
         {/* Mobile Top Bar */}
         <div className="md:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 z-40">

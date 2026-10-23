@@ -34,7 +34,7 @@ export default function Skills({
               className="animate-fade-in-up group"
               style={{ animationDelay: `${idx * 100}ms` }}
             >
-              <div className="bg-card/20 border border-border/30 rounded-xl overflow-hidden hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] transition-all duration-500 h-full">
+              <div className="bg-card/20 border border-border/30 rounded-xl overflow-hidden hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_0_30px_color-mix(in_srgb,var(--primary)_10%,transparent)] transition-all duration-500 h-full">
                 {/* Category Header */}
                 <div className="bg-primary/5 border-b border-border/30 px-6 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-2 terminal:font-mono text-primary font-bold tracking-wide">
@@ -64,7 +64,7 @@ export default function Skills({
                           className="h-full bg-primary/80 group-hover:bg-primary relative animate-bar-fill"
                         >
                           {/* Shimmer Effect overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/30 to-transparent w-full -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                         </div>
                       </div>
                     </div>

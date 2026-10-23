@@ -40,7 +40,7 @@ export function KitsNavClient({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
                 isActive
                   ? `${color.bg} ${color.text} ${color.border}`
-                  : 'hover:bg-white/5 border-transparent hover:border-white/10 text-muted-foreground'
+                  : 'hover:bg-foreground/5 border-transparent hover:border-foreground/10 text-muted-foreground'
               }`}
             >
               {renderKitIcon(icons[tool.icon], <ShieldCheck />, 'w-4 h-4')}

@@ -177,7 +177,7 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
         className={`
           ${popoverPositionClass}
           z-50 max-w-[90vw] sm:w-56 ${compact ? 'p-2' : 'p-3'}
-          bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl 
+          bg-foreground/10 border border-border rounded-lg shadow-xl 
           text-xs text-muted-foreground
           transition-all duration-200 ease-in-out
           origin-top-right
@@ -194,10 +194,10 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
               <Globe className="w-3 h-3" />
               {locationLabel ? `${locationLabel} Local` : 'Host Local'}
             </span>
-            <span className="font-mono text-white">{hostTime}</span>
+            <span className="font-mono text-foreground">{hostTime}</span>
           </div>
 
-          <hr className="border-neutral-700/50 my-2" />
+          <hr className="border-border/50 my-2" />
 
           {/* --- Visitor Info --- */}
           <div className="flex justify-between items-center">
@@ -205,31 +205,35 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
               <User className="w-3 h-3" />
               Your Local
             </span>
-            <span className="font-mono text-white">{visitorTime}</span>
+            <span className="font-mono text-foreground">{visitorTime}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="flex items-center gap-1.5 opacity-80">
               <Monitor className="w-3 h-3" />
               Platform
             </span>
-            <span className="font-mono text-white truncate max-w-[80px]">{platform || '...'}</span>
+            <span className="font-mono text-foreground truncate max-w-[80px]">
+              {platform || '...'}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="flex items-center gap-1.5 opacity-80">
               <Languages className="w-3 h-3" />
               Language
             </span>
-            <span className="font-mono text-white truncate max-w-[80px]">{language || '...'}</span>
+            <span className="font-mono text-foreground truncate max-w-[80px]">
+              {language || '...'}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="flex items-center gap-1.5 opacity-80">
               <Zap className="w-3 h-3" />
               Page Load
             </span>
-            <span className="font-mono text-white">{formatLoadTime(pageLoadTime)}</span>
+            <span className="font-mono text-foreground">{formatLoadTime(pageLoadTime)}</span>
           </div>
 
-          <hr className="border-neutral-700/50 my-2" />
+          <hr className="border-border/50 my-2" />
 
           {/* --- Total Uptime Row --- */}
           <div className="flex justify-between items-center">
@@ -237,7 +241,7 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
               <History className="w-3 h-3" />
               Total Time
             </span>
-            <span className="font-mono text-white">{formatUptime(totalUptime)}</span>
+            <span className="font-mono text-foreground">{formatUptime(totalUptime)}</span>
           </div>
 
           <div className="flex justify-between items-center">
@@ -245,7 +249,7 @@ export default function SiteFakeUptime({ compact = false, timeZone = 'UTC', loca
               <Eye className="w-3 h-3" />
               Page Visits
             </span>
-            <span className="font-mono text-white">{pageVisits}</span>
+            <span className="font-mono text-foreground">{pageVisits}</span>
           </div>
         </div>
       </div>

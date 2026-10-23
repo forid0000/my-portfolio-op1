@@ -13,6 +13,13 @@ interface AvatarSummary {
   isActive: boolean;
 }
 
+/** What visitors see right now (an upload, the GitHub picture, or the placeholder). */
+interface EffectiveAvatar {
+  url: string;
+  source: 'upload' | 'github' | 'placeholder';
+  githubUsername?: string;
+}
+
 /**
  * Profile picture control for the Hero Section editor. Uploads apply immediately (they
  * do not wait for the page's Save button), because the picture is shared chrome: the
@@ -20,6 +27,7 @@ interface AvatarSummary {
  */
 export function ProfilePictureCard() {
   const [active, setActive] = useState<AvatarSummary | null>(null);
+  const [effective, setEffective] = useState<EffectiveAvatar | null>(null);
   const [connected, setConnected] = useState(true);
   const [loaded, setLoaded] = useState(false);
   // The live picture's file can be gone from Cloudinary; show the empty state instead of a broken image.
@@ -32,6 +40,7 @@ export function ProfilePictureCard() {
       if (!res.ok || !data || !Array.isArray(data.avatars)) return;
       setConnected(data.cloudinaryConfigured !== false);
       setActive((data.avatars as AvatarSummary[]).find((a) => a.isActive) ?? null);
+      setEffective(data.effective ?? null);
       setImageFailed(false);
     } finally {
       setLoaded(true);
@@ -42,13 +51,17 @@ export function ProfilePictureCard() {
     void load();
   }, [load]);
 
+  // An upload wins; otherwise show the GitHub picture that visitors are seeing instead.
+  const shownUrl =
+    active?.secure_url ?? (effective?.source === 'github' ? effective.url : undefined);
+
   return (
     <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
       <div className="flex flex-col gap-5 sm:flex-row">
         <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl border border-gray-800 bg-gray-950">
-          {active?.secure_url && !imageFailed ? (
+          {shownUrl && !imageFailed ? (
             <Image
-              src={active.secure_url}
+              src={shownUrl}
               alt="Current profile picture"
               fill
               unoptimized
@@ -65,9 +78,11 @@ export function ProfilePictureCard() {
           <div>
             <h3 className="text-base font-semibold text-gray-100">Profile picture</h3>
             <p className="text-sm text-gray-400">
-              {loaded && !active
-                ? 'No picture yet, so a placeholder is shown. Upload yours below.'
-                : 'Shown in the hero, the top-left of every page, the browser tab and link previews.'}
+              {loaded && !active && effective?.source === 'github'
+                ? `No upload yet, so your public GitHub picture (@${effective.githubUsername}) is shown. Upload one below to replace it.`
+                : loaded && !active
+                  ? 'No picture yet, so a placeholder is shown. Upload yours below, or add your GitHub profile link in Global Settings to use your GitHub picture.'
+                  : 'Shown in the hero, the top-left of every page, the browser tab and link previews.'}
             </p>
           </div>
           <AvatarUploader

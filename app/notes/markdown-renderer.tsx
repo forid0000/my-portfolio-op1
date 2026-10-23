@@ -27,9 +27,9 @@ const components: Components = {
   pre: ({ children }) => (
     <pre className="bg-card border border-border rounded-xl overflow-hidden my-4 shadow-sm">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-muted/30">
-        <span className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
-        <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
-        <span className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
+        <span className="w-2.5 h-2.5 rounded-full bg-destructive/70" />
+        <span className="w-2.5 h-2.5 rounded-full bg-warning/70" />
+        <span className="w-2.5 h-2.5 rounded-full bg-success/70" />
       </div>
       <div className="p-4 overflow-x-auto text-sm font-mono text-foreground/90 leading-relaxed">
         {children}

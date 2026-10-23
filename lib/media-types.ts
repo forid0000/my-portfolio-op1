@@ -33,7 +33,8 @@ export interface MediaRef {
   kind: MediaKind;
 }
 
-export type MediaScope = 'avatars' | 'projects' | 'certifications' | 'testimonials' | 'services';
+export type MediaScope =
+  'avatars' | 'projects' | 'certifications' | 'testimonials' | 'services' | 'articles';
 
 export interface MediaScopeConfig {
   /** Cloudinary folder; every public_id of the scope must start with `${folder}/`. */
@@ -64,6 +65,11 @@ export const MEDIA_SCOPES: Record<MediaScope, MediaScopeConfig> = {
     folder: 'sections/services',
     allowVideo: false,
     imageTransformation: 'c_limit,w_1600,h_1600',
+  },
+  articles: {
+    folder: 'sections/articles',
+    allowVideo: true,
+    imageTransformation: 'c_limit,w_2400,h_2400',
   },
 };
 

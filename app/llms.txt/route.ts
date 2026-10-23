@@ -3,6 +3,7 @@ import { getGlobalContent } from '@/lib/site';
 import { mergeKitsContent } from '@/lib/kits-registry';
 import { DEFAULT_DEVTO_USERNAME, SYSTEM_DEFAULTS } from '@/lib/content-defaults';
 import { SITE_HOST, SITE_URL } from '@/lib/site-config';
+import { getPublishedArticles } from '@/lib/articles';
 
 // ISR instead of force-dynamic: this file changes rarely and pulls from Dev.to
 // (external), so cache and refresh every 30 min rather than rendering per hit.
@@ -81,7 +82,16 @@ export async function GET() {
   const devToUsername = ((headingsDoc?.devToUsername as string) || DEFAULT_DEVTO_USERNAME).trim();
   const canonicalTarget = headingsDoc?.articlesCanonicalTarget === 'self' ? 'self' : 'devto';
 
-  const [articles, notes] = await Promise.all([getDevToArticles(devToUsername), getPublicNotes()]);
+  const [devtoArticles, ownArticles, notes] = await Promise.all([
+    getDevToArticles(devToUsername),
+    getPublishedArticles(15),
+    getPublicNotes(),
+  ]);
+  const ownSlugs = new Set(ownArticles.map((a) => a.slug));
+  const articles = [
+    ...ownArticles.map((a) => ({ title: a.title, slug: a.slug })),
+    ...devtoArticles.filter((p) => !ownSlugs.has(p.slug)),
+  ];
 
   const seoTitle = (systemDoc?.seoTitle as string) || SYSTEM_DEFAULTS.seoTitle;
   const seoDescription = (systemDoc?.seoDescription as string) || SYSTEM_DEFAULTS.seoDescription;
@@ -169,10 +179,11 @@ export async function GET() {
     ? notes.map((n: any) => `- [${n.title}](${SITE_URL}/notes/${n.slug})`).join('\n')
     : '- No public notes published yet.';
 
-  const articlesSourceNote =
-    canonicalTarget === 'self'
+  const articlesSourceNote = !devToUsername
+    ? `Articles are written and published on ${SITE_HOST}.`
+    : canonicalTarget === 'self'
       ? `Articles are cross-published to Dev.to, but ${SITE_HOST} is the canonical source.`
-      : 'Articles are authored on Dev.to first and mirrored here; Dev.to is the canonical source for search engines. Reactions, comments, and discussion happen on Dev.to.';
+      : `Articles written on ${SITE_HOST} are canonical here; those mirrored from Dev.to keep Dev.to as their canonical source.`;
 
   const body = `# ${seoTitle}
 

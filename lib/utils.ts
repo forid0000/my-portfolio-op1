@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { describePath, friendlyMessage, parseIssues } from '@/lib/field-errors';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,6 +22,14 @@ export function utcOffsetLabel(timeZone: string, date: Date = new Date()): strin
 
 /** Extracts a human-readable message from an admin API error response body. */
 export function extractApiErrorMessage(errorData: any, fallback = 'Failed to save'): string {
+  // Validation problems read as "Field name: what is wrong", one per line.
+  const issues = parseIssues(errorData);
+  if (issues.length) {
+    return issues
+      .slice(0, 3)
+      .map((issue) => `${describePath(issue.path)}: ${friendlyMessage(issue)}`)
+      .join(' · ');
+  }
   if (Array.isArray(errorData?.details)) {
     return errorData.details.map((d: any) => d?.message || String(d)).join(', ') || fallback;
   }

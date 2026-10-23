@@ -12,6 +12,7 @@ import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { isSafeHref } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 
 interface ProjectLink {
   label: string;
@@ -180,22 +181,29 @@ export default function ProjectsCMS() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    for (const proj of projects) {
-      if (!proj.title.trim()) {
-        toast.error('Every project needs a title.');
-        return;
-      }
-      for (const link of proj.links) {
-        if (!link.label.trim() || !isSafeHref(link.url)) {
-          toast.error(
-            `"${proj.title}": every link needs a label and a full address such as https://example.com`
-          );
-          return;
-        }
-      }
-    }
+    // Check before sending, and show exactly which field needs attention.
+    const required = { code: 'too_small', origin: 'string', minimum: 1, message: 'Required' };
+    const badAddress = {
+      code: 'invalid_format',
+      format: 'url',
+      message: 'Enter a full web address, like https://example.com',
+    };
+    const issues: FieldIssue[] = [];
+    projects.forEach((proj, i) => {
+      if (!proj.title.trim()) issues.push({ ...required, path: ['projects', i, 'title'] });
+      proj.links.forEach((link, j) => {
+        if (!link.label.trim())
+          issues.push({ ...required, path: ['projects', i, 'links', j, 'label'] });
+        if (!isSafeHref(link.url))
+          issues.push({ ...badAddress, path: ['projects', i, 'links', j, 'url'] });
+      });
+    });
     if (state.ctaUrl.trim() && !isSafeHref(state.ctaUrl)) {
-      toast.error('The "view all" button needs a full address such as https://example.com');
+      issues.push({ ...badAddress, path: ['ctaUrl'] });
+    }
+    if (issues.length) {
+      const { summary } = reportFieldIssues(issues, { projects, ctaUrl: state.ctaUrl });
+      toast.error('Please fix the highlighted fields', { description: summary });
       return;
     }
 
@@ -291,6 +299,7 @@ export default function ProjectsCMS() {
               <input
                 type="text"
                 value={state.ctaLabel}
+                data-field="ctaLabel"
                 onChange={(e) => setState((s) => ({ ...s, ctaLabel: e.target.value }))}
                 placeholder="View all work"
                 className={inputClass}
@@ -301,6 +310,7 @@ export default function ProjectsCMS() {
               <input
                 type="text"
                 value={state.ctaUrl}
+                data-field="ctaUrl"
                 onChange={(e) => setState((s) => ({ ...s, ctaUrl: e.target.value }))}
                 placeholder="https://..."
                 className={inputClass}
@@ -379,6 +389,7 @@ export default function ProjectsCMS() {
                           <input
                             type="text"
                             value={proj.title}
+                            data-field={`projects.${idx}.title`}
                             onChange={(e) => patchProject(idx, { title: e.target.value })}
                             placeholder="e.g. Brand identity for a coffee roaster"
                             className={`${inputClass} font-semibold`}
@@ -392,6 +403,7 @@ export default function ProjectsCMS() {
                         </label>
                         <textarea
                           value={proj.description}
+                          data-field={`projects.${idx}.description`}
                           onChange={(e) => patchProject(idx, { description: e.target.value })}
                           rows={4}
                           className={`${inputClass} px-4 py-3 resize-y leading-relaxed`}
@@ -408,6 +420,7 @@ export default function ProjectsCMS() {
                               <input
                                 type="text"
                                 value={link.label}
+                                data-field={`projects.${idx}.links.${lIdx}.label`}
                                 onChange={(e) => patchLink(idx, lIdx, { label: e.target.value })}
                                 placeholder="Label"
                                 aria-label="Link label"
@@ -416,6 +429,7 @@ export default function ProjectsCMS() {
                               <input
                                 type="text"
                                 value={link.url}
+                                data-field={`projects.${idx}.links.${lIdx}.url`}
                                 onChange={(e) => patchLink(idx, lIdx, { url: e.target.value })}
                                 placeholder="https://..."
                                 aria-label="Link address"

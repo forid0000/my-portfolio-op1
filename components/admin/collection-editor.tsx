@@ -9,6 +9,7 @@ import { SortableItem } from '@/components/sortable-item';
 import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 
 export interface CollectionItem {
   _id?: string;
@@ -24,6 +25,8 @@ interface CollectionEditorProps<T extends CollectionItem> {
   emptyItem: () => Omit<T, '_id' | 'order'>;
   getItemLabel: (item: T, index: number) => string;
   renderFields: (item: T, onChange: (field: string, value: any) => void) => React.ReactNode;
+  /** Fields every item must fill in: the first empty one is scrolled to and outlined in red. */
+  requiredFields?: string[];
   validateItem?: (item: T) => string | null;
 }
 
@@ -45,6 +48,7 @@ export function CollectionEditor<T extends CollectionItem>({
   emptyItem,
   getItemLabel,
   renderFields,
+  requiredFields,
   validateItem,
 }: CollectionEditorProps<T>) {
   const [items, setItems] = useState<T[]>([]);
@@ -110,6 +114,27 @@ export function CollectionEditor<T extends CollectionItem>({
   };
 
   const handleSubmit = async () => {
+    if (requiredFields?.length) {
+      const issues: FieldIssue[] = [];
+      items.forEach((item, i) =>
+        requiredFields.forEach((key) => {
+          if (!String(item[key] ?? '').trim()) {
+            issues.push({
+              path: [i, key],
+              code: 'too_small',
+              origin: 'string',
+              minimum: 1,
+              message: 'Required',
+            });
+          }
+        })
+      );
+      if (issues.length) {
+        const { summary } = reportFieldIssues(issues, items);
+        toast.error('Please fix the highlighted fields', { description: summary });
+        return;
+      }
+    }
     if (validateItem) {
       for (const item of items) {
         const error = validateItem(item);

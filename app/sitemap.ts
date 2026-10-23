@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import connectToDatabase from '@/lib/db';
 import { DEFAULT_DEVTO_USERNAME } from '@/lib/content-defaults';
 import { SITE_URL } from '@/lib/site-config';
+import { getPublishedArticles } from '@/lib/articles';
 
 // Sitemap generation calls the Dev.to API - cache it so crawler traffic
 // (which hits /sitemap.xml far more often than a human ever would) doesn't
@@ -84,8 +85,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : route === '/articles' ? 0.9 : 0.8,
   }));
 
-  // Dynamic blog posts
-  const posts = await getBlogPosts();
+  // Articles written on this site, then the optional Dev.to feed (written ones win on a clash).
+  const own = await getPublishedArticles();
+  const ownRoutes = own.map((article) => ({
+    url: `${baseUrl}/articles/${article.slug}`,
+    lastModified: new Date(article.updatedAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+  const ownSlugs = new Set(own.map((a) => a.slug));
+  const posts = (await getBlogPosts()).filter((post) => !ownSlugs.has(post.slug));
   const blogRoutes = posts.map((post) => ({
     url: `${baseUrl}/articles/${post.slug}`,
     lastModified: new Date(post.published_at),
@@ -102,5 +111,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...blogRoutes, ...noteRoutes];
+  return [...staticRoutes, ...ownRoutes, ...blogRoutes, ...noteRoutes];
 }

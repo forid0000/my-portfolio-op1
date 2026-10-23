@@ -75,7 +75,7 @@ export default function FloatingContact({
             ${
               isOpen
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-gray-800 bg-card text-primary hover:border-primary/50'
+                : 'border-border bg-card text-primary hover:border-primary/50'
             }
           `}
         >
@@ -104,30 +104,30 @@ export default function FloatingContact({
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/40 z-40 animate-fade-in-up"
+            className="fixed inset-0 bg-scrim/40 z-40 animate-fade-in-up"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Connect Panel */}
           <div className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-72 md:w-80 md:right-10 md:bottom-28 z-50 floating-contact-enter">
-            <div className="bg-card border border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]">
+            <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]">
               {/* Header */}
-              <div className="flex items-center justify-between p-3 md:p-4 border-b border-gray-800 shrink-0">
+              <div className="flex items-center justify-between p-3 md:p-4 border-b border-border shrink-0">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <ShieldCheck className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white leading-tight">
+                    <h3 className="text-base font-semibold text-foreground leading-tight">
                       {data.heading}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{data.subtext}</p>
+                    <p className="text-xs text-muted-foreground">{data.subtext}</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors active:scale-95"
+                  className="p-2 hover:bg-foreground/10 rounded-lg transition-colors active:scale-95"
                   aria-label="Close contact menu"
                 >
                   <X className="w-5 h-5 text-foreground/70" />
@@ -141,25 +141,25 @@ export default function FloatingContact({
                     <div
                       key={`${contact.label}-${idx}`}
                       className={`
-                      group relative p-2.5 rounded-lg border border-gray-800 bg-gray-900
-                      transition-colors duration-200 hover:bg-gray-800 hover:border-gray-700
+                      group relative p-2.5 rounded-lg border border-border bg-foreground/5
+                      transition-colors duration-200 hover:bg-foreground/10 hover:border-primary/40
                       cursor-pointer
                     `}
                       onClick={() => handleDirectClick(contact.href)}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="p-2 rounded-lg bg-gray-800 text-primary shrink-0">
+                          <div className="p-2 rounded-lg bg-foreground/10 text-primary shrink-0">
                             <SocialIcon name={contact.icon} icons={icons} className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                              <span className="text-sm font-semibold text-foreground truncate">
                                 {contact.label}
                               </span>
-                              <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                             </div>
-                            <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {contact.value}
                             </p>
                           </div>
@@ -172,16 +172,16 @@ export default function FloatingContact({
                             handleCopy(contact.copyValue, idx, contact.label);
                           }}
                           className="
-                          p-2 rounded-lg bg-gray-800 border border-gray-700
-                          hover:bg-gray-700 transition-colors duration-200
+                          p-2 rounded-lg bg-foreground/10 border border-border
+                          hover:bg-foreground/15 transition-colors duration-200
                           shrink-0 active:scale-95
                         "
                           title={`Copy ${contact.label}`}
                         >
                           {copiedId === idx ? (
-                            <Check className="w-4 h-4 text-green-500" />
+                            <Check className="w-4 h-4 text-success" />
                           ) : (
-                            <Copy className="w-4 h-4 text-gray-300" />
+                            <Copy className="w-4 h-4 text-foreground/80" />
                           )}
                         </button>
                       </div>
@@ -191,8 +191,8 @@ export default function FloatingContact({
               </div>
 
               {/* Footer */}
-              <div className="p-2.5 border-t border-gray-800 bg-gray-900 space-y-2 shrink-0">
-                <div className="flex items-center justify-center text-[11px] text-gray-500">
+              <div className="p-2.5 border-t border-border bg-foreground/5 space-y-2 shrink-0">
+                <div className="flex items-center justify-center text-[11px] text-muted-foreground">
                   <span>{data.footerText}</span>
                 </div>
 

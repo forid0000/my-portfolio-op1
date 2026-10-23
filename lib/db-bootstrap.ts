@@ -16,7 +16,7 @@ const DB_NAME = 'portfolio_cms';
 const STATE_KEY = 'schema_version';
 
 /** Bump when INDEXES or a repair step changes, so existing databases pick it up. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** The few driver methods the setup uses, so it can be tested without a database. */
 interface SetupCollection {
@@ -55,6 +55,8 @@ const ORDERED_COLLECTIONS = [
  *    isActive: true), so two racing "set active" calls can never leave two live pictures; avatars
  *    also keep one entry per Cloudinary file.
  *  - the list sections: the `order` sort every public read uses.
+ *  - articles: a unique address (slug) per article and the "newest published first" listing;
+ *    comments by article and moderation status; at most one reaction of each kind per visitor.
  */
 export const INDEXES: IndexSpec[] = [
   { collection: 'settings', keys: { key: 1 }, options: { unique: true } },
@@ -72,6 +74,15 @@ export const INDEXES: IndexSpec[] = [
     options: { unique: true, partialFilterExpression: { public_id: { $type: 'string' } } },
   },
   ...ORDERED_COLLECTIONS.map((collection): IndexSpec => ({ collection, keys: { order: 1 } })),
+  { collection: 'articles', keys: { slug: 1 }, options: { unique: true } },
+  { collection: 'articles', keys: { status: 1, publishedAt: -1 } },
+  { collection: 'article_comments', keys: { articleId: 1, status: 1, createdAt: -1 } },
+  { collection: 'article_comments', keys: { status: 1, createdAt: -1 } },
+  {
+    collection: 'article_reactions',
+    keys: { articleId: 1, visitor: 1, kind: 1 },
+    options: { unique: true },
+  },
 ];
 
 /**

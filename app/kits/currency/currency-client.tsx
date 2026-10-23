@@ -140,10 +140,10 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
         {headingIcon} Currency Converter
       </h2>
 
-      <div className="info-card border-primary/20 bg-gradient-to-br from-white/5 to-transparent relative overflow-hidden">
+      <div className="info-card border-primary/20 bg-gradient-to-br from-foreground/5 to-transparent relative overflow-hidden">
         {/* Error Message */}
         {error && (
-          <div className="absolute top-0 left-0 w-full bg-red-500/10 text-red-400 text-xs py-1 px-4 flex items-center gap-2 border-b border-red-500/20">
+          <div className="absolute top-0 left-0 w-full bg-destructive/10 text-destructive text-xs py-1 px-4 flex items-center gap-2 border-b border-destructive/20">
             <AlertCircle className="w-3 h-3" /> {error}
           </div>
         )}
@@ -157,10 +157,10 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
               <select
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
+                className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
               >
                 {currencyList.map((c) => (
-                  <option key={c} value={c} className="bg-zinc-950 text-white">
+                  <option key={c} value={c} className="bg-background text-foreground">
                     {c}
                   </option>
                 ))}
@@ -175,7 +175,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
           {/* Swap Button */}
           <button
             onClick={handleSwap}
-            className="mt-6 p-3 rounded-full bg-white/5 hover:bg-primary/20 hover:text-primary border border-white/5 hover:border-primary/30 transition-all duration-300 group"
+            className="mt-6 p-3 rounded-full bg-foreground/5 hover:bg-primary/20 hover:text-primary border border-foreground/5 hover:border-primary/30 transition-all duration-300 group"
             title="Swap Currencies"
           >
             <ArrowRightLeft className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -188,10 +188,10 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
               <select
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
+                className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
               >
                 {currencyList.map((c) => (
-                  <option key={c} value={c} className="bg-zinc-950 text-white">
+                  <option key={c} value={c} className="bg-background text-foreground">
                     {c}
                   </option>
                 ))}
@@ -210,7 +210,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
             type="number"
             value={amountStr}
             onChange={(e) => setAmountStr(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-3xl font-bold text-center focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-white/10"
+            className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-4 text-3xl font-bold text-center focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-foreground/10"
             placeholder="0.00"
           />
         </div>
@@ -231,10 +231,10 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
             <div className="text-4xl md:text-5xl font-bold text-primary font-mono tracking-tight break-all">
               {convertedAmount}
             </div>
-            <div className="text-lg font-bold text-white/50">{to}</div>
+            <div className="text-lg font-bold text-foreground/50">{to}</div>
           </div>
 
-          <div className="text-xs text-muted-foreground mt-6 pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-2">
+          <div className="text-xs text-muted-foreground mt-6 pt-4 border-t border-foreground/5 flex flex-col md:flex-row justify-between items-center gap-2">
             <span>
               1 {from} = {rate ? rate.toFixed(4) : '...'} {to}
             </span>

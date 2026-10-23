@@ -63,16 +63,16 @@ export default function NotFoundClient({ config }: { config: any }) {
           className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl overflow-hidden animate-fade-in-up-notfound"
           style={{
             /* This shadow is a much subtler, static glow */
-            boxShadow: '0 0 25px rgba(52, 211, 153, 0.15)', // Softer glow from --primary
+            boxShadow: '0 0 25px color-mix(in srgb, var(--primary) 15%, transparent)', // Softer glow from --primary
             animationDelay: '0.1s',
           }}
         >
           {/* Terminal Header Bar */}
           <div className="flex items-center justify-between p-3 bg-border/20 border-b border-border">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-[#f87171] rounded-full"></span>
-              <span className="w-3 h-3 bg-[#facc15] rounded-full"></span>
-              <span className="w-3 h-3 bg-[#34d399] rounded-full"></span>
+              <span className="w-3 h-3 bg-destructive rounded-full"></span>
+              <span className="w-3 h-3 bg-warning rounded-full"></span>
+              <span className="w-3 h-3 bg-success rounded-full"></span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Terminal className="w-4 h-4" />

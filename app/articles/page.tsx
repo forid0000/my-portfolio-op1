@@ -1,30 +1,26 @@
-// /app/blog/page.tsx
-
-// ISR instead of force-dynamic: Dev.to content is external (can't be purely
-// on-demand), so cache the rendered page and refresh every 30 min. Crawlers then
-// hit cached HTML instead of re-rendering per request (Fluid Active CPU win).
+// The list mixes articles written on this site (refreshed on demand whenever one is saved) with an
+// optional Dev.to feed, which is external and cannot be purely on-demand, so the page also
+// refreshes every 30 minutes. Crawlers then hit cached HTML instead of re-rendering per request.
 export const revalidate = 1800;
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { format } from 'date-fns';
-import { Terminal, Calendar, Clock, Heart, MessageCircle, Hash } from 'lucide-react';
+import { Rss } from 'lucide-react';
 import type { Metadata } from 'next';
-import FeaturedCarousel from '@/components/blog/featured-carousel'; // <--- IMPORT THIS
-import connectToDatabase from '@/lib/db';
+import { notFound } from 'next/navigation';
+import FeaturedCarousel from '@/components/blog/featured-carousel';
+import ArticlesIndex from '@/components/articles/articles-index';
 import { safeJsonLd } from '@/lib/json-ld';
-import { DEFAULT_DEVTO_USERNAME } from '@/lib/content-defaults';
+import { ARTICLE_TEXT_DEFAULTS } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
 import { SITE_URL } from '@/lib/site-config';
+import { getActiveAvatarUrl } from '@/lib/avatar-cache';
+import { getLayoutSections, isSectionEnabled } from '@/lib/sections-registry';
+import { getArticleTexts, getPublishedArticles } from '@/lib/articles';
+import { withTransformation } from '@/lib/cloudinary-url';
+import type { ArticleCardItem } from '@/lib/articles-model';
+import { ByStyle } from '@/components/by-style';
 
-// === TYPES ===
-interface User {
-  name: string;
-  username: string;
-  profile_image_90: string;
-}
-
-interface BlogPost {
+// === Dev.to (optional) ===
+interface DevToPost {
   id: number;
   title: string;
   description: string;
@@ -35,27 +31,19 @@ interface BlogPost {
   cover_image: string | null;
   public_reactions_count: number;
   comments_count: number;
-  user: User;
-  url: string;
+  user: { name: string; profile_image_90: string };
 }
 
-// === API FETCH ===
-async function getBlogPosts(username: string): Promise<BlogPost[]> {
-  // No username configured (Admin -> Section Texts): show the empty state
-  // instead of querying Dev.to, whose API would return other people's posts.
+async function getDevToPosts(username: string): Promise<DevToPost[]> {
+  // No username configured (Admin -> Section Texts): do not query Dev.to, whose API would return
+  // other people's posts for an empty username.
   if (!username) return [];
-
   try {
     const res = await fetch(
       `https://dev.to/api/articles?username=${encodeURIComponent(username)}`,
       { next: { revalidate: 1800 } }
     );
-
-    if (!res.ok) {
-      console.error('Failed to fetch Dev.to posts');
-      return [];
-    }
-
+    if (!res.ok) return [];
     return res.json();
   } catch (error) {
     console.error('Failed to reach Dev.to', error);
@@ -63,88 +51,102 @@ async function getBlogPosts(username: string): Promise<BlogPost[]> {
   }
 }
 
+async function getItems(devToUsername: string) {
+  const [native, devto, identity, avatar] = await Promise.all([
+    getPublishedArticles(),
+    getDevToPosts(devToUsername),
+    getSiteIdentity(),
+    getActiveAvatarUrl(),
+  ]);
+  const author = { name: identity.personName, image: avatar };
+
+  const own: ArticleCardItem[] = native.map((a) => ({
+    key: `own-${a.id}`,
+    href: `/articles/${a.slug}`,
+    title: a.title,
+    description: a.excerpt,
+    cover: a.cover
+      ? withTransformation(a.cover.src, 'c_fill,g_auto,w_1200,h_675,q_auto,f_auto')
+      : null,
+    tags: a.tags,
+    publishedAt: a.publishedAt,
+    minutes: a.readingMinutes,
+    reactions: Object.values(a.reactionTotals).reduce((x, y) => x + y, 0),
+    comments: a.commentCount,
+    author,
+    source: 'native',
+  }));
+  const taken = new Set(native.map((a) => a.slug));
+  const external: ArticleCardItem[] = devto
+    .filter((p) => !taken.has(p.slug))
+    .map((p) => ({
+      key: `devto-${p.id}`,
+      href: `/articles/${p.slug}`,
+      title: p.title,
+      description: p.description,
+      cover: p.cover_image,
+      tags: p.tag_list,
+      publishedAt: p.published_at,
+      minutes: p.reading_time_minutes,
+      reactions: p.public_reactions_count,
+      comments: p.comments_count,
+      author: { name: p.user.name, image: p.user.profile_image_90 },
+      source: 'devto',
+    }));
+
+  const items = [...own, ...external].sort(
+    (a, b) => Date.parse(b.publishedAt ?? '') - Date.parse(a.publishedAt ?? '')
+  );
+  return { items, identity };
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  let devToUsername: string = DEFAULT_DEVTO_USERNAME;
-  let canonicalTarget: 'devto' | 'self' = 'devto';
-  try {
-    const db = await connectToDatabase();
-    const doc = await db.connection.client
-      .db('portfolio_cms')
-      .collection('homepage')
-      .findOne({ type: 'headings_content' });
-    if (doc?.devToUsername) devToUsername = doc.devToUsername;
-    if (doc?.articlesCanonicalTarget === 'self') canonicalTarget = 'self';
-  } catch (error) {}
+  const [{ texts, canonicalTarget }, identity] = await Promise.all([
+    getArticleTexts(),
+    getSiteIdentity(),
+  ]);
+  const { items } = await getItems(texts.devToUsername);
+  const cover = items.find((i) => i.cover)?.cover ?? null;
 
-  const [posts, identity] = await Promise.all([getBlogPosts(devToUsername), getSiteIdentity()]);
-
-  // The root layout's title template appends the site name to `title`.
-  const title = 'Articles';
-  const socialTitle = `Articles | ${identity.siteName}`;
-  const description =
-    'Technical articles, tutorials, and insights on Full-Stack Development & DevOps.';
+  const title = texts.articlesHeading || 'Articles';
+  const socialTitle = `${title} | ${identity.siteName}`;
+  const description = texts.articlesSubtext || ARTICLE_TEXT_DEFAULTS.articlesSubtext;
   const localUrl = `${SITE_URL}/articles`;
-  const devToProfile = `https://dev.to/${devToUsername}`;
+  const onlyDevTo = items.length > 0 && items.every((i) => i.source === 'devto');
 
   return {
     title,
     description,
-    keywords: ['blog', 'full-stack development', 'devops', 'coding'],
     authors: [{ name: identity.personName }],
     alternates: {
-      canonical: canonicalTarget === 'self' || !devToUsername ? localUrl : devToProfile,
+      canonical:
+        canonicalTarget === 'self' || !onlyDevTo || !texts.devToUsername
+          ? localUrl
+          : `https://dev.to/${texts.devToUsername}`,
+      types: { 'application/rss+xml': `${SITE_URL}/articles/rss.xml` },
     },
     openGraph: {
       title: socialTitle,
       description,
       url: localUrl,
-      images: posts[0]?.cover_image ? [{ url: posts[0].cover_image, alt: posts[0].title }] : [],
+      images: cover ? [{ url: cover, alt: title }] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title: socialTitle,
       description,
-      images: posts[0]?.cover_image ? [posts[0].cover_image] : [],
+      images: cover ? [cover] : [],
     },
   };
 }
 
-// === MAIN PAGE COMPONENT ===
-export default async function BlogPage() {
-  let textContent = {
-    articlesBadge: 'Fetching Articles From Online...',
-    articlesHeading: 'articles',
-    articlesSubtext: 'Documenting my journey through code, infrastructure, and bugs.',
-    articlesRecentUploads: 'Recent Uploads',
-    articlesEmptyAPI: 'No packets received. API might be down.',
-    devToUsername: DEFAULT_DEVTO_USERNAME as string,
-  };
+export default async function ArticlesPage() {
+  const sections = await getLayoutSections();
+  if (!isSectionEnabled(sections, 'articles')) notFound();
 
-  try {
-    const db = await connectToDatabase();
-    const doc = await db.connection.client
-      .db('portfolio_cms')
-      .collection('homepage')
-      .findOne({ type: 'headings_content' });
-    if (doc) {
-      if (doc.articlesBadge) textContent.articlesBadge = doc.articlesBadge;
-      if (doc.articlesHeading) textContent.articlesHeading = doc.articlesHeading;
-      if (doc.articlesSubtext) textContent.articlesSubtext = doc.articlesSubtext;
-      if (doc.articlesRecentUploads) textContent.articlesRecentUploads = doc.articlesRecentUploads;
-      if (doc.articlesEmptyAPI) textContent.articlesEmptyAPI = doc.articlesEmptyAPI;
-      if (doc.devToUsername) textContent.devToUsername = doc.devToUsername;
-    }
-  } catch (error) {
-    console.error('Failed to fetch dynamic text', error);
-  }
-
-  const [posts, identity] = await Promise.all([
-    getBlogPosts(textContent.devToUsername),
-    getSiteIdentity(),
-  ]);
-
-  // Get top 5 posts for the slider
-  const featuredPosts = posts.slice(0, 5);
+  const { texts } = await getArticleTexts();
+  const { items, identity } = await getItems(texts.devToUsername);
+  const featured = items.filter((i) => i.cover).slice(0, 5);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -152,32 +154,24 @@ export default async function BlogPage() {
       {
         '@type': 'CollectionPage',
         '@id': `${SITE_URL}/articles`,
-        name: `Articles | ${identity.siteName}`,
-        description:
-          'Technical articles, tutorials, and insights on Full-Stack Development & DevOps.',
+        name: `${texts.articlesHeading} | ${identity.siteName}`,
+        description: texts.articlesSubtext,
         url: `${SITE_URL}/articles`,
-        isPartOf: {
-          '@id': `${SITE_URL}/#website`,
-        },
-        hasPart: posts.map((post) => ({
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        hasPart: items.map((item) => ({
           '@type': 'Article',
-          headline: post.title,
-          url: `${SITE_URL}/articles/${post.slug}`,
+          headline: item.title,
+          url: `${SITE_URL}${item.href}`,
         })),
       },
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: SITE_URL,
-          },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'Articles',
+            name: texts.articlesHeading,
             item: `${SITE_URL}/articles`,
           },
         ],
@@ -188,154 +182,51 @@ export default async function BlogPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
-      {/* === HEADER SECTION === */}
-      <div className="mb-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono mb-2">
-              {textContent.articlesBadge}
-            </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight font-mono">
-              ~/{textContent.articlesHeading}
-              <span className="animate-pulse text-primary">_</span>
-            </h1>
-
-            <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-              <span className="text-primary font-mono mr-2">&gt;</span>
-              {textContent.articlesSubtext}
-            </p>
-          </div>
-
-          <div className="hidden md:flex flex-col items-end gap-2 text-sm font-mono text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4" />
-              <span>Total Posts: {posts.length}</span>
+      <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-4">
+          {texts.articlesBadge && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium terminal:font-mono">
+              {texts.articlesBadge}
             </div>
-            <div className="h-px w-24 bg-border/50" />
-            <div className="">
-              Latest:{' '}
-              {posts[0]?.published_at ? format(new Date(posts[0].published_at), 'MMM d') : 'N/A'}
-            </div>
-          </div>
+          )}
+          <h1
+            dir="auto"
+            className="text-4xl md:text-6xl font-bold tracking-tight terminal:font-mono"
+          >
+            <ByStyle
+              clean={texts.articlesHeading}
+              terminal={
+                <>
+                  ~/{texts.articlesHeading.toLowerCase()}
+                  <span className="animate-pulse text-primary">_</span>
+                </>
+              }
+            />
+          </h1>
+          <p dir="auto" className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            {texts.articlesSubtext}
+          </p>
         </div>
-      </div>
+        <a
+          href="/articles/rss.xml"
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary md:self-auto"
+        >
+          <Rss className="h-4 w-4" /> RSS
+        </a>
+      </header>
 
-      {/* === FEATURED SLIDER === */}
-      {/* Pass the top 5 posts to the slider */}
-      {featuredPosts.length > 0 && <FeaturedCarousel posts={featuredPosts} />}
+      {featured.length > 0 && <FeaturedCarousel posts={featured} />}
 
-      {/* Separator */}
       <div className="flex items-center gap-4 mb-8">
-        <h3 className="text-2xl font-bold font-mono">{textContent.articlesRecentUploads}</h3>
+        <h2 dir="auto" className="text-2xl font-bold terminal:font-mono">
+          {texts.articlesRecentUploads}
+        </h2>
         <div className="h-px bg-border/40 flex-1"></div>
+        <span className="text-sm text-muted-foreground tabular-nums">{items.length}</span>
       </div>
 
-      {/* === POSTS GRID === */}
-      {posts.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-border/50 rounded-xl">
-          <Terminal className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground font-mono">{textContent.articlesEmptyAPI}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
-            <Link
-              href={`/articles/${post.slug}`}
-              key={post.id}
-              className="group flex flex-col h-full bg-card md:bg-card/30 md:backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden hover:border-primary/50 hover:bg-card/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5"
-            >
-              {/* === COVER IMAGE === */}
-              <div className="aspect-video relative w-full bg-muted/20 overflow-hidden">
-                {post.cover_image ? (
-                  <Image
-                    src={post.cover_image}
-                    alt={post.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    // Priority only for the very first item if needed, but slider handles LCP now
-                    priority={false}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary/5 group-hover:bg-primary/10 transition-colors">
-                    <Terminal className="w-12 h-12 text-primary/20" />
-                  </div>
-                )}
-
-                {/* Tags Overlay */}
-                <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
-                  {post.tag_list.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md border border-white/10 rounded text-white/90 shadow-sm"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* === CARD CONTENT === */}
-              <div className="flex flex-col flex-1 p-6">
-                {/* Meta Row: Date & Time */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-4 font-mono">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {post.published_at ? format(new Date(post.published_at), 'MMM d, yyyy') : ''}
-                    </span>
-                  </div>
-                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-secondary/50 text-secondary-foreground">
-                    <Clock className="w-3 h-3" />
-                    {post.reading_time_minutes} min
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h2 className="text-xl font-bold leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                  {post.title}
-                </h2>
-
-                {/* Description */}
-                <p className="text-sm text-muted-foreground line-clamp-3 mb-6 flex-1 leading-relaxed">
-                  {post.description}
-                </p>
-
-                {/* === FOOTER: Author & Stats === */}
-                <div className="pt-5 mt-auto border-t border-border/40 flex items-center justify-between">
-                  {/* Author Info */}
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border/50">
-                      <Image
-                        src={post.user.profile_image_90}
-                        alt={post.user.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground/80 font-mono group-hover:text-foreground transition-colors">
-                      {post.user.name.slice(0, 25)}{' '}
-                    </span>
-                  </div>
-
-                  {/* Reactions & Comments */}
-                  <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                    <div className="flex items-center gap-1.5 hover:text-red-400 transition-colors">
-                      <Heart className="w-3.5 h-3.5" />
-                      <span>{post.public_reactions_count}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 hover:text-blue-400 transition-colors">
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>{post.comments_count}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      <ArticlesIndex items={items} emptyText={texts.articlesEmptyAPI} />
     </div>
   );
 }

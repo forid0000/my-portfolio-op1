@@ -59,8 +59,8 @@ export default function MediaLightbox({ items, index, onIndexChange, title }: Me
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
-        overlayClassName="bg-black/90"
-        className="z-[999] flex h-screen max-h-screen w-full max-w-full flex-col items-center justify-center gap-0 overflow-hidden rounded-none border-none bg-black/95 p-0 outline-none sm:max-w-full"
+        overlayClassName="bg-scrim/90"
+        className="z-[999] flex h-screen max-h-screen w-full max-w-full flex-col items-center justify-center gap-0 overflow-hidden rounded-none border-none bg-scrim/95 p-0 outline-none sm:max-w-full"
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
 
@@ -78,14 +78,14 @@ export default function MediaLightbox({ items, index, onIndexChange, title }: Me
           }}
         >
           <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4">
-            <span className="pointer-events-auto rounded-full bg-white/10 px-3 py-1.5 text-xs tabular-nums text-white/80">
+            <span className="pointer-events-auto rounded-full bg-on-scrim/10 px-3 py-1.5 text-xs tabular-nums text-on-scrim/80">
               {index !== null ? `${index + 1} / ${items.length}` : ''}
             </span>
             <button
               type="button"
               onClick={() => onIndexChange(null)}
               aria-label="Close"
-              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-on-scrim/10 text-on-scrim transition-colors hover:bg-on-scrim hover:text-scrim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X className="h-5 w-5" />
             </button>
@@ -100,7 +100,7 @@ export default function MediaLightbox({ items, index, onIndexChange, title }: Me
                   step(-1);
                 }}
                 aria-label="Previous"
-                className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:left-6 md:h-14 md:w-14"
+                className="absolute left-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-on-scrim/10 text-on-scrim transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:left-6 md:h-14 md:w-14"
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
@@ -111,7 +111,7 @@ export default function MediaLightbox({ items, index, onIndexChange, title }: Me
                   step(1);
                 }}
                 aria-label="Next"
-                className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:right-6 md:h-14 md:w-14"
+                className="absolute right-2 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-on-scrim/10 text-on-scrim transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:right-6 md:h-14 md:w-14"
               >
                 <ChevronRight className="h-6 w-6" />
               </button>

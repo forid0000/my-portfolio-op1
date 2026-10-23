@@ -71,13 +71,13 @@ export default function QrClient({ iconData, accentColor }: QrClientProps) {
         </h2>
 
         {/* Mode Switcher */}
-        <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+        <div className="flex bg-foreground/5 p-1 rounded-lg border border-foreground/10">
           <button
             onClick={() => setActiveTab('generate')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'generate'
                 ? 'bg-primary text-primary-foreground shadow-lg'
-                : 'text-muted-foreground hover:text-white'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <QrCode className="w-4 h-4" /> Generate
@@ -87,7 +87,7 @@ export default function QrClient({ iconData, accentColor }: QrClientProps) {
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               activeTab === 'scan'
                 ? 'bg-primary text-primary-foreground shadow-lg'
-                : 'text-muted-foreground hover:text-white'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Scan className="w-4 h-4" /> Scanner
@@ -230,7 +230,7 @@ function GeneratorView() {
               className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                 state.mode === type.id
                   ? 'bg-primary/20 border-primary text-primary'
-                  : 'bg-white/5 border-white/5 text-muted-foreground hover:bg-white/10'
+                  : 'bg-foreground/5 border-foreground/5 text-muted-foreground hover:bg-foreground/10'
               }`}
             >
               <type.icon className="w-5 h-5 mb-1" />
@@ -240,7 +240,7 @@ function GeneratorView() {
         </div>
 
         {/* Dynamic Inputs */}
-        <div className="p-6 bg-white/5 border border-white/10 rounded-xl space-y-4">
+        <div className="p-6 bg-foreground/5 border border-foreground/10 rounded-xl space-y-4">
           {(state.mode === 'url' || state.mode === 'text') && (
             <div className="space-y-2">
               <label className="text-xs uppercase font-bold text-muted-foreground">
@@ -249,16 +249,16 @@ function GeneratorView() {
               <textarea
                 value={state.value}
                 onChange={(e) => updateState('value', e.target.value)}
-                className={`w-full bg-black/40 border rounded-lg p-3 text-white focus:ring-1 outline-none min-h-[100px] ${
+                className={`w-full bg-scrim/40 border rounded-lg p-3 text-foreground focus:ring-1 outline-none min-h-[100px] ${
                   isPayloadTooLong
-                    ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
-                    : 'border-white/10 focus:border-primary focus:ring-primary/50'
+                    ? 'border-destructive/50 focus:border-destructive focus:ring-destructive/50'
+                    : 'border-foreground/10 focus:border-primary focus:ring-primary/50'
                 }`}
                 placeholder={state.mode === 'url' ? 'https://...' : 'Enter text...'}
               />
               <div
                 className={`text-xs text-right ${
-                  isPayloadTooLong ? 'text-red-400' : 'text-muted-foreground'
+                  isPayloadTooLong ? 'text-destructive' : 'text-muted-foreground'
                 }`}
               >
                 {state.value.length} / {MAX_QR_CHARS} characters
@@ -276,7 +276,7 @@ function GeneratorView() {
                   type="text"
                   value={state.ssid}
                   onChange={(e) => updateState('ssid', e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-primary outline-none"
+                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -288,7 +288,7 @@ function GeneratorView() {
                     type="text"
                     value={state.password}
                     onChange={(e) => updateState('password', e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-primary outline-none"
+                    className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                   />
                 </div>
                 <div className="space-y-2">
@@ -298,7 +298,7 @@ function GeneratorView() {
                   <select
                     value={state.encryption}
                     onChange={(e) => updateState('encryption', e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:border-primary outline-none"
+                    className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                   >
                     <option value="WPA">WPA/WPA2</option>
                     <option value="WEP">WEP</option>
@@ -319,7 +319,7 @@ function GeneratorView() {
                   type="email"
                   value={state.email}
                   onChange={(e) => updateState('email', e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-primary"
+                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -328,7 +328,7 @@ function GeneratorView() {
                   type="text"
                   value={state.subject}
                   onChange={(e) => updateState('subject', e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-primary"
+                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -336,10 +336,10 @@ function GeneratorView() {
                 <textarea
                   value={state.body}
                   onChange={(e) => updateState('body', e.target.value)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-primary min-h-[80px]"
+                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary min-h-[80px]"
                 />
                 {isPayloadTooLong && (
-                  <div className="text-xs text-red-400 text-right">
+                  <div className="text-xs text-destructive text-right">
                     Payload too long ({qrValue.length} / {MAX_QR_CHARS} characters)
                   </div>
                 )}
@@ -350,12 +350,12 @@ function GeneratorView() {
       </div>
 
       {/* Preview Output */}
-      <div className="md:col-span-5 flex flex-col items-center justify-center p-8 bg-white/[0.02] border border-white/5 rounded-xl text-center">
+      <div className="md:col-span-5 flex flex-col items-center justify-center p-8 bg-foreground/[0.02] border border-foreground/5 rounded-xl text-center">
         {isPayloadTooLong ? (
           <div className="flex flex-col items-center gap-4 p-6">
-            <XCircle className="w-12 h-12 text-red-400" />
+            <XCircle className="w-12 h-12 text-destructive" />
             <div className="space-y-2">
-              <p className="text-red-400 font-bold text-sm uppercase">Data Too Long</p>
+              <p className="text-destructive font-bold text-sm uppercase">Data Too Long</p>
               <p className="text-muted-foreground text-sm">
                 Your input is {qrValue.length.toLocaleString()} characters, but QR codes support a
                 maximum of {MAX_QR_CHARS.toLocaleString()} characters at this error correction
@@ -518,7 +518,7 @@ function ScannerView() {
       <div className="md:col-span-8 space-y-6">
         {/* Error Banner */}
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3 text-destructive">
             <XCircle className="w-5 h-5 flex-shrink-0" />
             <p className="text-sm font-bold">{error}</p>
           </div>
@@ -526,15 +526,15 @@ function ScannerView() {
 
         {/* Success Banner */}
         {scannedResult && (
-          <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl relative overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="flex items-center gap-2 mb-2 text-green-400 font-bold uppercase tracking-wider text-sm">
+          <div className="p-6 bg-success/10 border border-success/20 rounded-xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="flex items-center gap-2 mb-2 text-success font-bold uppercase tracking-wider text-sm">
               <CheckCircle2 className="w-4 h-4" /> Decoded Payload
             </div>
-            <div className="p-4 bg-black/30 rounded-lg border border-white/5 break-all font-mono text-white text-lg flex justify-between items-start gap-4">
+            <div className="p-4 bg-scrim/30 rounded-lg border border-foreground/5 break-all font-mono text-foreground text-lg flex justify-between items-start gap-4">
               <span>{scannedResult}</span>
               <button
                 onClick={() => copyToClipboard(scannedResult)}
-                className="text-white/50 hover:text-white transition-colors"
+                className="text-foreground/50 hover:text-foreground transition-colors"
                 title="Copy"
               >
                 <Copy className="w-4 h-4" />
@@ -545,7 +545,7 @@ function ScannerView() {
                 href={scannedResult}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase text-green-400 hover:underline"
+                className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase text-success hover:underline"
               >
                 Open Link <ExternalLink className="w-3 h-3" />
               </a>
@@ -554,19 +554,19 @@ function ScannerView() {
         )}
 
         {/* Scanner Interface */}
-        <div className="bg-black/20 border border-white/10 rounded-2xl overflow-hidden relative min-h-[400px] flex flex-col">
+        <div className="bg-scrim/20 border border-foreground/10 rounded-2xl overflow-hidden relative min-h-[400px] flex flex-col">
           <div
             id="reader"
-            className={`w-full flex-1 bg-black ${scanMode === 'camera' ? 'block' : 'hidden'}`}
+            className={`w-full flex-1 bg-scrim ${scanMode === 'camera' ? 'block' : 'hidden'}`}
           />
 
           {scanMode !== 'camera' && (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-2">
+              <div className="w-20 h-20 rounded-full bg-foreground/5 flex items-center justify-center mb-2">
                 <Scan className="w-10 h-10 text-muted-foreground" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-xl font-bold text-white">Ready to Scan</h3>
+                <h3 className="text-xl font-bold text-foreground">Ready to Scan</h3>
                 <p className="text-muted-foreground text-sm">
                   Select a method to decode a QR Matrix.
                 </p>
@@ -587,7 +587,7 @@ function ScannerView() {
                     onChange={handleFileUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <button className="w-full flex items-center justify-center gap-2 py-3 bg-white/10 group-hover:bg-white/20 text-white rounded-lg font-bold transition-all border border-white/10">
+                  <button className="w-full flex items-center justify-center gap-2 py-3 bg-foreground/10 group-hover:bg-foreground/20 text-foreground rounded-lg font-bold transition-all border border-foreground/10">
                     <ImageIcon className="w-4 h-4" /> Upload Image
                   </button>
                 </div>
@@ -599,7 +599,7 @@ function ScannerView() {
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
               <button
                 onClick={stopCamera}
-                className="px-6 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full font-bold backdrop-blur-md shadow-lg transition-all"
+                className="px-6 py-2 bg-destructive/80 hover:bg-destructive text-foreground rounded-full font-bold backdrop-blur-md shadow-lg transition-all"
               >
                 Stop Scanning
               </button>
@@ -610,7 +610,7 @@ function ScannerView() {
 
       {/* RIGHT COLUMN: HISTORY */}
       <div className="md:col-span-4">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 h-full flex flex-col">
+        <div className="bg-foreground/5 border border-foreground/10 rounded-xl p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 font-bold text-muted-foreground text-sm uppercase">
               <History className="w-4 h-4" /> Scan History
@@ -618,7 +618,7 @@ function ScannerView() {
             {history.length > 0 && (
               <button
                 onClick={clearHistory}
-                className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 uppercase font-bold"
+                className="text-[10px] text-destructive hover:text-destructive flex items-center gap-1 uppercase font-bold"
               >
                 <Trash2 className="w-3 h-3" /> Clear
               </button>
@@ -634,9 +634,9 @@ function ScannerView() {
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-lg bg-black/20 border border-white/5 hover:border-white/10 transition-all group"
+                  className="p-3 rounded-lg bg-scrim/20 border border-foreground/5 hover:border-foreground/10 transition-all group"
                 >
-                  <div className="text-xs text-white/90 break-all font-mono mb-2 line-clamp-3">
+                  <div className="text-xs text-foreground/90 break-all font-mono mb-2 line-clamp-3">
                     {item.text}
                   </div>
                   <div className="flex justify-between items-center text-[10px] text-muted-foreground">
