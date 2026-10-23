@@ -1,4 +1,8 @@
-import { withSentryConfig } from '@sentry/nextjs';
+import * as sentry from '@sentry/nextjs';
+
+// Sentry 10 exposes ES-module exports, Sentry 11 is picked up as CommonJS by Node when it loads
+// this file, so its functions sit on `default`. Accept both so upgrades do not break the build.
+const withSentryConfig = sentry.withSentryConfig ?? sentry.default?.withSentryConfig;
 
 // --- Sentry (optional) ---
 // Error reporting is enabled only when NEXT_PUBLIC_SENTRY_DSN is set. The DSN's
