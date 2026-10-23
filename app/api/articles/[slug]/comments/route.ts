@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const col = await commentsCollection();
     const duplicate = await col.findOne({
       articleId: article._id,
-      visitor: key,
+      $or: [{ visitor: key }, { addressHash: addressHash(ip) }],
       body: input.body,
       createdAt: { $gt: new Date(Date.now() - 60 * 60_000) },
     });

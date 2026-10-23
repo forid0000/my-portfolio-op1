@@ -62,7 +62,7 @@ export const THEME_DEFAULTS: SiteTheme = {
   primary: '#34d399',
   primaryForeground: '#1d232a',
   secondary: '#60a5fa',
-  secondaryForeground: '#ffffff',
+  secondaryForeground: '#0b1220',
   accent: '#34d399',
   muted: '#6b7280',
   mutedForeground: '#9ca3af',

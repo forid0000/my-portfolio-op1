@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { diffPaths, reportChanges, reportSaved } from '@/lib/change-tracker';
 
 const serialize = (value: unknown) => JSON.stringify(value) ?? '';
 
@@ -41,9 +42,28 @@ export function useUnsavedWarning<T>(currentState: T, isLoading: boolean = false
 
   const isDirty = baseline !== null && snapshot !== baseline;
 
-  const markClean = useCallback((cleanState?: T) => {
-    setBaseline(cleanState === undefined ? snapshotRef.current : serialize(cleanState));
-  }, []);
+  // Tell the admin layout how many unsaved changes this editor holds (shown at the top-left).
+  const trackerId = useId();
+  useEffect(() => {
+    if (!isDirty || baseline === null) {
+      reportChanges(trackerId, null);
+      return;
+    }
+    try {
+      reportChanges(trackerId, diffPaths(JSON.parse(baseline), JSON.parse(snapshot)));
+    } catch {
+      reportChanges(trackerId, [['page']]);
+    }
+    return () => reportChanges(trackerId, null);
+  }, [isDirty, baseline, snapshot, trackerId]);
+
+  const markClean = useCallback(
+    (cleanState?: T) => {
+      reportSaved(trackerId);
+      setBaseline(cleanState === undefined ? snapshotRef.current : serialize(cleanState));
+    },
+    [trackerId]
+  );
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

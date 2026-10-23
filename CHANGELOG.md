@@ -15,6 +15,14 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Appearance**: a Clean or Terminal **style**, one-click **color schemes**, and an **admin panel color** (default, match the site, or custom).
 - **Any language in the brand and headings** (Bangla, Arabic, Hindi…): fonts load only when needed, text direction is automatic, joined scripts are never letter-spaced, and the typing and decoding effects no longer corrupt them.
 - **Automatic database setup**: indexes and data repairs are applied on the first start of any deployment (versioned, background, never blocks a request).
+- **Write articles on your own site** (Admin → Articles). A Markdown editor with a formatting toolbar (bold, italic, headings, lists, checklists, quotes, links, tables, code, dividers, centered or right-aligned text, note/tip/warning boxes), live preview (write, side by side, preview), pictures and videos by upload, drag-and-drop or paste (Ctrl+V), a cover picture, tags, a summary, a closing note, draft or published with a publish date, and search title/description. Each article has its own **design**: font (sans, serif, rounded, monospace), text size, page width, alignment, header style (cover on top, title over the cover, centered, text only), an optional accent colour, a table of contents, and switches for date, reading time, tags, author and share button. Visitors can **react** (like, love, insightful, celebrate, curious; once per kind per visitor) and **comment** (approved by you first by default, with replies from you, spam defences and a moderation screen). Articles appear in `/articles` next to the optional Dev.to feed, in an RSS feed (`/articles/rss.xml`), the sitemap and `llms.txt`, with structured data. Deleting an article, or removing a picture from it, deletes the files from Cloudinary (unless another article still uses them).
+- **One place for every colour.** All public colours come from theme tokens (background, text, cards, brand, secondary, quiet text, borders, inputs, focus ring, and error/success/warning/information) edited in Admin → Appearance; components no longer pick their own. The floating contact button, kits, notes, error pages, gallery and article pages all follow the palette. **44 ready-made colour schemes** (light, dark, mixed and bold), each checked for readable text by a test, a readability check and a live preview built from the real site tokens.
+- **Navigation & Visibility** (Admin): choose, rename, reorder and hide the menu links (also used by the footer), add your own links, hide the floating contact button, the "Download CV" button (it now only appears when a resume is uploaded), the hero social links, and each part of the footer. Hiding a section also hides its link.
+- **GitHub picture as the avatar fallback.** Keep a GitHub profile link in Global Settings (or among your social links) and, until you upload a picture, your public GitHub picture is used in the hero, the top-left icon, the browser tab and the share image. A broken picture falls back to the placeholder.
+- **"Which field is wrong?" on every form.** A rejected save scrolls to the exact field, focuses it, outlines it in red and writes the reason under it (for example "Socials #3 > URL: Enter a full web address"). It works for every admin editor and for the contact form and comment form on the site.
+- **Unsaved-changes counter** at the top-left of the admin (above every page): how many fields differ from the last save, a list of what changed, and a confirmation after saving.
+- **Resizable, collapsible admin menu**: drag its edge (208 to 460 px), double-click the edge or use the arrow to fold it into an icon rail, arrow keys when focused. The size is remembered in the browser.
+- **npm works as well as pnpm.** CI installs and checks the project with both (`pnpm` first), and `npm run verify` mirrors `pnpm verify`.
 - **Tests and one CI workflow**: Vitest unit tests, an end-to-end smoke test (production server, real MongoDB, fake Cloudinary), `pnpm verify`, `pnpm test`, `pnpm test:smoke`, `pnpm format:check`, `pnpm typecheck`.
 
 ### Changed
@@ -23,6 +31,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - Placeholder content is neutral instead of developer-specific. Saved content is unaffected.
 - The favicon is a round PNG cut from the avatar by Cloudinary (set in the page metadata) and the share image is a JPEG variant; both follow the avatar automatically. The generated `/icon` route is gone.
 - `/kits` and `/articles` show the real avatar in the header instead of a redirect that could not render.
+- Dependency updates merged from Dependabot (Next.js 16.4, React 19.3, Sentry 11, Nodemailer 10, Zod 4.6, Radix). **ESLint stays on 9 and TypeScript on 5.9** on purpose: `eslint-plugin-react` (via `eslint-config-next`) does not support ESLint 10 yet, and `typescript-eslint` does not support TypeScript 7. `next.config.mjs` loads Sentry in a way that works with v10 and v11.
+- Section Texts: the editor's starting values are the same neutral wording the site uses (they used to be developer-flavoured and were saved if you pressed Save on a new site). The contact form says "Send message" instead of "Launch Transmission" (the old wording remains in the Terminal style).
+- The default text colour on secondary buttons is dark instead of white (white on light blue was hard to read).
 - Prettier is enforced across the whole repository (previously unformatted files were formatted).
 
 ### Fixed
@@ -33,6 +44,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - Avatar uploads over about 7.5 MB failed (base64 in JSON, cut off by Next's middleware buffer) and could not work at all on Vercel's 4.5 MB limit.
 - The Media Manager crashed on any error response; "Set active" on an unknown id switched every avatar off.
 - The hero greeting and subtitle were empty in the server HTML.
+- `--destructive`, `--popover`, `--primary-rgb` and `hsl(var(--x))` colours were used but never defined, so error text, article/markdown styles and glows had no colour. They are defined now.
+- Several kits, the floating contact panel and the notes tags kept dark colours on a light theme; they follow the palette now.
+- A page for a missing or unpublished article answered 200 with a "not found" page; it is a real 404.
 
 ### Removed
 

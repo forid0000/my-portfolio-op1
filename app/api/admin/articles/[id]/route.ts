@@ -11,7 +11,7 @@ import {
   toView,
   uniqueSlug,
 } from '@/lib/articles';
-import { destroyMedia, mediaRefs, removedRefs } from '@/lib/media-server';
+import { destroyUnreferenced, mediaRefs, removedRefs } from '@/lib/media-server';
 import { revalidateArticleIndex } from '@/lib/revalidate';
 import { problem } from '@/lib/api/respond';
 import { slugify } from '@/lib/articles-model';
@@ -93,7 +93,7 @@ export async function PUT(request: Request, { params }: Ctx) {
       mediaRefs(existing.media, existing.cover),
       mediaRefs(media, input.cover)
     );
-    after(() => destroyMedia([...gone, ...mediaRefs(unused)]));
+    after(() => destroyUnreferenced([...gone, ...mediaRefs(unused)]));
 
     revalidateArticleIndex(slug, existing.slug);
     return NextResponse.json({ success: true, id: String(oid), slug });
@@ -132,7 +132,7 @@ export async function DELETE(request: Request, { params }: Ctx) {
     ]);
 
     // Deleting an article deletes everything it uploaded.
-    after(() => destroyMedia(mediaRefs(existing.media, existing.cover)));
+    after(() => destroyUnreferenced(mediaRefs(existing.media, existing.cover)));
     revalidateArticleIndex(existing.slug);
     return NextResponse.json({ success: true });
   } catch (error: any) {

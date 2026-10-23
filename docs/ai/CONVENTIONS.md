@@ -65,7 +65,7 @@ Budget and rationale are in [ARCHITECTURE.md §13](ARCHITECTURE.md#13-performanc
 Run, in this order, and report results honestly (including failures):
 
 ```bash
-pnpm verify        # Prettier (whole repo), ESLint, tsc, unit tests, production build
+pnpm verify        # Prettier (whole repo), ESLint, tsc, unit tests, production build (npm: npm run verify)
 pnpm test:smoke    # production server + throwaway MongoDB + fake Cloudinary (needs a prior build)
 ```
 
@@ -83,6 +83,9 @@ On a low-memory machine run these steps **one at a time**, cap memory (`systemd-
 - **Never keep a cache in a module variable.** In a production build every route and page has its own copy of each module, so an admin save cleared only its own copy and the static page that regenerated read a stale one, freezing old content into the HTML (found by the smoke test). Use `sharedState()` from `lib/shared-state.ts`, and do not cache a failed read.
 - **pnpm 12 stops on undecided install scripts** (`ERR_PNPM_IGNORED_BUILDS`). The decisions live in `pnpm-workspace.yaml` (`allowBuilds`); a new dependency with an install script needs an entry there, or CI fails.
 - **Developer styling is opt-in.** The default look is the clean style. Use `terminal:` Tailwind classes (`terminal:font-mono`, `terminal:uppercase`) or `<ByStyle clean=… terminal=… />` for anything prompt-like; never hard-code monospace, `~/` paths or `SYS_` wording into the default look.
+- **Keep both lockfiles in sync.** `pnpm install` updates `pnpm-lock.yaml`; then run `npm install --package-lock-only --ignore-scripts` so `package-lock.json` matches (CI runs `npm ci`). If npm reports an `ERESOLVE` peer conflict, a dependency bump is ahead of the tooling: pin it back (ESLint stays on 9 until `eslint-plugin-react` supports 10; TypeScript stays on 5.9 until `typescript-eslint` supports 7).
+- **Every form shows which field is wrong.** Give inputs `data-field="path.to.field"` (matching the Zod path) when you write a new editor; the admin layout's `FieldErrorBridge` then outlines and scrolls to the field of any 400 answer that carries Zod issues. For a check done in the browser before saving, call `reportFieldIssues(issues, payload)` from `lib/field-errors.ts` and toast `summary`. In a route, return `problem(['slug'], 'message')` (`lib/api/respond.ts`) for a rule Zod cannot express.
+- **Editors must use `useUnsavedWarning`** (it feeds the unsaved-changes counter) and call `markClean(savedState)` after a successful save.
 - **Do not add a `packageManager` field** to `package.json`: pnpm then rewrites `pnpm-lock.yaml` with a large extra section. CI installs `pnpm@12.14.0` explicitly.
 - **Do not put `lucide-react` in `serverExternalPackages`**; it conflicts with Next's default handling of that package. Only `react-icons` is external.
 - **`otplib` v13** has no default export: `import { generateSecret, generateURI, verifySync } from 'otplib'`. `verifySync` takes `epochTolerance`; the result's `timeStep` may need a fallback.

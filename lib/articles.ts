@@ -217,7 +217,7 @@ const COOKIE = 'pv';
 /**
  * A stable, anonymous id for one browser: a random value kept in a first-party cookie, stored
  * only as a keyed hash, so reactions can be counted once per visitor without knowing who they
- * are. Without cookies it falls back to a hash of the network address and browser string.
+ * are. A browser that refuses cookies simply gets a new anonymous id each time.
  */
 export function visitorFromRequest(request: Request): { key: string; setCookie?: string } {
   const secret = process.env.JWT_SECRET;

@@ -9,7 +9,7 @@ import {
   uniqueSlug,
   type ArticleView,
 } from '@/lib/articles';
-import { destroyMedia, mediaRefs } from '@/lib/media-server';
+import { destroyUnreferenced, mediaRefs } from '@/lib/media-server';
 import { revalidateArticleIndex } from '@/lib/revalidate';
 import { problem } from '@/lib/api/respond';
 import { emptyReactionCounts, slugify } from '@/lib/articles-model';
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       reactionTotals: emptyReactionCounts(),
     } as any);
 
-    after(() => destroyMedia(mediaRefs(unused)));
+    after(() => destroyUnreferenced(mediaRefs(unused)));
     revalidateArticleIndex(slug);
     return NextResponse.json({ success: true, id: String(result.insertedId), slug });
   } catch (error: any) {

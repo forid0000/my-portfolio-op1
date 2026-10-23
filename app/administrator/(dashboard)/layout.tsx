@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -37,9 +37,14 @@ import {
   ListOrdered,
   PanelTop,
   PenLine,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { CommandPalette } from '@/components/admin/command-palette';
 import FieldErrorBridge from '@/components/admin/field-error-bridge';
+import ChangesBadge from '@/components/admin/changes-badge';
+import { useSidebarLayout } from '@/hooks/use-sidebar-layout';
+import { SIDEBAR, effectiveWidth } from '@/lib/sidebar-layout';
 import { OnboardingProvider, TourLauncher } from '@/components/admin/onboarding/provider';
 
 type NavItem = {
@@ -163,6 +168,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [sessionStatus, setSessionStatus] = useState<'loading' | 'active' | 'expired'>('loading');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const asideRef = useRef<HTMLElement>(null);
+  const sidebar = useSidebarLayout(asideRef);
+  const collapsed = sidebar.state.collapsed;
+  const sidebarPx = effectiveWidth(sidebar.state);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -250,6 +259,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const getLinkClasses = (path: string) => {
     const isActive = pathname === path;
     return `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+      collapsed ? 'md:justify-center md:px-0' : ''
+    } ${
       isActive
         ? 'bg-gray-800 text-emerald-400'
         : 'text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400'
@@ -274,11 +285,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <OnboardingProvider setMenuOpen={setIsMobileMenuOpen}>
       <FieldErrorBridge />
-      <div className="admin-accent flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
+      <div
+        className="admin-accent flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden"
+        style={{ '--sidebar-w': `${sidebarPx}px` } as React.CSSProperties}
+      >
         {/* Mobile Top Bar */}
         <div className="md:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 z-40">
           <h2 className="text-lg font-bold tracking-tight text-emerald-500">Admin Portal</h2>
           <div className="flex items-center gap-2">
+            <ChangesBadge compact />
             <span data-tour="search" className="inline-flex">
               <CommandPalette />
             </span>
@@ -299,41 +314,76 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           />
         )}
 
-        {/* Sidebar */}
+        {/* Sidebar: drag its edge to resize, double-click the edge (or use the arrow) to fold it
+            into an icon rail. The size is remembered in this browser. */}
         <aside
+          ref={asideRef}
           data-tour-sidebar
           className={`
-        fixed md:static inset-y-0 left-0 z-50 w-64 h-full bg-gray-900 border-r border-gray-800 flex flex-col
+        fixed md:static inset-y-0 left-0 z-50 w-64 md:w-[var(--sidebar-w)] h-full bg-gray-900 border-r border-gray-800 flex flex-col shrink-0
         transition-transform duration-300 ease-in-out
+        ${sidebar.dragging || !sidebar.ready ? 'md:transition-none' : 'md:transition-[width] md:duration-200'}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}
         >
-          <div className="p-4 border-b border-gray-800">
-            <AdminClock className="text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums" />
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold tracking-tight text-emerald-500 font-mono">
-                Admin Portal
-              </h2>
-              <span className="text-[10px] text-gray-500 tracking-widest font-mono mt-0.5">
-                dashboard
-              </span>
+          <div className={`border-b border-gray-800 ${collapsed ? 'p-4 md:p-2.5' : 'p-4'}`}>
+            <div
+              className={`flex items-start gap-2 ${collapsed ? 'md:flex-col md:items-center' : ''}`}
+            >
+              <div className="min-w-0 flex-1 md:w-full">
+                <ChangesBadge compact={collapsed} />
+              </div>
+              <button
+                type="button"
+                onClick={sidebar.toggle}
+                className="hidden md:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-800 text-gray-500 hover:bg-gray-800 hover:text-emerald-400 transition-colors"
+                aria-label={collapsed ? 'Expand the menu' : 'Collapse the menu'}
+                title={collapsed ? 'Expand the menu' : 'Collapse the menu'}
+              >
+                {collapsed ? (
+                  <ChevronsRight className="w-4 h-4" />
+                ) : (
+                  <ChevronsLeft className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+
+            <div className={collapsed ? 'md:hidden' : ''}>
+              <AdminClock className="mt-3 text-[10px] font-mono text-gray-600 tracking-[0.1em] mb-3 tabular-nums" />
+              <div className="flex flex-col">
+                <h2 className="text-lg font-bold tracking-tight text-emerald-500 font-mono">
+                  Admin Portal
+                </h2>
+                <span className="text-[10px] text-gray-500 tracking-widest font-mono mt-0.5">
+                  dashboard
+                </span>
+              </div>
             </div>
 
             {/* Enhanced Session Timer */}
             <div
               data-tour="session"
-              className={`mt-4 flex flex-col items-center justify-center p-3 rounded-xl border backdrop-blur-md shadow-lg transition-all duration-500 ${
+              title={`Session time left: ${sessionStatus === 'loading' ? '--:--' : formatTime(timeLeft!)}`}
+              className={`mt-4 flex flex-col items-center justify-center rounded-xl border backdrop-blur-md shadow-lg transition-all duration-500 ${
+                collapsed ? 'p-3 md:p-1.5 md:mt-3' : 'p-3'
+              } ${
                 isWarning
                   ? 'bg-gradient-to-br from-red-950/80 to-gray-900 border-red-900/50 shadow-red-900/20'
                   : 'bg-gradient-to-br from-gray-900 to-gray-800/80 border-gray-700/50 shadow-emerald-900/10'
               } ${isWarning ? 'animate-pulse' : ''}`}
             >
-              <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold mb-1 text-gray-400">
+              <div
+                className={`flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold mb-1 text-gray-400 ${
+                  collapsed ? 'md:hidden' : ''
+                }`}
+              >
                 <Clock className={`w-3 h-3 ${isWarning ? 'text-red-500' : 'text-emerald-500'}`} />
                 Active Session
               </div>
               <div
-                className={`text-2xl font-black font-mono tracking-widest ${
+                className={`font-black font-mono tracking-widest ${
+                  collapsed ? 'text-2xl md:text-[11px] md:tracking-normal md:font-bold' : 'text-2xl'
+                } ${
                   isWarning
                     ? 'text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]'
                     : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]'
@@ -347,6 +397,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <button
                   onClick={handleRefreshSession}
                   disabled={isRefreshing}
+                  title="Add five minutes to the session"
                   className="mt-3 px-3 py-1.5 w-full rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5"
                 >
                   {isRefreshing ? (
@@ -354,18 +405,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   ) : (
                     <Clock className="w-3.5 h-3.5" />
                   )}
-                  +5 Min
+                  <span className={collapsed ? 'md:sr-only' : ''}>+5 Min</span>
                 </button>
               )}
             </div>
           </div>
-          <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
+          <nav
+            className={`flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-1 ${
+              collapsed ? 'p-4 md:p-2' : 'p-4'
+            }`}
+          >
             {NAV_GROUPS.map((group, gi) => (
               <div key={gi} data-tour={group.tour} className={group.label ? 'mt-4 first:mt-0' : ''}>
                 {group.label && (
-                  <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                  <p
+                    className={`px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-600 ${
+                      collapsed ? 'md:hidden' : ''
+                    }`}
+                  >
                     {group.label}
                   </p>
+                )}
+                {group.label && collapsed && (
+                  <div className="hidden md:block mx-2 mb-1 h-px bg-gray-800" aria-hidden="true" />
                 )}
                 {group.items.map((item) => {
                   const Icon = item.icon;
@@ -374,35 +436,73 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       key={item.href}
                       href={item.href}
                       data-tour={item.tour}
+                      title={item.label}
                       className={getLinkClasses(item.href)}
                     >
-                      <Icon className="w-5 h-5" />
-                      {item.label}
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className={`truncate ${collapsed ? 'md:sr-only' : ''}`}>
+                        {item.label}
+                      </span>
                     </Link>
                   );
                 })}
               </div>
             ))}
           </nav>
-          <div className="p-4 border-t border-gray-800 space-y-1">
+          <div className={`border-t border-gray-800 space-y-1 ${collapsed ? 'p-4 md:p-2' : 'p-4'}`}>
             <a
               href="/"
               data-tour="live-site"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 transition-colors"
+              title="View Live Site"
+              className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 transition-colors ${
+                collapsed ? 'md:justify-center md:px-0' : ''
+              }`}
             >
-              <ExternalLink className="w-5 h-5" />
-              View Live Site
+              <ExternalLink className="w-5 h-5 shrink-0" />
+              <span className={collapsed ? 'md:sr-only' : ''}>View Live Site</span>
             </a>
-            <TourLauncher className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 disabled:opacity-50 transition-colors" />
+            <TourLauncher
+              labelClassName={collapsed ? 'md:sr-only' : ''}
+              className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-800/50 hover:text-emerald-400 disabled:opacity-50 transition-colors ${
+                collapsed ? 'md:justify-center md:px-0' : ''
+              }`}
+            />
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-950/50 transition-colors"
+              title="Sign Out"
+              className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg text-red-500 hover:bg-red-950/50 transition-colors ${
+                collapsed ? 'md:justify-center md:px-0' : ''
+              }`}
             >
-              <LogOut className="w-5 h-5" />
-              Sign Out
+              <LogOut className="w-5 h-5 shrink-0" />
+              <span className={collapsed ? 'md:sr-only' : ''}>Sign Out</span>
             </button>
+          </div>
+
+          {/* Drag to resize; double-click to fold or unfold; arrow keys work when focused. */}
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize the menu. Double-click to fold or unfold it."
+            aria-valuenow={sidebarPx}
+            aria-valuemin={SIDEBAR.rail}
+            aria-valuemax={SIDEBAR.max}
+            tabIndex={0}
+            onPointerDown={sidebar.onPointerDown}
+            onDoubleClick={sidebar.toggle}
+            onKeyDown={sidebar.onKeyDown}
+            style={{ touchAction: 'none' }}
+            className="group absolute -right-1.5 top-0 z-10 hidden h-full w-3 cursor-col-resize select-none md:block focus:outline-none"
+          >
+            <span
+              className={`mx-auto block h-full w-0.5 rounded transition-colors ${
+                sidebar.dragging
+                  ? 'bg-emerald-400'
+                  : 'bg-transparent group-hover:bg-emerald-500/60 group-focus-visible:bg-emerald-400'
+              }`}
+            />
           </div>
         </aside>
 

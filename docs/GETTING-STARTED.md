@@ -134,11 +134,14 @@ Use the left menu in the dashboard. A good order:
 2. **Hero Section** and **About**: the first things visitors read.
 3. **Sections & Layout**: switch off what does not apply to you (for example Roadmap or Tech Stacks), and drag the rest into the order you want.
 4. **Experience**, **Projects**, **Services**, **Education**, **Skills**, **Testimonials** and the other content pages: add your real entries and delete the examples.
-5. **Appearance**: choose the **Clean** style (plain headings, works for any profession) or **Terminal** (developer look), pick a color scheme, and optionally the admin panel color.
+5. **Appearance**: choose the **Clean** style (plain headings, works for any profession) or **Terminal** (developer look), pick one of 44 color schemes (light, dark or mixed) and fine-tune any color, with a live preview. Every color on the site comes from this one page. You can also choose the admin panel color.
+   **Navigation & Visibility**: rename, reorder or hide the menu links, add your own, and hide the corner contact button, the CV button or parts of the footer.
 6. **System & SEO**: the title and description that appear in Google and when your link is shared.
-7. **Hero Section** (or **Media Manager**): upload your profile picture. It goes live straight away and is shown in the hero, the top-left of every page and the browser tab. Upload a résumé in **Media Manager**. **Projects** and **Certifications** accept several pictures and videos each (the first is the cover; visitors can click any of them to see it larger).
+7. **Hero Section** (or **Media Manager**): upload your profile picture (or just keep your GitHub profile link in Global Settings and your public GitHub picture is used until you upload one). It goes live straight away and is shown in the hero, the top-left of every page and the browser tab. Upload a résumé in **Media Manager**. **Projects** and **Certifications** accept several pictures and videos each (the first is the cover; visitors can click any of them to see it larger).
 
-Press **Save** on each page. The public site updates right after you save; refresh the page if you do not see it.
+**Articles**: write your own articles right in the dashboard (text, pictures, videos, tags, and a design you choose), publish them when ready, and approve the comments readers leave.
+
+Press **Save** on each page. The public site updates right after you save; refresh the page if you do not see it. If a save is rejected, the page scrolls to the field to fix and outlines it in red. The counter at the top-left of the dashboard shows how many changes are waiting to be saved, and you can drag the edge of the left menu to make it wider or narrower, or double-click it to fold it.
 
 ## Step 8: Turn on the contact form and image uploads (optional)
 
@@ -169,6 +172,7 @@ Not needed to get online. Useful to try things privately or to work on the code.
 
    ```bash
    npm install --global pnpm
+   # (Prefer to use npm only? Skip this step and use `npm install` and `npm run preview` below instead.)
    git clone <the address of your fork>
    cd my-portfolio-op1
    pnpm install

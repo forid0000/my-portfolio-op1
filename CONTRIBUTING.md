@@ -13,7 +13,7 @@ Thanks for helping improve my-portfolio-op1. Bug reports, fixes, documentation, 
 
 ## Development setup
 
-Requirements: Node.js 20.9+, [pnpm](https://pnpm.io), and a MongoDB database.
+Requirements: Node.js 20.9+, [pnpm](https://pnpm.io) (preferred) or npm, and a MongoDB database. Every `pnpm <script>` also works as `npm run <script>`; CI checks both.
 
 ```bash
 pnpm install
@@ -30,7 +30,7 @@ The app runs at <http://localhost:3000>. On first visit to `/administrator` a se
 ## Checks to run before opening a pull request
 
 ```bash
-pnpm verify        # Prettier, ESLint, TypeScript, unit tests (Vitest) and the production build
+pnpm verify        # Prettier, ESLint, TypeScript, unit tests (Vitest) and the production build (npm: npm run verify)
 pnpm test:smoke    # end-to-end: production server + a throwaway MongoDB + a fake Cloudinary
 ```
 
@@ -60,3 +60,7 @@ CI (one workflow, one job) runs all of the above on every pull request.
 ## Reporting bugs
 
 Use the bug report form and include your Node.js version, how you run the app (Vercel, self-hosted, local), the exact steps, and what you expected versus what happened. Remove secrets from any logs you paste.
+
+## Dependencies and lockfiles
+
+Add packages with pnpm, then refresh the npm lockfile so both stay in step: `pnpm add <package>` and `npm install --package-lock-only --ignore-scripts`. Commit `package.json`, `pnpm-lock.yaml` and `package-lock.json` together. CI installs with `pnpm install --frozen-lockfile` and `npm ci`, so a lockfile that is out of date fails the build. Check bot-opened dependency bumps before merging: a major version can break the lint or build stack.

@@ -71,7 +71,7 @@
   --primary-foreground: #1d232a; /* Dark text on green buttons */
 
   --secondary: #60a5fa; /* Bright vibrant blue */
-  --secondary-foreground: #ffffff; /* White text */
+  --secondary-foreground: #0b1220; /* Dark text: white on this light blue is hard to read */
 
   --accent: #34d399; /* Bright green */
 
@@ -1235,7 +1235,7 @@
 }
 
 /* ---- Toasts follow the palette (the toaster in app/layout.tsx uses richColors) ---- */
-[data-sonner-toaster] {
+html [data-sonner-toaster][data-sonner-theme] {
   --normal-bg: var(--card);
   --normal-text: var(--card-foreground);
   --normal-border: var(--border);

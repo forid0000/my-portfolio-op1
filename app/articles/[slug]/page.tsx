@@ -38,6 +38,13 @@ import type { ArticleCardItem } from '@/lib/articles-model';
 import NativeArticle from '@/components/articles/native-article';
 // import ShareButton from "@/components/share-button";
 
+// Declaring (an empty list of) static params makes every article page a cached, fully rendered
+// page generated on first visit instead of a streamed one. That is what lets an unknown or
+// unpublished address answer with a real 404 status, which search engines need.
+export function generateStaticParams() {
+  return [];
+}
+
 // === TYPES ===
 interface BlogPost {
   id: number;
@@ -188,7 +195,9 @@ export async function generateMetadata({
 
   const [post, identity] = await Promise.all([getPost(devToUsername, slug), getSiteIdentity()]);
 
-  if (!post) return { title: 'Post Not Found' };
+  // An address that matches nothing is a real 404 (search engines get the status code, not
+  // just a "not found" page with a 200).
+  if (!post) notFound();
 
   const localUrl = `${SITE_URL}/articles/${slug}`;
 

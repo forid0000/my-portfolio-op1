@@ -26,11 +26,14 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 
 - Config-driven homepage: Hero, About, Education, Experience, Certifications, Skills, Industry Expertise, Tech Stacks, Services, Projects, Publications, Testimonials, Roadmap, Gallery, Contact. Visibility and order are controlled from the admin.
 - SEO out of the box: metadata and `ProfilePage` / `Person` / `WebSite` JSON-LD built from your CMS content, canonical URLs, dynamic `sitemap.xml`, `robots.txt`, and `/llms.txt`.
-- Masonry gallery backed by Cloudinary, contact form with email delivery, floating "connect" popup, dark glassmorphism theme with admin-editable accent colors.
+- Masonry gallery backed by Cloudinary, contact form with email delivery and field-level error highlighting, floating "connect" popup. It suits any profession: the default look is a clean, formal one, and the developer/terminal look is an opt-in style.
+- **One place for every colour**: 44 ready-made colour schemes (light, dark, mixed) plus a full palette editor with a live preview; every component follows the same theme tokens.
+- Hide what you do not need: sections, menu links (rename, reorder, add your own), the corner contact button, the CV button and parts of the footer.
 
 **Admin dashboard (`/administrator`)**
 
-- Editors for every section, a Cloudinary media explorer, avatar and résumé manager, theme engine, SEO and error-page texts, section order and visibility, and a guarded MongoDB inspector (system databases and critical collections are write-protected).
+- Editors for every section, a Cloudinary media explorer, avatar and résumé manager (the résumé is stored in MongoDB), theme engine, SEO and error-page texts, section order and visibility, navigation and visibility, and a guarded MongoDB inspector (system databases and critical collections are write-protected).
+- A rejected save scrolls to the field at fault and outlines it in red with the reason. An unsaved-changes counter sits at the top-left of every page, and the left menu can be dragged wider or narrower and folded into an icon rail (remembered in your browser).
 
 **Notes vault (`/notes`)**
 
@@ -42,13 +45,14 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 
 **Articles (`/articles`)**
 
-- Syndicates your Dev.to posts with native routing. Choose in the admin whether canonical URLs point at Dev.to or at your own site.
+- **Write your own articles** (Admin → Articles): a Markdown editor with a formatting toolbar and live preview, pictures and videos (upload, drag-and-drop, paste), tags, draft or published, and a per-article design (font, size, width, alignment, header style, accent colour, table of contents). Visitors can react and comment (comments wait for your approval by default). RSS feed, sitemap, structured data.
+- Optionally also lists your Dev.to posts with native routing; choose in the admin whether canonical URLs point at Dev.to or at your own site.
 
 ## Quick start
 
 > Not a developer? Use the [step-by-step guide](docs/GETTING-STARTED.md) instead; this section assumes you are comfortable with a terminal.
 
-**Requirements:** Node.js 20.9 or newer, [pnpm](https://pnpm.io), and a MongoDB database ([Atlas free tier](https://www.mongodb.com/atlas) or local).
+**Requirements:** Node.js 20.9 or newer, [pnpm](https://pnpm.io) (preferred) or npm, and a MongoDB database ([Atlas free tier](https://www.mongodb.com/atlas) or local). Both package managers are supported and checked in CI; every `pnpm <script>` below also works as `npm run <script>` (for example `npm install`, `npm run dev`).
 
 ```bash
 git clone <your-fork-url> my-portfolio-op1
@@ -219,10 +223,11 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 
 ```bash
 pnpm verify        # Prettier, ESLint, TypeScript, unit tests, production build (CI runs these first)
+                   # npm users: npm run verify
 pnpm test:smoke    # starts the production server, a fake Cloudinary and runs the end-to-end test
 ```
 
-`pnpm test:smoke` needs a throwaway MongoDB (`MONGODB_URI=mongodb://127.0.0.1:27017/portfolio_cms pnpm test:smoke`) and a prior `pnpm build`. It checks the first-start database setup, uploads and removal of pictures and videos, the avatar library and its Cloudinary sync, page refresh after saves, and that every public route answers. CI runs everything in one workflow (`.github/workflows/ci.yml`).
+`pnpm test:smoke` needs a throwaway MongoDB (`MONGODB_URI=mongodb://127.0.0.1:27017/portfolio_cms pnpm test:smoke`) and a prior `pnpm build`. It checks the first-start database setup, uploads and removal of pictures and videos, the avatar library and its Cloudinary sync, page refresh after saves, and that every public route answers. The smoke test also covers the colour tokens, menu and visibility settings, validation answers, the GitHub avatar fallback, and writing, publishing, reacting to, commenting on and deleting an article. CI runs everything in one workflow (`.github/workflows/ci.yml`), once with pnpm and once with npm, so both install from their own lockfile and pass the same checks.
 
 ## Project structure
 

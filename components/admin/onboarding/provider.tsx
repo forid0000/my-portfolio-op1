@@ -139,7 +139,14 @@ export function OnboardingProvider({
 }
 
 /** Sidebar button that (re)starts the tour from any admin page. */
-export function TourLauncher({ className }: { className?: string }) {
+export function TourLauncher({
+  className,
+  labelClassName,
+}: {
+  className?: string;
+  /** Applied to the text, so the layout can hide it (visually) when the menu is folded. */
+  labelClassName?: string;
+}) {
   const { startTour, tourOpen } = useOnboarding();
   return (
     <button
@@ -148,9 +155,10 @@ export function TourLauncher({ className }: { className?: string }) {
       disabled={tourOpen}
       className={className}
       data-tour="tour-launcher"
+      title="Take the tour"
     >
-      <Compass className="w-5 h-5" />
-      Take the tour
+      <Compass className="w-5 h-5 shrink-0" />
+      <span className={labelClassName}>Take the tour</span>
     </button>
   );
 }

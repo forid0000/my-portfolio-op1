@@ -135,6 +135,23 @@ export function removedRefs(before: MediaRef[], after: MediaRef[]): MediaRef[] {
 }
 
 /**
+ * Deletes the given files unless some saved document still points at them. Used after an article
+ * is saved or deleted: the same picture can be pasted into two articles, and deleting one article
+ * must not break the other.
+ */
+export async function destroyUnreferenced(refs: MediaRef[]): Promise<void> {
+  const free: MediaRef[] = [];
+  for (const ref of refs) {
+    try {
+      if (!(await isMediaReferenced(ref.public_id))) free.push(ref);
+    } catch {
+      // If we cannot tell, keep the file: a stray file is better than a broken page.
+    }
+  }
+  await destroyMedia(free);
+}
+
+/**
  * Best-effort delete in Cloudinary (videos need their own resource type). Never
  * throws: a failed destroy must not block a save or a delete the owner asked for,
  * it only leaves a stray file, which the Cloudinary explorer can still remove.

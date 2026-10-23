@@ -57,6 +57,7 @@ export function revalidateArticleIndex(...slugs: (string | null | undefined)[]) 
   revalidatePath('/articles');
   revalidatePath('/articles/rss.xml');
   revalidatePath('/sitemap.xml');
+  revalidatePath('/llms.txt');
   for (const slug of new Set(slugs)) {
     if (slug) revalidatePath(`/articles/${slug}`);
   }

@@ -165,14 +165,28 @@ Icons are stored as names; render data, not names, in client code.
 
 ## Add a theme token
 
-1. Add the field and a default to `SiteTheme` / `THEME_DEFAULTS` and `sanitizeTheme` in `lib/theme.ts`; make `themeToCssVars` emit it.
-2. Define the variable in `:root` and `.dark` in `app/globals.css`, and expose it in `@theme inline`.
-3. The theme route validates through `sanitizeTheme` (hex colors and a safe radius only; there is no Zod schema), so step 1 is the validation. Add the field to the Appearance page (`app/administrator/(dashboard)/appearance`).
+1. Add the field and a default to `SiteTheme` / `THEME_DEFAULTS`, `THEME_COLOR_KEYS` and `sanitizeTheme` in `lib/theme-model.ts`; emit it (and anything derived from it) in `themeCssVariables`.
+2. Define a fallback variable in `:root` and `.dark` in `app/globals.css`, and expose it in `@theme inline` (`--color-name: var(--name)`).
+3. The theme route validates through `sanitizeTheme` (hex colors and a safe radius only; there is no Zod schema), so step 1 is the validation. Add a control to the Appearance page and give `derivePalette` (`lib/theme-presets.ts`) a value for it so every scheme stays complete; `tests/unit/theme-presets.test.ts` then checks them all.
 4. Use it through its Tailwind utility; never hardcode its value.
+
+## Add a color scheme
+
+Add one `light(...)`, `dark(...)` or `mixed(...)` entry to `THEME_PRESETS` in `lib/theme-presets.ts` with its few defining colors (background, foreground, card, primary, secondary; `cardForeground` and `input` for mixed schemes where the cards are the opposite tone of the page). Run `pnpm test`: the contrast test fails with the exact pair that is unreadable.
+
+## Add a menu link or a visibility switch
+
+- A new built-in link: one entry in `NAV_BUILTINS` (`lib/chrome-model.ts`; `section` is the section id that must be on). Stored documents pick it up automatically (new links are appended).
+- A new on/off switch: add it to `ChromeContent` and `CHROME_DEFAULTS`, to `mergeChrome` (through the `pick` helper), to `lib/validation/chrome-schema.ts`, to the Navigation & Visibility page, and read it where the part renders (pass it from the page as a prop; `app/page.tsx` loads it with `getChrome()`).
+
+## Add a field to the article editor
+
+`ArticleInput` (`lib/validation/article-schemas.ts`) → `buildArticleDoc` (`lib/article-write.ts`) → `toView` (`lib/articles.ts`) → `components/admin/article-editor.tsx` (state, load, save payload, a control with `data-field`) → the public renderer (`components/articles/native-article.tsx` / `article-body.tsx`). For a typography option add a `data-*` attribute on `.article` and a rule in `app/globals.css` that uses only theme tokens. Extend `tests/unit/article-write.test.ts` and, if it changes the page, the articles section of `tests/smoke/e2e.mjs`.
 
 ## Upgrade dependencies
 
-- Use pnpm. Do not add a `packageManager` field. Keep `pnpm-lock.yaml` consistent (`pnpm install`, then commit the lockfile).
+- Use pnpm. Do not add a `packageManager` field. Keep both lockfiles consistent: `pnpm install`, then `npm install --package-lock-only --ignore-scripts`, then hand both to the owner (CI runs `pnpm install --frozen-lockfile` and `npm ci`).
+- Read the diff of a bot bump before accepting it: a major version can break the toolchain (ESLint 10 and TypeScript 7 do not work with the current lint stack; Sentry 11 is loaded as CommonJS by `next.config.mjs`).
 - After `react-icons` or `lucide-react` changes: `node scripts/generate-icon-names.mjs`, then check `/api/admin/icons?names=Mail,FaAws,TbBrandDocker` still resolves.
 - After a Next.js or React upgrade: run the full verification in [CONVENTIONS.md](CONVENTIONS.md#verifying-a-change) and compare First Load JS and dev-server memory.
 - Re-check anything in [CONVENTIONS.md "Pitfalls"](CONVENTIONS.md#pitfalls-already-paid-for) that depends on the upgraded package.

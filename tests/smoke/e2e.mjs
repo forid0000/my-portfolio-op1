@@ -26,13 +26,15 @@ const token = await new SignJWT({ role: 'admin' })
   .setNotBefore(iat)
   .sign(new TextEncoder().encode(secret));
 
-async function api(p, { method = 'GET', body, auth = true } = {}) {
+async function api(p, { method = 'GET', body, auth = true, headers = {} } = {}) {
   const res = await fetch(BASE + p, {
     method,
     redirect: 'manual',
     headers: {
       ...(auth ? { cookie: `admin_session=${token}` } : {}),
       ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
+      'x-forwarded-for': clientAddress,
+      ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -70,10 +72,17 @@ const url = (kind, id) =>
   `https://res.cloudinary.com/testcloud/${kind}/upload/v1/${id}.${kind === 'video' ? 'mp4' : 'png'}`;
 const item = (id, kind = 'image') => ({ kind, src: url(kind, id), public_id: id });
 
+const BOT = {
+  'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+};
 const results = [];
 let section = '';
+let sectionNo = 0;
+let clientAddress = '10.0.0.1';
 const group = (name) => {
   section = name;
+  sectionNo += 1;
+  clientAddress = `10.0.${sectionNo}.1`;
   console.log(`\n== ${name}`);
 };
 function check(name, cond, detail = '') {
@@ -729,6 +738,674 @@ group('9. Every public route answers');
   check(
     'no developer-prompt wording is visible in the default (clean) style',
     home.text.includes('data-ui="clean"')
+  );
+}
+
+// ---------------------------------------------------------------------------------------
+group('10. One place for every colour');
+{
+  const light = {
+    background: '#ffffff',
+    foreground: '#111827',
+    card: '#f8fafc',
+    cardForeground: '#111827',
+    primary: '#2563eb',
+    primaryForeground: '#ffffff',
+    secondary: '#7c3aed',
+    secondaryForeground: '#ffffff',
+    accent: '#0ea5e9',
+    muted: '#9ca3af',
+    mutedForeground: '#4b5563',
+    border: '#e5e7eb',
+    input: '#f3f4f6',
+    ring: '#2563eb',
+    destructive: '#b91c1c',
+    success: '#15803d',
+    warning: '#b45309',
+    info: '#1d4ed8',
+    uiStyle: 'clean',
+    adminAccentMode: 'default',
+  };
+  let r = await api('/api/admin/content/theme', { method: 'POST', body: light });
+  check('a light palette saves', r.status === 200, String(r.status));
+  let home = await pageWhere('/', (t) => t.includes('--background:#ffffff'));
+  check('the page carries the chosen background', home.ok);
+  check('browser widgets are told it is a light page', /color-scheme:light/.test(home.text));
+  check(
+    'status colours are variables too',
+    /--destructive:#b91c1c/.test(home.text) && /--success:#15803d/.test(home.text)
+  );
+  check('a colour palette is generated for charts', /--chart-12:#[0-9a-f]{6}/.test(home.text));
+  check(
+    'the page is not marked dark when the palette is light',
+    !/<html[^>]*class="[^"]*\bdark\b/.test(home.text)
+  );
+  check(
+    'no fixed grey/black/white palette classes are left in the public page',
+    !/\b(?:bg|text|border)-(?:gray|zinc|slate|neutral|stone)-\d{2,3}\b/.test(home.text)
+  );
+  r = await api('/api/admin/content/theme', {
+    method: 'POST',
+    body: { primary: 'red;}body{display:none' },
+  });
+  const css = (await pageWhere('/', (t) => t.includes('--background:#1d232a'))).text;
+  check('hostile colour input is ignored', r.status === 200 && !css.includes('display:none'));
+  // back to the default palette
+  await api('/api/admin/content/theme', { method: 'POST', body: {} });
+}
+
+// ---------------------------------------------------------------------------------------
+group('11. Menu links and what is shown');
+{
+  const sections = (await api('/api/admin/content/layout')).json.sections;
+  const setSection = (id, isEnabled) =>
+    api('/api/admin/content/layout', {
+      method: 'POST',
+      body: {
+        sections: sections.map((s) => ({
+          id: s.id,
+          order: s.order,
+          isEnabled: s.id === id ? isEnabled : s.isEnabled,
+        })),
+      },
+    });
+
+  const defaults = await api('/api/admin/content/chrome');
+  check(
+    'navigation settings load with defaults',
+    defaults.status === 200 && Array.isArray(defaults.json.nav)
+  );
+  check(
+    'built-in links default to the original menu',
+    ['home', 'about', 'projects', 'gallery', 'articles', 'kits', 'notes'].every(
+      (id) => defaults.json.nav.find((n) => n.id === id)?.enabled
+    )
+  );
+
+  const nav = defaults.json.nav.map((n) => {
+    if (n.id === 'gallery') return { ...n, enabled: false };
+    if (n.id === 'projects') return { ...n, label: 'Our Work' };
+    return n;
+  });
+  nav.push({
+    id: 'custom-shop',
+    label: 'Shop',
+    href: 'https://example.com/shop',
+    enabled: true,
+    newTab: true,
+  });
+  let r = await api('/api/admin/content/chrome', {
+    method: 'POST',
+    body: {
+      ...defaults.json,
+      nav,
+      floatingContact: false,
+      hero: { resume: true, socials: false },
+      footer: { ...defaults.json.footer, adminLink: false },
+    },
+  });
+  check('navigation settings save', r.status === 200, JSON.stringify(r.json));
+  let home = await pageWhere('/', (t) => t.includes('Our Work'));
+  check('a renamed link shows its new name', home.ok);
+  check(
+    'a custom link appears with a safe new-tab target',
+    /href="https:\/\/example\.com\/shop"[^>]*rel="noopener noreferrer"/.test(home.text) ||
+      /rel="noopener noreferrer"[^>]*href="https:\/\/example\.com\/shop"/.test(home.text)
+  );
+  check(
+    'a hidden link is gone from the menu',
+    !/<a[^>]*href="\/#gallery"[^>]*nav-link/.test(home.text)
+  );
+  check(
+    'the floating contact button can be hidden',
+    !home.text.includes('Let&#x27;s Connect') && !home.text.includes("Let's Connect")
+  );
+  check('the footer admin link can be hidden', !/href="\/administrator"/.test(home.text));
+  check('no download button without an uploaded resume', !home.text.includes('Download CV'));
+
+  r = await api('/api/admin/content/chrome', {
+    method: 'POST',
+    body: {
+      ...defaults.json,
+      nav: [...nav, { id: 'custom-bad', label: 'Bad', href: 'javascript:alert(1)', enabled: true }],
+    },
+  });
+  check(
+    'a script link is rejected, naming the field',
+    r.status === 400 && r.json.details.some((d) => d.path.join('.') === `nav.${nav.length}.href`),
+    JSON.stringify(r.json)
+  );
+
+  // turning a whole section off removes its link even though the link is switched on
+  await api('/api/admin/content/chrome', { method: 'POST', body: defaults.json });
+  r = await setSection('articles', false);
+  check('the articles section can be switched off', r.status === 200);
+  check(
+    'articles pages disappear',
+    (await pageWhere('/articles', () => true)).status === 404 ||
+      (await api('/articles', { auth: false })).status === 404
+  );
+  home = await pageWhere('/', (t) => !/href="\/articles"/.test(t));
+  check('its menu link disappears with it', home.ok);
+  await setSection('articles', true);
+  check('and comes back', (await pageWhere('/articles', () => true)).status === 200);
+}
+
+// ---------------------------------------------------------------------------------------
+group('12. Which field is wrong? (validation answers)');
+{
+  const r = await api('/api/admin/content/global', {
+    method: 'POST',
+    body: {
+      brandName: 'X',
+      footerText: '',
+      copyrightName: '',
+      headerName: '',
+      headerTag: '',
+      githubProfileUrl: '',
+      locationLabel: '',
+      timeZone: '',
+      socials: [{ href: 'a', label: 'b' }],
+      footerSocials: [],
+    },
+  });
+  check('a save with a missing field answers 400', r.status === 400, String(r.status));
+  const paths = (r.json?.details ?? []).map((d) => d.path.join('.'));
+  check('the answer names the field by its path', paths.includes('socials.0.icon'), paths.join());
+  check(
+    'every issue carries a readable message',
+    (r.json?.details ?? []).every((d) => typeof d.message === 'string' && d.message)
+  );
+}
+
+// ---------------------------------------------------------------------------------------
+group('13. GitHub picture as the fallback avatar');
+{
+  const conn = (await mongoose.connect(process.env.MONGODB_URI)).connection.client.db(
+    'portfolio_cms'
+  );
+  await conn.collection('avatars').deleteMany({});
+  const globalDoc = (await api('/api/admin/content/global')).json;
+  const save = (githubProfileUrl) =>
+    api('/api/admin/content/global', { method: 'POST', body: { ...globalDoc, githubProfileUrl } });
+
+  let r = await save('https://github.com/octocat');
+  check('a GitHub profile link saves', r.status === 200);
+  let redirect = await api('/api/avatar', { auth: false });
+  check(
+    'with no upload, /api/avatar points at the GitHub picture',
+    redirect.status === 302 &&
+      /avatars\.githubusercontent\.com\/octocat/.test(redirect.headers.get('location') ?? ''),
+    redirect.headers.get('location') ?? ''
+  );
+  let home = await pageWhere('/', (t) => t.includes('avatars.githubusercontent.com'));
+  check('the hero and header use it', home.ok);
+  const effective = (await api('/api/admin/avatars')).json?.effective;
+  check(
+    'the admin sees where the picture comes from',
+    effective?.source === 'github' && effective?.githubUsername === 'octocat',
+    JSON.stringify(effective)
+  );
+
+  r = await save('github.com/some-name/');
+  redirect = await api('/api/avatar', { auth: false });
+  check(
+    'a bare github.com link works too',
+    /\/some-name/.test(redirect.headers.get('location') ?? ''),
+    redirect.headers.get('location') ?? ''
+  );
+
+  r = await save('https://www.behance.net/someone');
+  redirect = await api('/api/avatar', { auth: false });
+  check(
+    'a non-GitHub link falls back to the placeholder',
+    /avatar-placeholder/.test(redirect.headers.get('location') ?? ''),
+    redirect.headers.get('location') ?? ''
+  );
+
+  await save('https://github.com/octocat');
+  const up = await seed('avatars/mine');
+  await conn.collection('avatars').insertOne({
+    name: 'mine.png',
+    public_id: 'avatars/mine',
+    secure_url: url('image', 'avatars/mine'),
+    isActive: true,
+    uploadedAt: new Date(),
+  });
+  await save('https://github.com/octocat'); // clears the in-process cache
+  redirect = await api('/api/avatar', { auth: false });
+  check(
+    'an uploaded picture always wins over GitHub',
+    /testcloud/.test(redirect.headers.get('location') ?? ''),
+    redirect.headers.get('location') ?? ''
+  );
+  void up;
+  await conn.collection('avatars').deleteMany({});
+  await save('');
+}
+
+// ---------------------------------------------------------------------------------------
+group('14. Articles: write, publish, react, comment, delete');
+{
+  const conn = (await mongoose.connect(process.env.MONGODB_URI)).connection.client.db(
+    'portfolio_cms'
+  );
+  await seed('sections/articles/cover1');
+  await seed('sections/articles/inline1');
+  await seed('sections/articles/inline2');
+  const body = [
+    '## First heading',
+    '',
+    'Hello **world** with a [safe link](https://example.com).',
+    '',
+    `![Inline picture](${url('image', 'sections/articles/inline1')})`,
+    '',
+    '::: note',
+    'A note box',
+    ':::',
+    '',
+    '## Second heading',
+    '',
+    '<script>window.pwned=1</script>',
+    '',
+    '[bad](javascript:alert(1))',
+  ].join('\n');
+  const input = {
+    title: 'My First Article',
+    slug: '',
+    excerpt: 'A short summary of the article.',
+    body,
+    cover: { src: url('image', 'sections/articles/cover1'), public_id: 'sections/articles/cover1' },
+    media: [
+      item('sections/articles/cover1'),
+      item('sections/articles/inline1'),
+      item('sections/articles/inline2'),
+    ],
+    tags: ['Design', '#design', 'Life'],
+    status: 'draft',
+    design: { font: 'serif', size: 'lg', header: 'overlay', showToc: true, accent: '#0d9488' },
+    footerNote: 'Thanks for reading!',
+  };
+
+  let r = await api('/api/admin/articles', { method: 'POST', body: { ...input, title: '' } });
+  check(
+    'an article without a title is refused, naming the title field',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'title'),
+    JSON.stringify(r.json)
+  );
+
+  r = await api('/api/admin/articles', {
+    method: 'POST',
+    body: {
+      ...input,
+      cover: { src: 'https://evil.example/x.png', public_id: 'sections/articles/x' },
+    },
+  });
+  check('a cover that is not on Cloudinary is refused', r.status === 400);
+
+  r = await api('/api/admin/articles', { method: 'POST', body: input });
+  check(
+    'a draft is created',
+    r.status === 200 && r.json.slug === 'my-first-article',
+    JSON.stringify(r.json)
+  );
+  const id = r.json.id;
+
+  r = await api('/api/admin/articles', {
+    method: 'POST',
+    body: { ...input, slug: 'my-first-article' },
+  });
+  check(
+    'a taken address is refused, naming the slug field',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'slug'),
+    JSON.stringify(r.json)
+  );
+
+  r = await api('/api/admin/articles', {
+    method: 'POST',
+    body: { ...input, title: 'My First Article' },
+  });
+  check(
+    'the same title gets its own address',
+    r.status === 200 && r.json.slug === 'my-first-article-2',
+    JSON.stringify(r.json)
+  );
+  await api(`/api/admin/articles/${r.json.id}`, { method: 'DELETE' });
+
+  check(
+    'a draft is private',
+    (await api('/articles/my-first-article', { auth: false })).status === 404
+  );
+  const listed = await api('/api/admin/articles');
+  const row = listed.json.articles.find((a) => a.id === id);
+  check(
+    'the admin list shows the draft',
+    row?.status === 'draft' && row.tags.length === 2,
+    JSON.stringify(row)
+  );
+
+  r = await api(`/api/admin/articles/${id}`, {
+    method: 'PUT',
+    body: { ...input, slug: 'my-first-article', status: 'published' },
+  });
+  check('publishing works', r.status === 200, JSON.stringify(r.json));
+
+  const page = await pageWhere(
+    '/articles/my-first-article',
+    (t) => t.includes('My First Article') && t.includes('First heading')
+  );
+  check('the article page shows title and text', page.ok);
+  check(
+    'headings get ids for links and the contents list',
+    /<h2 id="first-heading"/.test(page.text) && /<h2 id="second-heading"/.test(page.text)
+  );
+  check('the table of contents is shown when chosen', page.text.includes('In this article'));
+  check(
+    'the chosen design reaches the page',
+    /data-font="serif"/.test(page.text) && /data-size="lg"/.test(page.text)
+  );
+  check(
+    "the writer's accent colour is used for this article only",
+    /--article-accent:#0d9488/.test(page.text)
+  );
+  check('a note block renders as a styled box', page.text.includes('article-block-note'));
+  check(
+    'pictures are served through Cloudinary sizing',
+    /res\.cloudinary\.com\/testcloud\/image\/upload\/c_limit/.test(page.text)
+  );
+  check(
+    'raw HTML in the text is never rendered',
+    !page.text.includes('<script>window.pwned'),
+    'script tag found'
+  );
+  check('javascript: links are dropped', !page.text.includes('javascript:alert'));
+  check('the closing note is shown', page.text.includes('Thanks for reading!'));
+  check('structured data names the article', page.text.includes('"@type":"BlogPosting"'));
+  check(
+    'tags were cleaned and de-duplicated',
+    page.text.includes('Design') && page.text.includes('Life') && !page.text.includes('#design')
+  );
+
+  const index = await pageWhere('/articles', (t) => t.includes('My First Article'));
+  check('the articles list shows it', index.ok);
+  const rss = await api('/articles/rss.xml', { auth: false });
+  check(
+    'the RSS feed lists it',
+    rss.status === 200 &&
+      rss.text.includes('<title>My First Article</title>') &&
+      /rss\+xml/.test(rss.headers.get('content-type') ?? '')
+  );
+  const sitemap = await pageWhere('/sitemap.xml', (t) => t.includes('/articles/my-first-article'));
+  check('the sitemap lists it', sitemap.ok);
+  const llms = await api('/llms.txt', { auth: false });
+  check('llms.txt lists it', llms.text.includes('My First Article'));
+
+  // ---- reactions
+  let visitorNo = 0;
+  const visitor = () => ({ origin: BASE, 'x-forwarded-for': `10.9.0.${++visitorNo}` });
+  const same = { origin: BASE };
+  r = await api('/api/articles/my-first-article/react', {
+    method: 'POST',
+    auth: false,
+    headers: same,
+    body: { kind: 'like' },
+  });
+  const cookie = (r.headers.get('set-cookie') ?? '').split(';')[0];
+  check(
+    'a first reaction counts and sets an anonymous visitor cookie',
+    r.status === 200 && r.json.counts.like === 1 && r.json.active === true && /^pv=/.test(cookie),
+    JSON.stringify(r.json)
+  );
+  r = await api('/api/articles/my-first-article/react', {
+    method: 'POST',
+    auth: false,
+    headers: { ...same, cookie },
+    body: { kind: 'like' },
+  });
+  check(
+    'reacting again takes it back (one per visitor)',
+    r.json.counts.like === 0 && r.json.active === false,
+    JSON.stringify(r.json)
+  );
+  await api('/api/articles/my-first-article/react', {
+    method: 'POST',
+    auth: false,
+    headers: { ...same, cookie },
+    body: { kind: 'love' },
+  });
+  r = await api('/api/articles/my-first-article/engagement', { auth: false, headers: { cookie } });
+  check(
+    'the visitor sees which reactions are theirs',
+    r.json.mine.join() === 'love' && r.json.counts.love === 1,
+    JSON.stringify(r.json)
+  );
+  r = await api('/api/articles/my-first-article/react', {
+    method: 'POST',
+    auth: false,
+    headers: same,
+    body: { kind: 'sparkles' },
+  });
+  check('an unknown reaction is refused', r.status === 400);
+  r = await api('/api/articles/my-first-article/react', {
+    method: 'POST',
+    auth: false,
+    headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
+    body: { kind: 'like' },
+  });
+  check('cross-site reaction requests are refused', r.status === 403);
+
+  // ---- comments
+  const comment = { name: 'Reader', email: '', body: 'Great article, thank you!', hp: '' };
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: visitor(),
+    body: { ...comment, body: 'x' },
+  });
+  check(
+    'a too-short comment names the field',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'body'),
+    JSON.stringify(r.json)
+  );
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: visitor(),
+    body: { ...comment, name: '' },
+  });
+  check(
+    'a missing name names the field',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'name')
+  );
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: visitor(),
+    body: { ...comment, body: 'see http://a.example http://b.example http://c.example' },
+  });
+  check(
+    'too many links are refused',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'body')
+  );
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: visitor(),
+    body: { ...comment, hp: 'i am a bot' },
+  });
+  check(
+    'the hidden bot field is accepted silently but stores nothing',
+    r.status === 200 &&
+      (await conn.collection('article_comments').countDocuments({ body: comment.body })) === 0
+  );
+
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: { ...visitor(), cookie },
+    body: comment,
+  });
+  check(
+    'a comment waits for approval by default',
+    r.status === 200 && r.json.status === 'pending' && r.json.comment === null,
+    JSON.stringify(r.json)
+  );
+  const pending = await api('/api/admin/articles/comments?status=pending');
+  const cm = pending.json.comments.find((c) => c.body === comment.body);
+  check('the owner sees it in the pending list', !!cm && cm.articleTitle === 'My First Article');
+  let shown = await api('/articles/my-first-article', { auth: false });
+  check('and visitors do not', !shown.text.includes('Great article, thank you!'));
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: { ...visitor(), cookie },
+    body: comment,
+  });
+  check(
+    'posting the same text twice is refused',
+    r.status === 400 || r.status === 429,
+    String(r.status)
+  );
+
+  r = await api('/api/admin/articles/comments', {
+    method: 'PATCH',
+    body: { id: cm.id, status: 'approved' },
+  });
+  check('approving works', r.status === 200);
+  shown = await pageWhere('/articles/my-first-article', (t) =>
+    t.includes('Great article, thank you!')
+  );
+  check('an approved comment appears on the page', shown.ok);
+  r = await api('/api/admin/articles/comments', {
+    method: 'POST',
+    body: { articleId: id, parentId: cm.id, body: 'Thank you for reading!' },
+  });
+  check('the owner can reply publicly', r.status === 200);
+  shown = await pageWhere('/articles/my-first-article', (t) =>
+    t.includes('Thank you for reading!')
+  );
+  check(
+    'the reply shows under the comment, marked as the author',
+    shown.ok && shown.text.includes('Author')
+  );
+  const counted = await api('/api/articles/my-first-article/engagement', { auth: false });
+  check('the comment count follows', counted.json.commentCount === 2, JSON.stringify(counted.json));
+
+  const off = await api('/api/admin/articles/settings', {
+    method: 'PUT',
+    body: { moderate: false, reactions: true, comments: true },
+  });
+  check('moderation can be switched off', off.status === 200);
+  r = await api('/api/articles/my-first-article/comments', {
+    method: 'POST',
+    auth: false,
+    headers: visitor(),
+    body: { ...comment, body: 'Posted straight away' },
+  });
+  check(
+    'then comments appear immediately',
+    r.status === 200 &&
+      r.json.status === 'approved' &&
+      r.json.comment?.body === 'Posted straight away',
+    JSON.stringify(r.json)
+  );
+  await api('/api/admin/articles/settings', {
+    method: 'PUT',
+    body: { moderate: true, reactions: true, comments: true },
+  });
+
+  // ---- editing removes pictures that are no longer used
+  const trimmed = body.replace(/!\[Inline picture\]\([^)]*\)/, '');
+  r = await api(`/api/admin/articles/${id}`, {
+    method: 'PUT',
+    body: {
+      ...input,
+      slug: 'my-first-article',
+      status: 'published',
+      body: trimmed,
+      media: input.media,
+    },
+  });
+  check('saving without a picture in the text works', r.status === 200);
+  await wait(2000);
+  check(
+    'the picture that left the text is deleted from Cloudinary',
+    !(await has('sections/articles/inline1'))
+  );
+  check('an unused upload is deleted too', !(await has('sections/articles/inline2')));
+  check('the cover stays', await has('sections/articles/cover1'));
+
+  // ---- renaming the address and deleting
+  r = await api(`/api/admin/articles/${id}`, {
+    method: 'PUT',
+    body: {
+      ...input,
+      slug: 'renamed-article',
+      status: 'published',
+      body: trimmed,
+      media: [item('sections/articles/cover1')],
+    },
+  });
+  check('the address can be changed', r.status === 200 && r.json.slug === 'renamed-article');
+  check(
+    'the new address works',
+    (await pageWhere('/articles/renamed-article', (t) => t.includes('My First Article'))).ok
+  );
+  r = await api(`/api/admin/articles/${id}`, {
+    method: 'PUT',
+    body: {
+      ...input,
+      slug: 'renamed-article',
+      status: 'draft',
+      body: trimmed,
+      media: [item('sections/articles/cover1')],
+    },
+  });
+  {
+    let status = 0;
+    for (let i = 0; i < 30 && status !== 404; i++) {
+      status = (await api('/articles/renamed-article', { auth: false, headers: BOT })).status;
+      if (status !== 404) await wait(500);
+    }
+    check('unpublishing hides it again (crawlers get a 404)', status === 404, String(status));
+  }
+
+  r = await api(`/api/admin/articles/${id}`, { method: 'DELETE' });
+  check('deleting works', r.status === 200);
+  await wait(2000);
+  check('deleting removes its cover from Cloudinary', !(await has('sections/articles/cover1')));
+  check(
+    'and its comments',
+    (await conn
+      .collection('article_comments')
+      .countDocuments({ articleId: new mongoose.Types.ObjectId(id) })) === 0
+  );
+  check(
+    'and its reactions',
+    (await conn
+      .collection('article_reactions')
+      .countDocuments({ articleId: new mongoose.Types.ObjectId(id) })) === 0
+  );
+  check('the article is gone', (await api(`/api/admin/articles/${id}`)).status === 404);
+
+  // access control
+  check(
+    'the article list needs a session',
+    (await api('/api/admin/articles', { auth: false })).status === 401
+  );
+  check(
+    'writing needs a session',
+    (await api('/api/admin/articles', { method: 'POST', auth: false, body: input })).status === 401
+  );
+  check(
+    'moderation needs a session',
+    (
+      await api('/api/admin/articles/comments', {
+        method: 'PATCH',
+        auth: false,
+        body: { id: 'x', status: 'approved' },
+      })
+    ).status === 401
   );
 }
 

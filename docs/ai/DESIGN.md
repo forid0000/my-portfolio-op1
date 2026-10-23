@@ -27,22 +27,29 @@ The default look is **clean**: plain section headings with an accent bar, sans-s
 
 ## 3. Color: tokens only
 
-In new public-site code, never write a raw hex or a fixed Tailwind palette color (`text-emerald-400`) for brand-level color. Use the semantic tokens; the owner can change them in Admin → Appearance. (Existing components still contain a few fixed colors, and the kits' closed accent palette is the one deliberate exception; do not copy the old habit.)
+**Every public color comes from one place**: Admin → Appearance (`theme_content`, built by `lib/theme-model.ts`). A component never chooses its own color. Do not write a raw hex, an `rgba(...)` of a brand color, or a fixed Tailwind palette color (`text-emerald-400`, `bg-gray-900`, `text-white`, `border-gray-800`) in public-site code; use a token. A test-visible symptom of breaking this: change the palette to a light one and a panel stays dark (the floating contact popup was exactly that).
 
-| Token (utility)                      | Meaning                           | Dark default                    |
-| ------------------------------------ | --------------------------------- | ------------------------------- |
-| `background` / `foreground`          | page and body text                | `#1d232a` / `#e5e7eb`           |
-| `card` / `card-foreground`           | surfaces                          | `#2a3142` / `#e5e7eb`           |
-| `primary` / `primary-foreground`     | accent, buttons, highlights       | `#34d399` / `#1d232a`           |
-| `secondary` / `secondary-foreground` | support accent                    | `#60a5fa` / `#ffffff`           |
-| `accent`                             | alias accent                      | `#34d399`                       |
-| `muted` / `muted-foreground`         | secondary text                    | `#6b7280` / `#9ca3af`           |
-| `border`, `input`, `ring`            | lines, fields, focus              | `#3f4655`, `#252d38`, `#34d399` |
-| `--radius`                           | corner radius (`rounded-lg` = it) | `0.5rem`                        |
+| Token (utility)                                               | Meaning                                    | Dark default                    |
+| ------------------------------------------------------------- | ------------------------------------------ | ------------------------------- |
+| `background` / `foreground`                                   | page and body text                         | `#1d232a` / `#e5e7eb`           |
+| `card` / `card-foreground` (`popover` is the same)            | surfaces                                   | `#2a3142` / `#e5e7eb`           |
+| `primary` / `primary-foreground`                              | accent, buttons, highlights                | `#34d399` / `#1d232a`           |
+| `secondary` / `secondary-foreground`                          | support accent                             | `#60a5fa` / `#0b1220`           |
+| `accent`                                                      | glows and small highlights                 | `#34d399`                       |
+| `muted` / `muted-foreground`                                  | soft fills / secondary text                | `#6b7280` / `#9ca3af`           |
+| `border`, `input`, `ring`                                     | lines, fields, focus                       | `#3f4655`, `#252d38`, `#34d399` |
+| `destructive`, `success`, `warning`, `info` (+ `-foreground`) | errors, confirmations, cautions, notes     | red / green / amber / blue      |
+| `chart-1` … `chart-12`                                        | twelve palette-matched hues for categories | generated from `primary`        |
+| `scrim` / `on-scrim`                                          | dark film over photos and the text on it   | black / white (fixed)           |
+| `code`, `code-foreground`                                     | code blocks                                | derived from the page colors    |
+| `shadow-glow-sm`, `shadow-glow`, `shadow-glow-lg`             | soft brand-colored glows                   | from `primary`                  |
+| `--radius`                                                    | corner radius (`rounded-lg` = it)          | `0.5rem`                        |
 
-How it works: `:root` and `.dark` in `app/globals.css` define the variables, `@theme inline` exposes them to Tailwind, and `app/layout.tsx` injects the owner's `theme_content` overrides (`themeToCssVars`, validated by `sanitizeTheme`: hex colors and a safe radius only). The `<html>` element is always `class="dark"`; the light tokens exist but dark is the product's face.
+How it works: `themeCssVariables()` in `lib/theme-model.ts` returns every custom property (stored colors plus the derived ones: readable text on status colors, `--primary-rgb` triplets, the chart hues, code colors, `color-scheme`). `themeToCssVars()` serialises it into the `<style>` that `app/layout.tsx` injects, and the Appearance live preview applies the same object inline, so the preview cannot drift from the site. `@theme inline` in `app/globals.css` exposes the variables to Tailwind; `:root` and `.dark` there only hold fallbacks. `<html>` gets `class="dark"` only when the chosen background is dark, and the toaster follows. Overlay text on photos or video uses `bg-scrim/NN` and `text-on-scrim`, never `text-white`. Glows use `shadow-glow*` or `color-mix(in_srgb,var(--primary)_N%,transparent)`; canvas code reads `--primary-rgb` from the computed style (canvas cannot use `var()`).
 
-Use opacity modifiers for depth (`border-border/30`, `bg-primary/10`) instead of new colors. The kits use a closed accent palette (`KITS_COLOR_MAP` in `lib/kits-registry.tsx`: primary, emerald, blue, amber, red, purple, cyan, pink) because each maps to fixed classes.
+`lib/theme-presets.ts` holds the 44 colour schemes as a handful of base colors each; `derivePalette` completes them. `tests/unit/theme-presets.test.ts` checks contrast for every scheme, so a new scheme cannot ship unreadable.
+
+Use opacity modifiers for depth (`border-border/30`, `bg-primary/10`, `bg-foreground/10` for hover fills) instead of new colors. The kits' closed accent names (`KITS_COLOR_MAP`: primary, emerald, blue, amber, red, purple, cyan, pink) map to tokens, not fixed colors. Exceptions that are deliberate: QR code black on white, shadows in plain black, the standalone HTML export of a note, and the admin panel (below).
 
 ## 4. Typography
 
@@ -94,7 +101,7 @@ Shared classes defined in `app/globals.css` (reuse before inventing): `.section-
 
 - Shell: fixed sidebar (collapses to a top bar on mobile) with groups Content / Customize / Media / System, a command palette, a live session countdown that turns red in the last 3 minutes, and a button to extend the session. Expiry redirects to sign-in with the router, not a full reload overlay.
 - Editors: one page per content type. List-like content uses `CollectionEditor` (add, edit, delete, drag to reorder via dnd-kit, validate per item). Single-document content uses a form + one save.
-- Admin look: **dark gray surfaces with an emerald accent**. Page `bg-gray-950 text-gray-100`; sidebar and panels `bg-gray-900 border-gray-800`; inputs `w-full px-4 py-2 bg-gray-950 border border-gray-800 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500`; primary buttons `bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg`; destructive actions in red; labels `text-sm font-medium text-gray-300/400`; code and keys in `font-mono`. The admin does **not** use the owner's theme tokens, so a bad color choice can never make the control panel unreadable.
+- Admin look: **dark gray surfaces with an emerald accent**. Page `bg-gray-950 text-gray-100`; sidebar and panels `bg-gray-900 border-gray-800`; inputs `w-full px-4 py-2 bg-gray-950 border border-gray-800 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500`; primary buttons `bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg`; destructive actions in red; labels `text-sm font-medium text-gray-300/400`; code and keys in `font-mono`. The admin does **not** use the owner's theme tokens (only its accent follows the site, through `.admin-accent`), so a bad color choice can never make the control panel unreadable. The admin menu is resizable and collapsible (`hooks/use-sidebar-layout.ts`, limits in `lib/sidebar-layout.ts`), and `components/admin/changes-badge.tsx` at its top shows the unsaved-changes count (`lib/change-tracker.ts`, fed by `useUnsavedWarning`).
 - Secrets are write-only: the Security & Keys page shows "set / not set", never the value, and requires a fresh authenticator code to change anything.
 
 ## 9. Icons
