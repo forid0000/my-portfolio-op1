@@ -6,6 +6,7 @@
  * truth (placeholder values from lib/content-defaults.ts), shared by the homepage,
  * the Header (on every page), and the API route.
  */
+import { sharedState } from '@/lib/shared-state';
 import { z } from 'zod';
 import connectToDatabase from '@/lib/db';
 import { isSectionEnabled, type PortfolioSectionConfig } from '@/lib/sections-registry';
@@ -36,11 +37,16 @@ export const GLOBAL_DEFAULTS: GlobalContent = GLOBAL_CONTENT_DEFAULTS;
 
 // Short in-process cache so the Header (rendered on every page) doesn't hit
 // MongoDB on every request. Admin saves invalidate it.
-let cache: { value: GlobalContent; at: number } | null = null;
-let fetchPromise: Promise<GlobalContent> | null = null;
+const store = sharedState<{
+  cache: { value: GlobalContent; at: number } | null;
+  fetchPromise: Promise<GlobalContent> | null;
+}>('global', () => ({
+  cache: null,
+  fetchPromise: null,
+}));
 
 export function invalidateGlobalCache() {
-  cache = null;
+  store.cache = null;
 }
 
 /** Merge a stored doc over the defaults (so new fields always have a value). */
@@ -60,11 +66,12 @@ export function mergeGlobal(doc: any): GlobalContent {
 
 /** Server-side, TTL-cached read of the global content for Header-bearing pages. */
 export async function getGlobalContent(): Promise<GlobalContent> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.value;
-  if (fetchPromise) return fetchPromise;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.value;
+  if (store.fetchPromise) return store.fetchPromise;
 
-  fetchPromise = (async () => {
+  store.fetchPromise = (async () => {
     let value = GLOBAL_DEFAULTS;
+    let ok = false;
     try {
       const db = await connectToDatabase();
       const doc = await db.connection.client
@@ -72,16 +79,18 @@ export async function getGlobalContent(): Promise<GlobalContent> {
         .collection('homepage')
         .findOne({ type: 'global_content' });
       value = mergeGlobal(doc as Partial<GlobalContent> | null);
+      ok = true;
     } catch {
       value = GLOBAL_DEFAULTS;
     } finally {
-      cache = { value, at: Date.now() };
-      fetchPromise = null;
+      // A failed read falls back to the defaults for this request only; it must not be remembered.
+      if (ok) store.cache = { value, at: Date.now() };
+      store.fetchPromise = null;
     }
     return value;
   })();
 
-  return fetchPromise;
+  return store.fetchPromise;
 }
 
 /** Brand subset the Header needs (serializable props for the client component). */
@@ -90,9 +99,13 @@ export type HeaderBrand = Pick<
   'avatarUrl' | 'headerName' | 'headerTag' | 'locationLabel' | 'timeZone'
 >;
 
-export function toHeaderBrand(g: GlobalContent): HeaderBrand {
+/**
+ * `avatarUrl` should be the resolved active avatar (getActiveAvatarUrl()): the constant
+ * '/api/avatar' stored in GlobalContent is a redirect, which next/image cannot render.
+ */
+export function toHeaderBrand(g: GlobalContent, avatarUrl?: string): HeaderBrand {
   return {
-    avatarUrl: g.avatarUrl,
+    avatarUrl: avatarUrl ?? g.avatarUrl,
     headerName: g.headerName,
     headerTag: g.headerTag,
     locationLabel: g.locationLabel,

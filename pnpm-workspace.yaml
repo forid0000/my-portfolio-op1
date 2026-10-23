@@ -1,4 +1,10 @@
+# Which dependency install scripts pnpm may run. pnpm 12 stops the install while any script is
+# undecided, which is what broke CI ("ERR_PNPM_IGNORED_BUILDS"). All three are optional here:
 allowBuilds:
-  '@sentry/cli': set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  # Downloads a CLI that is only used to upload source maps to Sentry. Set to true if you
+  # configure SENTRY_AUTH_TOKEN and want source maps uploaded during `pnpm build`.
+  '@sentry/cli': false
+  # Ship prebuilt binaries through per-platform optional packages; their install script only
+  # re-checks (or rebuilds) them, which is not needed on supported platforms.
+  sharp: false
+  unrs-resolver: false

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import SectionHeading from '@/components/section-heading';
 import { Rocket, Check } from 'lucide-react';
 import { DynamicLucideIcon } from '@/components/dynamic-lucide-icon';
 
@@ -31,15 +32,7 @@ export default function Services({
   return (
     <section id="services" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Rocket className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/{heading}</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading title={heading} prefix={terminalPrefix} path={heading} icon={<Rocket />} />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {content.map((item, idx) => (
@@ -66,13 +59,13 @@ export default function Services({
                     <h3 className="text-base font-bold text-foreground">{item.title}</h3>
                   </div>
                   {item.category && (
-                    <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground/70 bg-secondary/30 px-2 py-1 rounded shrink-0">
+                    <span className="text-[10px] terminal:font-mono uppercase tracking-wide text-muted-foreground/70 bg-secondary/30 px-2 py-1 rounded shrink-0">
                       {item.category}
                     </span>
                   )}
                 </div>
                 {item.pricing && (
-                  <p className="text-sm font-mono font-semibold text-primary mb-2">
+                  <p className="text-sm terminal:font-mono font-semibold text-primary mb-2">
                     {item.pricing}
                   </p>
                 )}
@@ -97,7 +90,7 @@ export default function Services({
                 {item.ctaLabel && item.ctaLink && (
                   <a
                     href={item.ctaLink}
-                    className="mt-auto inline-flex items-center justify-center text-xs font-mono font-semibold px-4 py-2 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+                    className="mt-auto inline-flex items-center justify-center text-xs terminal:font-mono font-semibold px-4 py-2 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
                   >
                     {item.ctaLabel}
                   </a>

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
+import SectionHeading from '@/components/section-heading';
 import { Container } from '@/components/site/primitives';
-import { Terminal } from 'lucide-react';
+import {} from 'lucide-react';
 import { DynamicLucideIcon } from '@/components/dynamic-lucide-icon';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
@@ -99,20 +100,14 @@ export default function IndustryExpertise({
     >
       <Container className="flex flex-col gap-10 lg:gap-14 relative z-10">
         <div className="flex flex-col gap-2 animate-fade-in-up">
-          <div className="flex items-center gap-3">
-            <Terminal className="w-6 h-6 text-primary animate-pulse" />
-            <h2
-              id="industries-heading"
-              className="text-xl md:text-2xl font-mono font-bold tracking-tight"
-            >
-              <span className="text-primary">{terminalPrefix}</span>
-              <span className="text-muted-foreground">:</span>
-              <span className="text-blue-500">~/expertises</span>
-              <span className="text-muted-foreground">$</span>
-            </h2>
-          </div>
+          <SectionHeading
+            title={heading || 'Expertise'}
+            prefix={terminalPrefix}
+            path={'expertises'}
+            id="industries-heading"
+          />
           {heading && (
-            <p className="pl-9 font-mono text-sm text-muted-foreground/60">
+            <p className="pl-9 terminal:font-mono text-sm text-muted-foreground/60">
               <span className="select-none">{'// '}</span>
               {heading}
             </p>
@@ -138,12 +133,12 @@ export default function IndustryExpertise({
                 <span className="ie-glyph text-[color-mix(in_srgb,var(--ie-c)_75%,transparent)] transition-colors duration-300 group-hover:text-(--ie-c) [&_svg]:size-5">
                   <DynamicLucideIcon name={item.icon} />
                 </span>
-                <span className="font-mono text-[10px] tracking-widest text-muted-foreground/50 transition-colors duration-300 group-hover:text-[color-mix(in_srgb,var(--ie-c)_70%,transparent)]">
+                <span className="terminal:font-mono text-[10px] tracking-widest text-muted-foreground/50 transition-colors duration-300 group-hover:text-[color-mix(in_srgb,var(--ie-c)_70%,transparent)]">
                   {String(index + 1).padStart(2, '0')}
                 </span>
               </div>
 
-              <h3 className="font-mono text-sm font-semibold leading-snug tracking-tight text-foreground">
+              <h3 className="terminal:font-mono text-sm font-semibold leading-snug tracking-tight text-foreground">
                 <span className="ie-underline bg-linear-to-r from-(--ie-c) to-(--ie-c) bg-size-[0%_1px] bg-bottom-left bg-no-repeat pb-0.5 transition-[background-size] duration-300 ease-out group-hover:bg-size-[100%_1px]">
                   {item.name}
                 </span>
@@ -158,7 +153,7 @@ export default function IndustryExpertise({
                   {item.skills.map((skill) => (
                     <li
                       key={skill}
-                      className="rounded border border-border/60 bg-background/40 px-1.5 py-1 font-mono text-[10px] leading-none text-muted-foreground transition-colors duration-300 group-hover:border-[color-mix(in_srgb,var(--ie-c)_45%,transparent)] group-hover:text-foreground"
+                      className="rounded border border-border/60 bg-background/40 px-1.5 py-1 terminal:font-mono text-[10px] leading-none text-muted-foreground transition-colors duration-300 group-hover:border-[color-mix(in_srgb,var(--ie-c)_45%,transparent)] group-hover:text-foreground"
                     >
                       {skill}
                     </li>

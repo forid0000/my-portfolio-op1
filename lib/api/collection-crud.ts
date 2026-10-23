@@ -6,13 +6,13 @@
  * collection. Centralizing the GET/POST/PATCH/DELETE wiring here means a new
  * collection-backed section is a ~15 line route file, not a ~150 line one.
  */
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import mongoose from 'mongoose';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
-import cloudinary, { configureCloudinary } from '@/lib/cloudinary';
+import { destroyMedia, mediaRefs, removedRefs } from '@/lib/media-server';
 import { revalidatePublicContent } from '@/lib/revalidate';
 
 async function getCollection(name: string) {
@@ -43,22 +43,15 @@ function toObjectId(id: string): mongoose.Types.ObjectId | null {
   }
 }
 
-/** Best-effort Cloudinary cleanup - never lets a destroy failure block the DB delete. */
-async function destroyPublicIds(publicIds: (string | undefined | null)[]) {
-  await configureCloudinary();
-  for (const id of publicIds) {
-    if (!id) continue;
-    try {
-      await cloudinary.uploader.destroy(id);
-    } catch (e) {
-      console.error('Cloudinary destroy failed for', id, e);
-    }
-  }
-}
-
 interface CollectionCrudOptions<T extends z.ZodObject<any>> {
-  /** Extract the Cloudinary public_id(s) embedded in a document, for delete-time cleanup. */
-  getPublicIds?: (doc: any) => (string | undefined | null)[];
+  /**
+   * Fields of a document that hold Cloudinary media (a single `{ src, public_id }` or a
+   * list of media items). The factory then (a) deletes the files when the document is
+   * deleted, (b) deletes files that were removed from a field on save, and (c) really
+   * removes a field the editor dropped: the editor omits an emptied field from the
+   * payload, and a plain `$set` of the remaining keys would silently keep the old image.
+   */
+  mediaFields?: string[];
 }
 
 export function createCollectionHandlers<T extends z.ZodRawShape>(
@@ -123,18 +116,53 @@ export function createCollectionHandlers<T extends z.ZodRawShape>(
           return NextResponse.json({ error: 'Invalid _id in payload' }, { status: 400 });
         }
         const collection = await getCollection(collectionName);
+        const mediaFields = opts.mediaFields ?? [];
+
+        // Remember what each document held before this save so removed files can be deleted.
+        const previous = new Map<string, any>();
+        if (mediaFields.length) {
+          const ids = items.flatMap((it) =>
+            it._id && toObjectId(it._id) ? [toObjectId(it._id)!] : []
+          );
+          if (ids.length) {
+            for (const doc of await collection.find({ _id: { $in: ids } }).toArray()) {
+              previous.set(String(doc._id), doc);
+            }
+          }
+        }
+
         const result = await collection.bulkWrite(
-          items.map(({ _id, ...rest }) => ({
-            updateOne: {
-              filter: {
-                _id: _id && toObjectId(_id) ? toObjectId(_id)! : new mongoose.Types.ObjectId(),
+          items.map(({ _id, ...rest }) => {
+            const dropped = mediaFields.filter((field) => !(field in rest));
+            return {
+              updateOne: {
+                filter: {
+                  _id: _id && toObjectId(_id) ? toObjectId(_id)! : new mongoose.Types.ObjectId(),
+                },
+                update: {
+                  $set: { ...rest, updatedAt: new Date() },
+                  ...(dropped.length
+                    ? { $unset: Object.fromEntries(dropped.map((field) => [field, ''])) }
+                    : {}),
+                },
+                upsert: true,
               },
-              update: { $set: { ...rest, updatedAt: new Date() } },
-              upsert: true,
-            },
-          })),
+            };
+          }),
           { ordered: false }
         );
+
+        if (mediaFields.length) {
+          const stale = items.flatMap((it) => {
+            const before = it._id ? previous.get(it._id) : undefined;
+            if (!before) return [];
+            return removedRefs(
+              mediaRefs(...mediaFields.map((f) => before[f])),
+              mediaRefs(...mediaFields.map((f) => it[f]))
+            );
+          });
+          if (stale.length) after(() => destroyMedia(stale));
+        }
         revalidatePublicContent();
         return NextResponse.json({
           success: true,
@@ -192,10 +220,20 @@ export function createCollectionHandlers<T extends z.ZodRawShape>(
         );
       }
       const collection = await getCollection(collectionName);
+      const mediaFields = (opts.mediaFields ?? []).filter((f) => f in parsed.data);
+      const before = mediaFields.length ? await collection.findOne({ _id: objectId }) : null;
       await collection.updateOne(
         { _id: objectId },
         { $set: { ...parsed.data, updatedAt: new Date() } }
       );
+      if (before) {
+        const data = parsed.data as Record<string, unknown>;
+        const stale = removedRefs(
+          mediaRefs(...mediaFields.map((f) => before[f])),
+          mediaRefs(...mediaFields.map((f) => data[f]))
+        );
+        if (stale.length) after(() => destroyMedia(stale));
+      }
       revalidatePublicContent();
       return NextResponse.json({ success: true });
     } catch (error: any) {
@@ -227,12 +265,14 @@ export function createCollectionHandlers<T extends z.ZodRawShape>(
 
       const collection = await getCollection(collectionName);
 
-      if (opts.getPublicIds) {
-        const doc = await collection.findOne({ _id: objectId });
-        if (doc) await destroyPublicIds(opts.getPublicIds(doc));
-      }
+      const mediaFields = opts.mediaFields ?? [];
+      const doc = mediaFields.length ? await collection.findOne({ _id: objectId }) : null;
 
       await collection.deleteOne({ _id: objectId });
+      if (doc) {
+        const refs = mediaRefs(...mediaFields.map((f) => doc[f]));
+        if (refs.length) after(() => destroyMedia(refs));
+      }
       revalidatePublicContent();
       return NextResponse.json({ success: true });
     } catch (error: any) {

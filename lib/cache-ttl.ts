@@ -1,6 +1,7 @@
 /**
  * Shared TTL for every in-process content cache (site.ts, theme.ts,
- * sections-registry.ts, avatar-cache.ts). In production this trades a bounded
+ * sections-registry.ts, avatar-cache.ts, identity.ts, integrations.ts). The caches themselves live
+ * on globalThis (lib/shared-state.ts) so an admin save clears them for every route and page. In production this trades a bounded
  * staleness window for far fewer MongoDB round trips on hot paths (every page
  * render). In development that same window would mean CMS edits appear to
  * "not save" for up to 3 minutes on a page you didn't hard-navigate - so the

@@ -16,6 +16,7 @@ const FloatingContact = dynamicImport(() => import('@/components/floating-contac
 import connectToDatabase from '@/lib/db';
 import { safeJsonLd } from '@/lib/json-ld';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
+import { getTheme } from '@/lib/theme';
 import { getPublicItems } from '@/lib/api/collection-crud';
 import galleryFallback from '@/components/data/gallery-cloudinary.json';
 import type { GalleryItem } from '@/components/achievements-gallery';
@@ -56,6 +57,7 @@ export default async function Home() {
   let experienceContent: any[] = EXPERIENCE_DEFAULTS;
   let skillsContent: any[] = SKILLS_DEFAULTS;
   let projectsContent: any[] = PROJECTS_DEFAULTS;
+  let projectsCta = { label: '', url: '' };
   let roadmapContent: any[] = ROADMAP_DEFAULTS;
   let contactContent = { ...CONTACT_DEFAULTS };
   let sectionTexts = { ...SECTION_TEXT_DEFAULTS };
@@ -152,6 +154,9 @@ export default async function Home() {
     if (projectsDoc && projectsDoc.projects?.length) {
       projectsContent = projectsDoc.projects;
     }
+    if (projectsDoc) {
+      projectsCta = { label: projectsDoc.ctaLabel ?? '', url: projectsDoc.ctaUrl ?? '' };
+    }
 
     const roadmapDoc = allDocs.find((doc: any) => doc.type === 'roadmap_content');
     if (roadmapDoc && roadmapDoc.roadmapItems?.length) {
@@ -213,7 +218,8 @@ export default async function Home() {
   // serverless-function + redirect round-trip that was sitting on the LCP path).
   // On-demand revalidation (the avatars save route) refreshes it when the
   // active avatar changes, so baking it in stays correct.
-  globalContent.avatarUrl = await getActiveAvatarUrl();
+  const [resolvedAvatarUrl, theme] = await Promise.all([getActiveAvatarUrl(), getTheme()]);
+  globalContent.avatarUrl = resolvedAvatarUrl;
 
   // schema.org ProfilePage, built from CMS content (nothing hardcoded): the
   // person's name/title from the hero, links from the global socials, and the
@@ -269,7 +275,7 @@ export default async function Home() {
   // sections just need `content`) that no single uniform prop object could
   // express. Every key here has a matching entry in SECTION_COMPONENT_MAP.
   const sectionProps: Record<string, Record<string, unknown>> = {
-    hero: { content: heroContent, global: globalContent, icons },
+    hero: { content: heroContent, global: globalContent, icons, uiStyle: theme.uiStyle },
     about: {
       content: aboutContent,
       heading: sectionTexts.aboutHeading,
@@ -301,6 +307,8 @@ export default async function Home() {
     projects: {
       content: projectsContent,
       githubUrl: globalContent.githubProfileUrl,
+      ctaLabel: projectsCta.label,
+      ctaUrl: projectsCta.url,
       heading: sectionTexts.projectsHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
     },
@@ -325,7 +333,11 @@ export default async function Home() {
     // bg-background commented out to remove solid background color
     <main className="min-h-screen ">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
-      <Header brand={toHeaderBrand(globalContent)} toggles={toNavToggles(sections)} />
+      <Header
+        brand={toHeaderBrand(globalContent)}
+        toggles={toNavToggles(sections)}
+        uiStyle={theme.uiStyle}
+      />
       {renderableSections.map((section) => {
         const Component = SECTION_COMPONENT_MAP[section.id];
         if (!Component) return null;

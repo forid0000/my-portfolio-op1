@@ -136,7 +136,9 @@ export default function FeaturedCarousel({ posts }: { posts: BlogPost[] }) {
                         <span className="h-4 w-px bg-white/20" />
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-4 h-4" />
-                          {post.published_at ? format(new Date(post.published_at), 'MMM d, yyyy') : ''}
+                          {post.published_at
+                            ? format(new Date(post.published_at), 'MMM d, yyyy')
+                            : ''}
                         </div>
                         <span className="h-4 w-px bg-white/20" />
                         <div className="flex items-center gap-1.5">

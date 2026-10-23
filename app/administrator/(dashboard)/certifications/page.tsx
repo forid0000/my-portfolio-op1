@@ -3,6 +3,8 @@
 import React from 'react';
 import { CollectionEditor, type CollectionItem } from '@/components/admin/collection-editor';
 import { SectionImageUploader, type SectionMedia } from '@/components/admin/section-image-uploader';
+import { MediaUploader } from '@/components/admin/media-uploader';
+import type { MediaItem } from '@/lib/media-types';
 
 interface CertificationItem extends CollectionItem {
   name: string;
@@ -12,6 +14,7 @@ interface CertificationItem extends CollectionItem {
   credentialId: string;
   credentialUrl: string;
   badge?: SectionMedia;
+  media?: MediaItem[];
 }
 
 export default function CertificationsCMS() {
@@ -28,6 +31,7 @@ export default function CertificationsCMS() {
         expiryDate: '',
         credentialId: '',
         credentialUrl: '',
+        media: [],
       })}
       getItemLabel={(item) => [item.name, item.issuer].filter(Boolean).join(' - ')}
       validateItem={(item) =>
@@ -39,9 +43,15 @@ export default function CertificationsCMS() {
         <div className="space-y-4">
           <SectionImageUploader
             folder="certifications"
-            label="Badge Image (optional)"
+            label="Badge / logo (optional)"
             value={item.badge}
             onChange={(v) => onChange('badge', v)}
+          />
+          <MediaUploader
+            scope="certifications"
+            label="Certificate pictures and videos (optional)"
+            value={item.media ?? []}
+            onChange={(v) => onChange('media', v)}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -52,7 +62,7 @@ export default function CertificationsCMS() {
                 type="text"
                 value={item.name || ''}
                 onChange={(e) => onChange('name', e.target.value)}
-                placeholder="AWS Certified Solutions Architect"
+                placeholder="e.g. Certified Professional in Your Field"
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
               />
             </div>
@@ -62,7 +72,7 @@ export default function CertificationsCMS() {
                 type="text"
                 value={item.issuer || ''}
                 onChange={(e) => onChange('issuer', e.target.value)}
-                placeholder="Amazon Web Services"
+                placeholder="e.g. Issuing organization"
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
               />
             </div>

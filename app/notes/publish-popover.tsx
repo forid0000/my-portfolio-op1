@@ -45,10 +45,11 @@ export function PublishPopover({
       <button
         onClick={onOpen}
         title={note.published ? 'Published · manage' : 'Publish this note'}
-        className={`p-1.5 border rounded-lg transition-all ${note.published
+        className={`p-1.5 border rounded-lg transition-all ${
+          note.published
             ? 'border-primary/40 text-primary bg-primary/8 hover:bg-primary/15'
             : 'border-transparent text-muted-foreground/50 hover:text-muted-foreground hover:border-border'
-          }`}
+        }`}
       >
         <Globe className="w-3.5 h-3.5" />
       </button>
@@ -81,10 +82,11 @@ export function PublishPopover({
                 <div className="flex gap-2">
                   <button
                     onClick={onCopy}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${copied
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                      copied
                         ? 'border-primary/40 text-primary bg-primary/8'
                         : 'border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/40'
-                      }`}
+                    }`}
                   >
                     {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     {copied ? 'Copied!' : 'Copy link'}

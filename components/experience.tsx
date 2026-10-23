@@ -1,6 +1,7 @@
 'use client';
 
-import { Terminal, Briefcase, Calendar, MapPin } from 'lucide-react';
+import SectionHeading from '@/components/section-heading';
+import { Briefcase, Calendar, MapPin } from 'lucide-react';
 import { DEFAULT_TERMINAL_PREFIX, EXPERIENCE_DEFAULTS } from '@/lib/content-defaults';
 
 interface ExperienceProps {
@@ -29,16 +30,7 @@ export default function Experience({
     <section id="experience" className="section-spacing relative overflow-hidden">
       <div className="max-w-5xl mx-auto space-y-12 relative z-10">
         {/* Terminal Header */}
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Terminal className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="sr-only">{heading}</h2>
-          <div className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/experience</span>
-            <span className="text-muted-foreground">$</span>
-          </div>
-        </div>
+        <SectionHeading title={heading} prefix={terminalPrefix} path={'experience'} />
 
         {/* Timeline Container */}
         <div className="relative ml-3 md:ml-6 space-y-12 py-4">
@@ -62,20 +54,20 @@ export default function Experience({
                 {/* Header Row */}
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground/60 mb-1">
+                    <div className="flex items-center gap-2 text-xs terminal:font-mono text-muted-foreground/60 mb-1">
                       <span className="text-primary tracking-wider">// {exp.type}</span>
                     </div>
-                    <h3 className="text-xl font-bold font-mono text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="text-xl font-bold terminal:font-mono text-foreground group-hover:text-primary transition-colors">
                       {exp.displayRole}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground terminal:font-mono">
                       <Briefcase className="w-3 h-3" />
                       <span className="text-foreground/80 font-semibold">@{exp.company}</span>
                     </div>
                   </div>
 
                   {/* Metadata Right Side */}
-                  <div className="text-right flex flex-col items-start md:items-end gap-2 font-mono text-xs text-muted-foreground mt-2 md:mt-0">
+                  <div className="text-right flex flex-col items-start md:items-end gap-2 terminal:font-mono text-xs text-muted-foreground mt-2 md:mt-0">
                     <div className="flex items-center gap-2 bg-background/40 px-2 py-1 rounded border border-border/30 group-hover:border-primary/30 transition-colors">
                       <Calendar className="w-3 h-3 text-primary/70" />
                       {exp.period}
@@ -88,7 +80,7 @@ export default function Experience({
                 </div>
 
                 {/* Description Log */}
-                <div className="font-mono text-sm leading-relaxed mb-6 pl-4 border-l-2 border-primary/20 text-muted-foreground/70 group-hover:text-muted-foreground/90 transition-colors">
+                <div className="terminal:font-mono text-sm leading-relaxed mb-6 pl-4 border-l-2 border-primary/20 text-muted-foreground/70 group-hover:text-muted-foreground/90 transition-colors">
                   <span className="text-primary mr-2 opacity-50 select-none">&gt;</span>
                   {exp.description}
                 </div>
@@ -98,7 +90,7 @@ export default function Experience({
                   {exp.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="px-2 py-1 text-xs font-mono text-primary/80 bg-primary/5 border border-primary/10 rounded group-hover:border-primary/30 transition-colors select-none"
+                      className="px-2 py-1 text-xs terminal:font-mono text-primary/80 bg-primary/5 border border-primary/10 rounded group-hover:border-primary/30 transition-colors select-none"
                     >
                       [{skill}]
                     </span>

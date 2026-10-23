@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import SectionHeading from '@/components/section-heading';
 import { Quote } from 'lucide-react';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
@@ -35,15 +36,7 @@ export default function Testimonials({
   return (
     <section id="testimonials" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Quote className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/{heading}</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading title={heading} prefix={terminalPrefix} path={heading} icon={<Quote />} />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {content.map((item, idx) => (
@@ -68,7 +61,7 @@ export default function Testimonials({
                     />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-mono font-bold text-primary">
+                  <div className="w-10 h-10 rounded-full shrink-0 bg-primary/10 border border-primary/20 flex items-center justify-center text-xs terminal:font-mono font-bold text-primary">
                     {initials(item.name)}
                   </div>
                 )}

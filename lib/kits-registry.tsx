@@ -120,17 +120,17 @@ export function mergeKitsContent(doc: any): KitsContent {
   const storedTools: Partial<KitTool>[] = Array.isArray(rest.tools) ? rest.tools : [];
   const tools: KitTool[] = storedTools.length
     ? storedTools.map((t) => {
-      const fallback = KITS_DEFAULTS.tools.find((d) => d.key === t.key) || KITS_DEFAULTS.tools[0];
-      return {
-        key: t.key || fallback.key,
-        name: t.name || fallback.name,
-        description: t.description || fallback.description,
-        // Any non-empty name; an unknown one renders the fallback glyph (see renderKitIcon).
-        icon: t.icon || fallback.icon,
-        accentColor:
-          t.accentColor && KITS_COLOR_MAP[t.accentColor] ? t.accentColor : fallback.accentColor,
-      };
-    })
+        const fallback = KITS_DEFAULTS.tools.find((d) => d.key === t.key) || KITS_DEFAULTS.tools[0];
+        return {
+          key: t.key || fallback.key,
+          name: t.name || fallback.name,
+          description: t.description || fallback.description,
+          // Any non-empty name; an unknown one renders the fallback glyph (see renderKitIcon).
+          icon: t.icon || fallback.icon,
+          accentColor:
+            t.accentColor && KITS_COLOR_MAP[t.accentColor] ? t.accentColor : fallback.accentColor,
+        };
+      })
     : KITS_DEFAULTS.tools;
 
   return {

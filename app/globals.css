@@ -2,6 +2,8 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+/* The developer-prompt look (Admin -> Appearance -> Style). <html data-ui="terminal"> turns it on. */
+@custom-variant terminal (&:where([data-ui='terminal'] *));
 
 /* LIGHT MODE - Balanced Polished Gray (Not 100% white, easier on eyes) */
 :root {
@@ -54,7 +56,17 @@
 }
 
 @theme inline {
-  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  /* Noto fonts for Bangla, Arabic and Hindi are listed after the system fonts, so they only
+     apply to letters the system font cannot draw; the browser downloads them only when such
+     letters appear (see app/layout.tsx). The fallbacks keep the stack valid if a variable is unset. */
+  --font-sans:
+    ui-sans-serif, system-ui, var(--font-bengali, 'Noto Sans Bengali'),
+    var(--font-arabic, 'Noto Sans Arabic'), var(--font-devanagari, 'Noto Sans Devanagari'),
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    var(--font-bengali, 'Noto Sans Bengali'), var(--font-arabic, 'Noto Sans Arabic'),
+    var(--font-devanagari, 'Noto Sans Devanagari'), monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -311,8 +323,13 @@
 }
 
 .nav-link {
-  @apply text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium text-sm uppercase tracking-wide;
+  @apply text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium text-sm;
   @apply relative;
+}
+
+/* Terminal style keeps the shouting, letter-spaced labels. */
+[data-ui='terminal'] .nav-link {
+  @apply uppercase tracking-wide;
 }
 
 .nav-link::after {
@@ -441,16 +458,15 @@
   transition: all 0.2s ease;
 }
 
-.nav-link:hover::before {
+/* The arrow prefixes belong to the terminal style only (Admin -> Appearance -> Style). */
+[data-ui='terminal'] .nav-link:hover::before {
   content: '> ';
   opacity: 1;
   transform: translateX(0);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Add to app/globals.css */
-
-.nav-link.active::before {
+[data-ui='terminal'] .nav-link.active::before {
   content: '>> ';
   opacity: 1;
   transform: translateX(0);

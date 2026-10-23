@@ -7,6 +7,8 @@ import { SocialIcon } from '@/lib/social-icon';
 import type { IconMap } from '@/lib/icons/icon-data';
 import { utcOffsetLabel } from '@/lib/utils';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
+import { ByStyle } from '@/components/by-style';
+import { hasComplexScript } from '@/lib/text-script';
 
 interface FooterProps {
   /** Server-resolved SVG data for the social icons (see lib/icons). */
@@ -60,11 +62,16 @@ export default function Footer({ content, icons }: FooterProps) {
             {/* 1. Brand / Identity */}
             <div className="space-y-6 animate-fade-in-up">
               <div className="flex items-center gap-3 group">
-                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20 group-hover:bg-primary/20 transition-colors duration-300">
+                <div className="hidden terminal:block p-2 bg-primary/10 rounded-lg border border-primary/20 group-hover:bg-primary/20 transition-colors duration-300">
                   <Terminal className="w-6 h-6 text-primary" />
                 </div>
                 <div className="">
-                  <h3 className="text-lg font-bold tracking-tighter font-mono">
+                  <h3
+                    dir="auto"
+                    className={`text-lg font-bold terminal:font-mono ${
+                      hasComplexScript(footerData.brandName) ? 'tracking-normal' : 'tracking-tight'
+                    }`}
+                  >
                     {footerData.brandName}
                   </h3>
                 </div>
@@ -76,14 +83,14 @@ export default function Footer({ content, icons }: FooterProps) {
 
             {/* 2. Directory Links */}
             <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <h4 className="font-mono text-xs font-bold text-primary tracking-widest uppercase">
-                [ DIR : LINKS ]
+              <h4 className="terminal:font-mono text-xs font-bold text-primary terminal:tracking-widest terminal:uppercase">
+                <ByStyle clean="Explore" terminal="[ DIR : LINKS ]" />
               </h4>
               {(() => {
                 const dirLinks = ['About', 'Skills', 'Projects', 'Gallery', 'Articles', 'Contact'];
                 const isOdd = dirLinks.length % 2 !== 0;
                 return (
-                  <ul className="grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-sm">
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-3 terminal:font-mono text-sm">
                     {dirLinks.map((link, index) => (
                       <li
                         key={link}
@@ -94,7 +101,7 @@ export default function Footer({ content, icons }: FooterProps) {
                           className="group flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
                         >
                           <span className="group-hover:translate-x-1 transition-transform duration-300">
-                            ~/ {link.toLowerCase()}
+                            <ByStyle clean={link} terminal={`~/ ${link.toLowerCase()}`} />
                           </span>
                         </a>
                       </li>
@@ -106,8 +113,8 @@ export default function Footer({ content, icons }: FooterProps) {
 
             {/* 3. Connect (UPDATED: Grid Layout + Always Visible) */}
             <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              <h4 className="font-mono text-xs font-bold text-primary tracking-widest uppercase">
-                [ NET : CONNECT ]
+              <h4 className="terminal:font-mono text-xs font-bold text-primary terminal:tracking-widest terminal:uppercase">
+                <ByStyle clean="Connect" terminal="[ NET : CONNECT ]" />
               </h4>
 
               {/* Grid Logic: 3 columns; any remainder row is pulled out and centered */}
@@ -140,7 +147,7 @@ export default function Footer({ content, icons }: FooterProps) {
                                  hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                     >
                       {IconComponent}
-                      <span className="text-xs font-medium text-muted-foreground transition-colors duration-300 group-hover:text-primary font-mono">
+                      <span className="text-xs font-medium text-muted-foreground transition-colors duration-300 group-hover:text-primary terminal:font-mono">
                         {link.label}
                       </span>
                     </a>
@@ -169,7 +176,7 @@ export default function Footer({ content, icons }: FooterProps) {
           </div>
 
           {/* Bottom Status Bar */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-muted-foreground/60">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs terminal:font-mono text-muted-foreground/60">
             {/* Left: Copyright */}
             <div className="flex items-center gap-4">
               <p>
@@ -184,8 +191,10 @@ export default function Footer({ content, icons }: FooterProps) {
                 href="/administrator"
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
-                <GitBranch className="w-3 h-3" />
-                <span>sys-core</span>
+                <GitBranch className="hidden w-3 h-3 terminal:block" />
+                <span>
+                  <ByStyle clean="Admin" terminal="sys-core" />
+                </span>
               </Link>
               <div className="w-px h-3 bg-border/40" />
               <div className="flex items-center gap-2">

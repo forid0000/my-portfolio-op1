@@ -5,8 +5,15 @@
  * portfolio_cms.homepage collection and injected as CSS-variable overrides in
  * the root layout. Values are sanitized before they ever reach a <style> tag.
  */
+import { sharedState } from '@/lib/shared-state';
 import connectToDatabase from '@/lib/db';
 import { CACHE_TTL_MS } from '@/lib/cache-ttl';
+import { shadesFromHex } from '@/lib/color';
+
+/** 'clean' is a plain, friendly portfolio; 'terminal' is the developer-prompt look. */
+export type UiStyle = 'clean' | 'terminal';
+/** Where the admin panel takes its accent colour from. */
+export type AdminAccentMode = 'default' | 'site' | 'custom';
 
 export interface SiteTheme {
   background: string;
@@ -24,6 +31,10 @@ export interface SiteTheme {
   input: string;
   ring: string;
   radius: string;
+  uiStyle: UiStyle;
+  adminAccentMode: AdminAccentMode;
+  /** Used when adminAccentMode is 'custom'. */
+  adminAccent: string;
 }
 
 export const THEME_DEFAULTS: SiteTheme = {
@@ -42,6 +53,9 @@ export const THEME_DEFAULTS: SiteTheme = {
   input: '#252d38',
   ring: '#34d399',
   radius: '0.5rem',
+  uiStyle: 'clean',
+  adminAccentMode: 'default',
+  adminAccent: '#34d399',
 };
 
 const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
@@ -72,24 +86,36 @@ export function sanitizeTheme(input: Partial<SiteTheme> | null | undefined): Sit
       typeof input?.radius === 'string' && RADIUS_RE.test(input.radius)
         ? input.radius
         : THEME_DEFAULTS.radius,
+    uiStyle: input?.uiStyle === 'terminal' ? 'terminal' : 'clean',
+    adminAccentMode:
+      input?.adminAccentMode === 'site' || input?.adminAccentMode === 'custom'
+        ? input.adminAccentMode
+        : 'default',
+    adminAccent: safeHex(input?.adminAccent, THEME_DEFAULTS.adminAccent),
   };
 }
 
 // Short in-process cache so the root layout (which wraps every route) does not
 // hit MongoDB on every request. Admin saves invalidate it immediately.
-let cache: { theme: SiteTheme; at: number } | null = null;
-let fetchPromise: Promise<SiteTheme> | null = null;
+const store = sharedState<{
+  cache: { theme: SiteTheme; at: number } | null;
+  fetchPromise: Promise<SiteTheme> | null;
+}>('theme', () => ({
+  cache: null,
+  fetchPromise: null,
+}));
 
 export function invalidateThemeCache() {
-  cache = null;
+  store.cache = null;
 }
 
 export async function getTheme(): Promise<SiteTheme> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.theme;
-  if (fetchPromise) return fetchPromise;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.theme;
+  if (store.fetchPromise) return store.fetchPromise;
 
-  fetchPromise = (async () => {
+  store.fetchPromise = (async () => {
     let theme = THEME_DEFAULTS;
+    let ok = false;
     try {
       const db = await connectToDatabase();
       const doc = await db.connection.client
@@ -97,16 +123,32 @@ export async function getTheme(): Promise<SiteTheme> {
         .collection('homepage')
         .findOne({ type: 'theme_content' });
       theme = sanitizeTheme(doc as Partial<SiteTheme> | null);
+      ok = true;
     } catch {
       theme = THEME_DEFAULTS;
     } finally {
-      cache = { theme, at: Date.now() };
-      fetchPromise = null;
+      // A failed read falls back to the defaults for this request only; it must not be remembered.
+      if (ok) store.cache = { theme, at: Date.now() };
+      store.fetchPromise = null;
     }
     return theme;
   })();
 
-  return fetchPromise;
+  return store.fetchPromise;
+}
+
+/**
+ * The admin panel is styled with Tailwind's emerald palette. Re-pointing the eleven emerald
+ * variables inside `.admin-accent` (the admin layout wrapper) re-tints every button, badge and
+ * focus ring there at once, without touching a single admin component.
+ */
+function adminAccentCss(t: SiteTheme): string {
+  if (t.adminAccentMode === 'default') return '';
+  const shades = shadesFromHex(t.adminAccentMode === 'site' ? t.primary : t.adminAccent);
+  const vars = Object.entries(shades)
+    .map(([step, hex]) => `--color-emerald-${step}:${hex};`)
+    .join('');
+  return `.admin-accent{${vars}}`;
 }
 
 /** Build the CSS-variable override block injected into the document. */
@@ -122,6 +164,7 @@ export function themeToCssVars(theme: SiteTheme): string {
     `--muted:${t.muted};--muted-foreground:${t.mutedForeground};` +
     `--border:${t.border};--input:${t.input};--ring:${t.ring};` +
     `--radius:${t.radius};` +
-    `}`
+    `}` +
+    adminAccentCss(t)
   );
 }

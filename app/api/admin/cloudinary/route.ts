@@ -4,6 +4,7 @@ import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import cloudinary, { configureCloudinary } from '@/lib/cloudinary';
 import { getIntegrations } from '@/lib/integrations';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { propagateCloudinaryDelete } from '@/lib/media-sync';
 
 // Light shape validation only - this is a power-tool Cloudinary asset browser
 // (analogous to the raw Mongo data console), so the goal is just preventing
@@ -171,6 +172,9 @@ export async function DELETE(request: Request) {
 
     // Use api.delete_resources for bulk deletion (up to 100 at a time)
     const result = await cloudinary.api.delete_resources(public_ids);
+    await propagateCloudinaryDelete(
+      public_ids.filter((id) => ['deleted', 'not_found'].includes(result?.deleted?.[id]))
+    );
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     console.error('Cloudinary DELETE Error:', error);

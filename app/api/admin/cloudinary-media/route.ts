@@ -3,7 +3,7 @@ import { z } from 'zod';
 import cloudinary, { configureCloudinary } from '@/lib/cloudinary';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
-
+import { propagateCloudinaryDelete, propagateCloudinaryRename } from '@/lib/media-sync';
 
 // Light shape validation only - this is a power-tool Cloudinary media browser
 // (analogous to the raw Mongo data console), so the goal is just preventing
@@ -66,10 +66,10 @@ export async function GET(request: Request) {
       // To simulate a file explorer, we should only return files that are strictly in THIS folder level.
       const filteredResources = folder
         ? result.resources.filter(
-          (res: any) =>
-            res.asset_folder === folder ||
-            res.public_id.split('/').slice(0, -1).join('/') === folder
-        )
+            (res: any) =>
+              res.asset_folder === folder ||
+              res.public_id.split('/').slice(0, -1).join('/') === folder
+          )
         : result.resources; // root shows all files across all folders
 
       return NextResponse.json({
@@ -128,6 +128,7 @@ export async function POST(request: Request) {
       const result = await cloudinary.uploader.rename(from_public_id, to_public_id, {
         overwrite: false,
       });
+      await propagateCloudinaryRename(from_public_id, to_public_id, result?.secure_url);
       return NextResponse.json({ success: true, resource: result });
     }
 
@@ -227,6 +228,13 @@ export async function DELETE(request: Request) {
 
     // Use delete_resources for batch deletion
     const result = await cloudinary.api.delete_resources(parsed.data.public_ids);
+
+    // Saved content must not keep pointing at files that are now gone.
+    await propagateCloudinaryDelete(
+      parsed.data.public_ids.filter((id) =>
+        ['deleted', 'not_found'].includes(result?.deleted?.[id])
+      )
+    );
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {

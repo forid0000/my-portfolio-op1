@@ -134,8 +134,11 @@ const nextConfig = {
     const imgSrc =
       "img-src 'self' data: blob: https://avatars.githubusercontent.com https://github.com https://media.dev.to https://media2.dev.to https://res.cloudinary.com https://dev-to-uploads.s3.amazonaws.com" +
       (r2Host ? ` ${r2Host}` : '');
+    // Admin uploads go straight from the browser to Cloudinary (signed by our server), so the API
+    // host must be reachable, and uploaded videos are played from Cloudinary's delivery host.
+    const mediaSrc = "media-src 'self' blob: https://res.cloudinary.com";
     const connectSrc =
-      "connect-src 'self' https://api.ipapi.is https://ipwho.is https://open.er-api.com https://api.aladhan.com https://api.open-meteo.com" +
+      "connect-src 'self' https://api.cloudinary.com https://api.ipapi.is https://ipwho.is https://open.er-api.com https://api.aladhan.com https://api.open-meteo.com" +
       // Sentry browser SDK posts errors/traces directly to its ingest host (no
       // same-origin tunnel, which would run telemetry through our own
       // functions). Without this, CSP silently drops every report. Derived from
@@ -147,6 +150,7 @@ const nextConfig = {
       scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       imgSrc,
+      mediaSrc,
       "font-src 'self' data:",
       connectSrc,
       "frame-ancestors 'none'",

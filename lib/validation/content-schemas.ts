@@ -10,6 +10,8 @@
  * pages working unmodified.
  */
 import { z } from 'zod';
+import { isSafeHref } from '@/lib/safe-href';
+import { mediaListSchema } from '@/lib/validation/media-schemas';
 import { KITS_COLOR_MAP } from '@/lib/kits-registry';
 
 /** hero_content - app/api/admin/content/homepage/route.ts */
@@ -77,18 +79,36 @@ export const skillsContentSchema = z.object({
   ),
 });
 
+/** A labelled link on a project card (case study, live site, Behance, repository, ...). */
+export const projectLinkSchema = z.object({
+  label: z.string().trim().min(1).max(40),
+  url: z.string().trim().max(500).refine(isSafeHref, 'Use a full link such as https://example.com'),
+});
+
 /** projects_content - app/api/admin/content/projects/route.ts */
 export const projectsContentSchema = z.object({
   projects: z.array(
     z.object({
       title: z.string(),
       description: z.string(),
-      github: z.string(),
-      demo: z.string(),
+      // Legacy single links, kept so documents and clients from before `links` still work.
+      github: z.string().default(''),
+      demo: z.string().default(''),
       tags: z.array(z.string()),
       featured: z.boolean(),
+      links: z.array(projectLinkSchema).max(6).optional(),
+      /** Pictures and videos; index 0 is the main cover. */
+      media: mediaListSchema('projects').optional(),
     })
   ),
+  /** Optional button under the project grid (e.g. "View all work"); hidden when no link is set. */
+  ctaLabel: z.string().trim().max(80).optional(),
+  ctaUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((v) => !v || isSafeHref(v), 'Use a full link such as https://example.com')
+    .optional(),
 });
 
 /** roadmap_content - app/api/admin/content/roadmap/route.ts */

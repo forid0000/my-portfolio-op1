@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { scheduleDatabaseBootstrap } from '@/lib/db-bootstrap';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -49,6 +50,9 @@ async function connectToDatabase() {
     cached.promise = null;
     throw e;
   }
+
+  // First connection of this process: make sure the indexes exist (background, never blocks).
+  scheduleDatabaseBootstrap(cached.conn);
 
   return cached.conn;
 }

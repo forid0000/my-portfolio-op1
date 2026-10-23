@@ -16,19 +16,20 @@ Only the latest release on the default branch receives security fixes.
 
 my-portfolio-op1 is a single-owner CMS. There is one admin and one optional notes-vault user, both of whom are the site owner. The public site is read-only.
 
-| Area                   | What protects it                                                                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| First-run setup        | Setup code derived from `JWT_SECRET` and printed only in the server log; 10 attempts / 15 min / IP; closes for good once the admin exists                    |
-| Admin sign-in          | Authenticator (TOTP) **always required**, optional password (scrypt) enforced once set; generic failure message; each code usable once; 10 attempts / 15 min |
-| Admin session          | `HS512` JWT, 15 minutes, `HttpOnly` + `SameSite=Strict` + `Secure` (production) cookie                                                                       |
-| Sensitive changes      | Passwords, authenticators and integration keys need a fresh authenticator code in addition to the session; 15 attempts / 15 min                              |
-| Stored credentials     | Passwords scrypt-hashed; authenticator seeds and integration secrets AES-256-GCM encrypted with a key derived from `JWT_SECRET`; secrets never sent back     |
-| Admin API              | Middleware verification plus per-route re-verification, CSRF check via `Sec-Fetch-Site` / `Origin`                                                           |
-| Writes                 | Zod validation on every mutating route, 60 writes / 5 min / IP                                                                                               |
-| Notes vault            | Separate session; optional scrypt-hashed password and/or authenticator quick unlock; locked for everyone until one is set; 30 attempts / 15 min / IP         |
-| Markdown / JSON-LD     | Link allow-list on render; `<` escaped in all JSON-LD                                                                                                        |
-| Headers                | Strict CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`                                                                |
-| Infrastructure secrets | `MONGODB_URI` and `JWT_SECRET` only, read from the environment. The app fails closed when `JWT_SECRET` is missing or too short                               |
+| Area                   | What protects it                                                                                                                                                                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First-run setup        | Setup code derived from `JWT_SECRET` and printed only in the server log; 10 attempts / 15 min / IP; closes for good once the admin exists                                                                                                                      |
+| Admin sign-in          | Authenticator (TOTP) **always required**, optional password (scrypt) enforced once set; generic failure message; each code usable once; 10 attempts / 15 min                                                                                                   |
+| Admin session          | `HS512` JWT, 15 minutes, `HttpOnly` + `SameSite=Strict` + `Secure` (production) cookie                                                                                                                                                                         |
+| Sensitive changes      | Passwords, authenticators and integration keys need a fresh authenticator code in addition to the session; 15 attempts / 15 min                                                                                                                                |
+| Stored credentials     | Passwords scrypt-hashed; authenticator seeds and integration secrets AES-256-GCM encrypted with a key derived from `JWT_SECRET`; secrets never sent back                                                                                                       |
+| Admin API              | Middleware verification plus per-route re-verification, CSRF check via `Sec-Fetch-Site` / `Origin`                                                                                                                                                             |
+| Writes                 | Zod validation on every mutating route, 60 writes / 5 min / IP                                                                                                                                                                                                 |
+| Media uploads          | Admin-only signature, locked to one folder and to image or video formats; the API key is returned, the secret never. Stored references must be Cloudinary URLs inside the area's folder; cleanup only deletes files that were in the previously saved document |
+| Notes vault            | Separate session; optional scrypt-hashed password and/or authenticator quick unlock; locked for everyone until one is set; 30 attempts / 15 min / IP                                                                                                           |
+| Markdown / JSON-LD     | Link allow-list on render; `<` escaped in all JSON-LD                                                                                                                                                                                                          |
+| Headers                | Strict CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`                                                                                                                                                                  |
+| Infrastructure secrets | `MONGODB_URI` and `JWT_SECRET` only, read from the environment. The app fails closed when `JWT_SECRET` is missing or too short                                                                                                                                 |
 
 ## Known limitations (read before deploying)
 

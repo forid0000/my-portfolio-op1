@@ -1,5 +1,6 @@
 import { Container } from '@/components/site/primitives';
-import { Terminal } from 'lucide-react';
+import SectionHeading from '@/components/section-heading';
+import {} from 'lucide-react';
 import { Marquee } from '@/components/site/marquee';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
@@ -141,15 +142,11 @@ export default function TechStacks({
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent pointer-events-none" />
 
       <Container className="relative z-10">
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Terminal className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/tech-stacks</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading
+          title={heading || 'Tools & Technologies'}
+          prefix={terminalPrefix}
+          path={'tech-stacks'}
+        />
       </Container>
 
       <div className="relative z-10 flex flex-col gap-4 md:gap-5 items-center w-full mt-10 md:mt-14">

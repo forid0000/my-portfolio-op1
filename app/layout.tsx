@@ -1,5 +1,6 @@
 import type React from 'react';
 import type { Metadata } from 'next';
+import { Noto_Sans_Arabic, Noto_Sans_Bengali, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
@@ -12,6 +13,29 @@ import DotWeave from '@/components/dot-weave';
 import { SYSTEM_DEFAULTS } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
 import { SITE_URL, getGeoMeta } from '@/lib/site-config';
+import { faviconUrl, shareImageUrl } from '@/lib/cloudinary-url';
+
+// Fonts for text the system font may not cover (the brand can be written in any language).
+// `preload: false` + Google's per-script unicode-range files mean a visitor whose page has no
+// Bangla, Arabic or Hindi letters downloads none of them.
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ['bengali'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-bengali',
+});
+const notoArabic = Noto_Sans_Arabic({
+  subsets: ['arabic'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-arabic',
+});
+const notoDevanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-devanagari',
+});
 
 // === SEO & SOCIAL CONFIGURATION ===
 export async function generateMetadata(): Promise<Metadata> {
@@ -58,8 +82,12 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: '/',
     },
+    // The tab icon is a small round PNG cut from the avatar by Cloudinary itself, so it is
+    // always a format every browser accepts and follows the avatar whenever the layout
+    // re-renders. (A generated /icon route was static and never refreshed.)
     icons: {
-      icon: '/icon',
+      icon: [{ url: faviconUrl(avatarUrl, 96), type: 'image/png', sizes: '96x96' }],
+      apple: [{ url: faviconUrl(avatarUrl, 180), sizes: '180x180' }],
     },
     keywords,
     authors: [{ name: identity.personName, url: SITE_URL }],
@@ -78,13 +106,13 @@ export async function generateMetadata(): Promise<Metadata> {
       // real URL is embedded directly. Stays correct automatically if the
       // active avatar is ever changed, with no width/height hint since an
       // admin-uploaded avatar's real dimensions aren't known ahead of time.
-      images: [{ url: avatarUrl, alt: title }],
+      images: [{ url: shareImageUrl(avatarUrl), alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [avatarUrl],
+      images: [shareImageUrl(avatarUrl)],
     },
     ...(Object.keys(other).length ? { other } : {}),
   };
@@ -117,7 +145,7 @@ export default async function RootLayout({
       '@type': 'Person',
       name: identity.personName,
       url: SITE_URL,
-      image: avatarUrl.startsWith('/') ? `${SITE_URL}${avatarUrl}` : avatarUrl,
+      image: avatarUrl.startsWith('/') ? `${SITE_URL}${avatarUrl}` : shareImageUrl(avatarUrl),
       jobTitle: identity.jobTitle,
       sameAs: identity.sameAs,
       homeLocation: {
@@ -137,7 +165,12 @@ export default async function RootLayout({
   ];
 
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-ui={theme.uiStyle}
+      className={`dark ${notoBengali.variable} ${notoArabic.variable} ${notoDevanagari.variable}`}
+    >
       <head>
         {/* Admin-customizable theme: overrides CSS variables defined in globals.css */}
         <style dangerouslySetInnerHTML={{ __html: themeToCssVars(theme) }} />

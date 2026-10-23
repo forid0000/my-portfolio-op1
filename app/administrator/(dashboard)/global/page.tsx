@@ -368,13 +368,13 @@ export default function GlobalCMS() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
-                  GitHub Profile URL
+                  Profile or portfolio link (optional)
                 </label>
                 <input
                   type="text"
                   value={data.githubProfileUrl || ''}
                   onChange={(e) => handleFieldChange('githubProfileUrl', e.target.value)}
-                  placeholder={GLOBAL_CONTENT_DEFAULTS.githubProfileUrl}
+                  placeholder="https://... (Behance, Dribbble, GitHub, your own site)"
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
                 />
                 <p className="mt-1 text-xs text-gray-500">

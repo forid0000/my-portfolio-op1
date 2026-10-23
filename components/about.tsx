@@ -1,4 +1,6 @@
-import { Terminal, Cpu, ShieldCheck, Activity } from 'lucide-react';
+import { Cpu, ShieldCheck, Activity } from 'lucide-react';
+import { ByStyle } from '@/components/by-style';
+import SectionHeading from '@/components/section-heading';
 import ReactMarkdown from 'react-markdown';
 import { DynamicLucideIcon } from '@/components/dynamic-lucide-icon';
 import { ABOUT_DEFAULTS, DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
@@ -30,16 +32,7 @@ export default function About({
     <section id="about" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Terminal Header */}
-        <div className="flex items-center gap-3 mb-12 animate-fade-in-up">
-          <Terminal className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="sr-only">{heading}</h2>
-          <div className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/about</span>
-            <span className="text-muted-foreground">$</span>
-          </div>
-        </div>
+        <SectionHeading title={heading} prefix={terminalPrefix} path="about" className="mb-12" />
 
         <div className="grid md:grid-cols-12 gap-12">
           {/* LEFT: System Logs (Bio) */}
@@ -57,14 +50,14 @@ export default function About({
               {/* Decorative Square top-left */}
               <div className="absolute top-0 left-[-4px] w-2 h-2 border border-primary bg-background z-10" />
 
-              <div className="text-lg text-muted-foreground/80 leading-relaxed font-mono relative z-10 prose prose-invert max-w-none">
+              <div className="text-lg text-muted-foreground/80 leading-relaxed terminal:font-mono relative z-10 prose prose-invert max-w-none">
                 <ReactMarkdown>{content?.bioText || ABOUT_DEFAULTS.bioText}</ReactMarkdown>
               </div>
             </div>
 
             {/* "What I Do" Log */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-mono text-primary/80 uppercase tracking-widest border-b border-border/40 pb-2">
+              <div className="flex items-center gap-2 text-sm terminal:font-mono text-primary/80 uppercase tracking-widest border-b border-border/40 pb-2">
                 <Activity className="w-4 h-4 animate-pulse" />[ ACTIVE_PROCESSES ]
               </div>
 
@@ -78,7 +71,7 @@ export default function About({
                     <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     <div className="relative z-10 flex flex-col sm:flex-row sm:items-baseline gap-2">
-                      <span className="font-mono text-primary text-sm whitespace-nowrap flex items-center gap-2">
+                      <span className="terminal:font-mono text-primary text-sm whitespace-nowrap flex items-center gap-2">
                         <span className="font-bold">{title}</span>
                       </span>
                       <span className="hidden sm:inline text-muted-foreground/30">--</span>
@@ -92,7 +85,7 @@ export default function About({
             </div>
 
             {/* Quote Block */}
-            <div className="bg-primary/5 border border-primary/20 p-4 rounded-md font-mono text-sm text-primary/80 flex gap-3 items-start">
+            <div className="bg-primary/5 border border-primary/20 p-4 rounded-md terminal:font-mono text-sm text-primary/80 flex gap-3 items-start">
               <span className="text-xl leading-none">"</span>
               <span>{content?.quote || ABOUT_DEFAULTS.quote}</span>
             </div>
@@ -108,21 +101,22 @@ export default function About({
               <div className="bg-card/30 border border-border/30 rounded-xl p-6 relative overflow-hidden group hover:border-primary/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] transition-all duration-500">
                 {/* Removed Scanner Animation */}
 
-                <h3 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-6 flex items-center gap-2 relative z-10">
-                  <Cpu className="w-4 h-4" /> System_Diagnostics
+                <h3 className="text-sm font-semibold terminal:font-mono terminal:text-xs terminal:uppercase terminal:tracking-widest text-muted-foreground mb-6 flex items-center gap-2 relative z-10">
+                  <Cpu className="hidden w-4 h-4 terminal:block" />
+                  <ByStyle clean="Highlights" terminal="System_Diagnostics" />
                 </h3>
 
                 <div className="space-y-6 relative z-10">
                   {stats.map((stat, i) => (
                     <div key={stat.label} className="relative">
-                      <div className="flex justify-between items-end mb-2 font-mono text-sm">
+                      <div className="flex justify-between items-end mb-2 terminal:font-mono text-sm">
                         <span className="flex items-center gap-2 text-muted-foreground">
                           <DynamicLucideIcon name={stat.icon} className="w-4 h-4" /> {stat.label}
                         </span>
                         <span className="text-primary font-bold text-lg">{stat.value}</span>
                       </div>
                       {/* Progress Bar Visual */}
-                      <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
+                      <div className="hidden terminal:block h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
                         <div
                           style={{ width: i === 2 ? '100%' : '75%' }}
                           className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)] relative animate-bar-fill"
@@ -135,7 +129,7 @@ export default function About({
                 </div>
 
                 {/* Decorative Tech Elements */}
-                <div className="mt-8 pt-4 border-t border-dashed border-border/40 grid grid-cols-2 gap-4 text-[10px] font-mono text-muted-foreground/60 uppercase relative z-10">
+                <div className="mt-8 pt-4 border-t border-dashed border-border/40 hidden terminal:grid grid-cols-2 gap-4 text-[10px] terminal:font-mono text-muted-foreground/60 uppercase relative z-10">
                   <div className="">
                     <span className="block text-primary/40">KERNEL</span>
                     {content?.kernelValue || ABOUT_DEFAULTS.kernelValue}
@@ -157,8 +151,9 @@ export default function About({
                   <div className="text-sm font-bold text-foreground">
                     {content?.statusTitle || ABOUT_DEFAULTS.statusTitle}
                   </div>
-                  <div className="text-xs text-muted-foreground font-mono">
-                    status: {content?.statusLabel || ABOUT_DEFAULTS.statusLabel}
+                  <div className="text-xs text-muted-foreground terminal:font-mono">
+                    <span className="hidden terminal:inline">status: </span>
+                    {content?.statusLabel || ABOUT_DEFAULTS.statusLabel}
                   </div>
                 </div>
               </div>

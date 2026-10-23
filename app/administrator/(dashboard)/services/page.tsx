@@ -58,7 +58,10 @@ export default function ServicesCMS() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">Icon</label>
-              <IconPicker value={item.icon || 'Code2'} onChange={(name) => onChange('icon', name)} />
+              <IconPicker
+                value={item.icon || 'Code2'}
+                onChange={(name) => onChange('icon', name)}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">

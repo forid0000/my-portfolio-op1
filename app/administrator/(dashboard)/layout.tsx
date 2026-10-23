@@ -268,7 +268,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <OnboardingProvider setMenuOpen={setIsMobileMenuOpen}>
-      <div className="flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
+      <div className="admin-accent flex flex-col md:flex-row h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
         {/* Mobile Top Bar */}
         <div className="md:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 z-40">
           <h2 className="text-lg font-bold tracking-tight text-emerald-500">Admin Portal</h2>

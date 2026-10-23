@@ -45,7 +45,7 @@ Example: "Awards" as a list of items, like education or testimonials.
 
 3. **Public read.** In `app/page.tsx` add `getPublicItems('awards')` to the `Promise.all`, guarded by `isSectionEnabled(sections, 'awards')`, and add the `sectionProps` entry.
 4. **Component, registry, admin page.** As in the first playbook; the admin page is a `CollectionEditor` (copy `app/administrator/(dashboard)/education/page.tsx`: `endpoint`, `emptyItem`, `getItemLabel`, `validateItem`, `renderFields`).
-5. **Index.** Add `awards` to the `order` index list in `scripts/create-indexes.mjs`.
+5. **Index.** Add `awards` to `ORDERED_COLLECTIONS` in `lib/db-bootstrap.ts` and bump `SCHEMA_VERSION`; deployments create it automatically.
 
 ## Add a field to an existing section
 
@@ -121,6 +121,15 @@ Anything that changes credentials or integration keys must additionally require 
 2. Add `{ href: '/administrator/<name>', label: '<Menu label>', icon: <LucideIcon> }` to the right group in `NAV_GROUPS` in `app/administrator/(dashboard)/layout.tsx`.
 3. Follow the admin look in [DESIGN.md §8](DESIGN.md#8-interaction-patterns): gray-950/900 surfaces, emerald accent, `font-mono` for keys and code.
 4. Admin pages import icons directly from `lucide-react` for the menu (the admin is not on the public budget), but **icons chosen by the owner** still go through `IconPicker` and the server resolver.
+
+## Add pictures or videos to a section
+
+1. **Scope.** If it is a new area, add it to `MEDIA_SCOPES` in `lib/media-types.ts` (folder, `allowVideo`, incoming image transformation) and to the `scope` enum in `app/api/admin/media/sign/route.ts`.
+2. **Schema.** Add `media: mediaListSchema('<scope>').optional()` (a list; index 0 is the cover) or `singleMediaSchema('<scope>')` (one picture) to the section's Zod schema. Only Cloudinary URLs inside the scope's folder validate.
+3. **Cleanup.** Collection sections: list the field in `mediaFields` in the route (`createCollectionHandlers`), which deletes files on remove, on delete, and really unsets a field the editor dropped. Single-document sections: diff old and new with `mediaRefs` / `removedRefs` and call `destroyMedia` inside `after()`, as `app/api/admin/content/projects/route.ts` does. Add the field to `lib/media-sync.ts` and `isMediaReferenced` so Cloudinary-explorer deletes and renames keep it in sync.
+4. **Admin.** Use `<MediaUploader scope="…" />` (lists) or `<SectionImageUploader />` (one picture). Both compress in the browser and upload straight to Cloudinary through `lib/media-upload.ts`.
+5. **Public.** Render a list with `<MediaGallery items title />` (cover, thumbnails, lazy lightbox) and a single picture with `next/image`.
+6. **Test.** Add the new route and field to `tests/smoke/e2e.mjs`.
 
 ## Add an integration key
 

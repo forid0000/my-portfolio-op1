@@ -7,6 +7,7 @@
  * and every field falls back to the neutral placeholders in
  * lib/content-defaults.ts if the database is empty or unreachable.
  */
+import { sharedState } from '@/lib/shared-state';
 import connectToDatabase from '@/lib/db';
 import { getGlobalContent } from '@/lib/site';
 import { CACHE_TTL_MS } from '@/lib/cache-ttl';
@@ -26,11 +27,14 @@ export interface SiteIdentity {
   sameAs: string[];
 }
 
-let cache: { value: SiteIdentity; at: number } | null = null;
+const store = sharedState<{ cache: { value: SiteIdentity; at: number } | null }>(
+  'identity',
+  () => ({ cache: null })
+);
 let inflight: Promise<SiteIdentity> | null = null;
 
 export function invalidateIdentityCache() {
-  cache = null;
+  store.cache = null;
 }
 
 function cleanTitle(subtitle: string): string {
@@ -84,12 +88,12 @@ async function loadIdentity(): Promise<SiteIdentity> {
 
 /** TTL-cached identity lookup. Never throws. */
 export async function getSiteIdentity(): Promise<SiteIdentity> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.value;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.value;
   if (inflight) return inflight;
 
   inflight = loadIdentity()
     .then((value) => {
-      cache = { value, at: Date.now() };
+      store.cache = { value, at: Date.now() };
       return value;
     })
     .finally(() => {

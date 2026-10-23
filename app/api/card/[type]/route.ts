@@ -56,7 +56,9 @@ function esc(value: unknown): string {
 }
 
 function clamp(text: string, max: number): string {
-  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  const clean = String(text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return clean.length > max ? `${clean.slice(0, max - 1)}…` : clean;
 }
 
@@ -134,8 +136,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ type
     return new Response('Unknown card type', { status: 404 });
   }
 
-  const theme =
-    new URL(request.url).searchParams.get('theme') === 'dark' ? 'dark' : 'light';
+  const theme = new URL(request.url).searchParams.get('theme') === 'dark' ? 'dark' : 'light';
 
   let svg: string;
   try {

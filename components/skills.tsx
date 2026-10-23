@@ -1,4 +1,5 @@
-import { Terminal } from 'lucide-react';
+import {} from 'lucide-react';
+import SectionHeading from '@/components/section-heading';
 import { DynamicLucideIcon } from '@/components/dynamic-lucide-icon';
 import { DEFAULT_TERMINAL_PREFIX, SKILLS_DEFAULTS } from '@/lib/content-defaults';
 
@@ -23,15 +24,7 @@ export default function Skills({
     <section id="skills" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
         {/* Terminal Header */}
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Terminal className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/skills</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading title={heading || 'Skills'} prefix={terminalPrefix} path={'skills'} />
 
         {/* Skills Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -44,7 +37,7 @@ export default function Skills({
               <div className="bg-card/20 border border-border/30 rounded-xl overflow-hidden hover:border-primary/40 hover:bg-card/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)] transition-all duration-500 h-full">
                 {/* Category Header */}
                 <div className="bg-primary/5 border-b border-border/30 px-6 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-mono text-primary font-bold tracking-wide">
+                  <div className="flex items-center gap-2 terminal:font-mono text-primary font-bold tracking-wide">
                     <DynamicLucideIcon name={category.icon} className="w-4 h-4" />
                     {category.name.replace(/_/g, ' ')}
                   </div>
@@ -54,7 +47,7 @@ export default function Skills({
                 <div className="p-6 space-y-5">
                   {category.skills.map((skill, sIdx) => (
                     <div key={skill.name} className="space-y-1.5">
-                      <div className="flex justify-between text-sm font-mono">
+                      <div className="flex justify-between text-sm terminal:font-mono">
                         <span className="text-foreground/80 group-hover:text-foreground transition-colors duration-300">
                           {skill.name}
                         </span>

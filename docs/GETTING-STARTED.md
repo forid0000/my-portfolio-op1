@@ -134,9 +134,9 @@ Use the left menu in the dashboard. A good order:
 2. **Hero Section** and **About**: the first things visitors read.
 3. **Sections & Layout**: switch off what does not apply to you (for example Roadmap or Tech Stacks), and drag the rest into the order you want.
 4. **Experience**, **Projects**, **Services**, **Education**, **Skills**, **Testimonials** and the other content pages: add your real entries and delete the examples.
-5. **Appearance**: pick your colors.
+5. **Appearance**: choose the **Clean** style (plain headings, works for any profession) or **Terminal** (developer look), pick a color scheme, and optionally the admin panel color.
 6. **System & SEO**: the title and description that appear in Google and when your link is shared.
-7. **Media Manager**: upload your photo (the picture shown on the site) and a résumé file.
+7. **Hero Section** (or **Media Manager**): upload your profile picture. It goes live straight away and is shown in the hero, the top-left of every page and the browser tab. Upload a résumé in **Media Manager**. **Projects** and **Certifications** accept several pictures and videos each (the first is the cover; visitors can click any of them to see it larger).
 
 Press **Save** on each page. The public site updates right after you save; refresh the page if you do not see it.
 
@@ -186,7 +186,7 @@ Not needed to get online. Useful to try things privately or to work on the code.
 
    Then open <http://localhost:3000/administrator>. The **setup code** is printed in the terminal window. (On a powerful computer you can use `pnpm dev` instead, which updates as you edit code but uses far more memory.)
 
-6. Optional, one time: `node scripts/create-indexes.mjs` adds extra safety checks to the database. The site works without it, and it is safe to run more than once.
+6. Nothing else to run: the first time the server starts, it prepares the database (indexes and safety checks) by itself.
 
 ## Troubleshooting
 

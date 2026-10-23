@@ -17,8 +17,8 @@ interface RoadmapProps {
 
 export default function Roadmap({
   content,
-  heading = 'System',
-  highlight = 'Evolution_Path',
+  heading = 'Roadmap',
+  highlight = 'Ahead',
 }: RoadmapProps) {
   const roadmapItems = content || ROADMAP_DEFAULTS;
 
@@ -76,7 +76,7 @@ export default function Roadmap({
                       <div className="relative z-10">
                         {/* Date & Icon Header */}
                         <div className="flex items-center justify-between mb-3">
-                          <span className="font-mono text-xs text-primary/80 border border-primary/20 px-2 py-0.5 rounded bg-primary/5">
+                          <span className="terminal:font-mono text-xs text-primary/80 border border-primary/20 px-2 py-0.5 rounded bg-primary/5">
                             {item.year}
                           </span>
                           <span className="text-muted-foreground group-hover:text-primary transition-colors">
@@ -97,7 +97,7 @@ export default function Roadmap({
                           {item.tech.map((t) => (
                             <span
                               key={t}
-                              className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 bg-secondary/30 px-2 py-1 rounded"
+                              className="text-[10px] terminal:font-mono uppercase tracking-wider text-muted-foreground/70 bg-secondary/30 px-2 py-1 rounded"
                             >
                               {t}
                             </span>

@@ -6,6 +6,8 @@ import connectToDatabase from '@/lib/db';
 import { mergeKitsContent, type KitsContent } from '@/lib/kits-registry';
 import { getLayoutSections, isSectionEnabled } from '@/lib/sections-registry';
 import { getGlobalContent, toHeaderBrand, toNavToggles } from '@/lib/site';
+import { getActiveAvatarUrl } from '@/lib/avatar-cache';
+import { getTheme } from '@/lib/theme';
 import { resolveIconMap } from '@/lib/icons/resolve';
 import { KitsNavClient } from './kits-nav-client';
 import './style.css';
@@ -24,10 +26,12 @@ async function getKitsContent(): Promise<KitsContent> {
 }
 
 export default async function KitsLayout({ children }: { children: React.ReactNode }) {
-  const [sections, global, content] = await Promise.all([
+  const [sections, global, content, avatarUrl, theme] = await Promise.all([
     getLayoutSections(),
     getGlobalContent(),
     getKitsContent(),
+    getActiveAvatarUrl(),
+    getTheme(),
   ]);
   if (!isSectionEnabled(sections, 'kits')) notFound();
 
@@ -40,7 +44,11 @@ export default async function KitsLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-screen text-foreground flex flex-col relative font-sans">
-      <Header brand={toHeaderBrand(global)} toggles={toNavToggles(sections)} />
+      <Header
+        brand={toHeaderBrand(global, avatarUrl)}
+        toggles={toNavToggles(sections)}
+        uiStyle={theme.uiStyle}
+      />
       <KitsNavClient content={content} icons={icons}>
         {children}
       </KitsNavClient>

@@ -16,6 +16,8 @@ This repository documents itself for AI agents in [`docs/ai/`](docs/ai/README.md
 - **Everything visible arrives in the server HTML.** Never add a blocking loader, splash or full-screen overlay (`app/loading.tsx` is a thin top bar by design).
 - **Validate every write** (session, rate limit, Zod) and **fall back to defaults** on every public read.
 - **After a save route changes shared chrome** (header, footer, theme, avatar, section toggles), call `revalidateSiteChrome()`, not just `revalidatePublicContent()`.
+- **Default look is the clean style**; developer wording and monospace are opt-in (`terminal:` variant, `<ByStyle>`). Brand text may be in any language.
+- **Never keep a cache in a module variable** (use `lib/shared-state.ts`); a production build has one copy of each module per route.
 - **Do not commit, push or open pull requests** unless the human owner asks. Stage and describe the change.
 - **Update the docs, `.env.example` and `CHANGELOG.md`** in the same change as the behavior.
 
@@ -25,10 +27,9 @@ This repository documents itself for AI agents in [`docs/ai/`](docs/ai/README.md
 pnpm install
 pnpm dev                      # compiles on demand; ~1.4 GB RAM after a few routes
 pnpm preview                  # next build && next start: light, recommended on small machines
-pnpm lint
-pnpm exec tsc --noEmit
-pnpm exec prettier --check <changed files>
-pnpm build
+pnpm verify                   # Prettier, ESLint, tsc, unit tests, production build (what CI runs first)
+pnpm test:smoke               # production server + throwaway MongoDB + fake Cloudinary, end to end
+pnpm format                   # Prettier --write (CI only checks)
 ```
 
 On a machine with little free memory run heavy steps one at a time, cap them (`systemd-run --user --scope -p MemoryMax=2G -p MemorySwapMax=0 …`), and never stop a dev server you did not start.

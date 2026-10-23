@@ -9,6 +9,7 @@
  *
  * Node runtime only.
  */
+import { sharedState } from '@/lib/shared-state';
 import { CACHE_TTL_MS } from '@/lib/cache-ttl';
 import { getSetting, settingsCollection } from '@/lib/settings-store';
 import { sealSecret, tryOpenSecret } from '@/lib/secret-box';
@@ -117,15 +118,18 @@ const MAX_VALUE_LENGTH = 500;
 
 type Stored = Record<string, string>;
 
-let cache: { values: Record<string, string>; at: number } | null = null;
+const store = sharedState<{ cache: { values: Record<string, string>; at: number } | null }>(
+  'integrations',
+  () => ({ cache: null })
+);
 
 export function invalidateIntegrationsCache() {
-  cache = null;
+  store.cache = null;
 }
 
 /** Decrypted admin-panel values (secrets opened), cached briefly. */
 async function loadStored(): Promise<Record<string, string>> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.values;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.values;
   const values: Record<string, string> = {};
   try {
     const stored = (await getSetting<Stored>(STORE_KEY)) ?? {};
@@ -138,7 +142,7 @@ async function loadStored(): Promise<Record<string, string>> {
   } catch {
     // Database unavailable: callers fall back to environment variables.
   }
-  cache = { values, at: Date.now() };
+  store.cache = { values, at: Date.now() };
   return values;
 }
 

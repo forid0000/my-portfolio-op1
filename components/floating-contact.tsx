@@ -68,7 +68,7 @@ export default function FloatingContact({
             relative
             h-14 w-14 flex items-center justify-center rounded-full
             md:h-auto md:w-auto md:px-6 md:py-4 md:rounded-2xl
-            font-mono text-sm font-semibold
+            terminal:font-mono text-sm font-semibold
             transition-colors duration-200
             shadow-lg
             border

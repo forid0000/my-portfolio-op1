@@ -48,7 +48,7 @@ Break one of these and the change is rejected, whatever else it does.
 - Database name is fixed: `portfolio_cms`. Use `db.connection.client.db('portfolio_cms').collection(name)`.
 - `homepage` docs are keyed by `type` and written with an **upsert by type**. Never `insertOne` into `homepage`.
 - Store media as `{ src, public_id }` (Cloudinary), never base64.
-- Add an index to `scripts/create-indexes.mjs` when a query path needs it (and document it in the README's deployment note). Code must still work if the script was never run.
+- Add an index to `INDEXES` in `lib/db-bootstrap.ts` when a query path needs it and bump `SCHEMA_VERSION`: every deployment creates it automatically on its next start. Code must still work if an index could not be built.
 - Existing stored documents must keep working: add new fields with defaults, merge over defaults on read, never require a migration.
 
 ## Performance rules
@@ -65,13 +65,11 @@ Budget and rationale are in [ARCHITECTURE.md §13](ARCHITECTURE.md#13-performanc
 Run, in this order, and report results honestly (including failures):
 
 ```bash
-pnpm lint                              # 0 errors expected (2 known <img> warnings)
-pnpm exec tsc --noEmit                 # 0 errors
-pnpm exec prettier --check <files you changed>
-pnpm build                             # must succeed; read First Load JS
+pnpm verify        # Prettier (whole repo), ESLint, tsc, unit tests, production build
+pnpm test:smoke    # production server + throwaway MongoDB + fake Cloudinary (needs a prior build)
 ```
 
-For behavior that touches auth, content saving, revalidation, icons or the homepage, also test against a real database on a production build. Recipe:
+`pnpm verify` expects 0 lint errors (2 known `<img>` warnings). `pnpm test:smoke` covers content saving, revalidation, uploads and the public pages (extend `tests/smoke/e2e.mjs` when you add a write route). For auth flows, also test by hand against a real database on a production build. Recipe:
 
 1. Start a throwaway MongoDB (for example `docker run -d --rm --name test-mongo -p 127.0.0.1:27018:27017 --tmpfs /data/db --memory 400m mongo:7`).
 2. Build and start a **copy** or a separate dist dir so you never clobber a running dev server: `NEXT_DIST_DIR=.next-verify NEXT_BUILD_CPUS=2 MONGODB_URI=mongodb://127.0.0.1:27018/portfolio_cms JWT_SECRET=<32+ chars> pnpm build`, then `next start -p 3201` with the same variables.
@@ -82,6 +80,9 @@ On a low-memory machine run these steps **one at a time**, cap memory (`systemd-
 
 ## Pitfalls already paid for
 
+- **Never keep a cache in a module variable.** In a production build every route and page has its own copy of each module, so an admin save cleared only its own copy and the static page that regenerated read a stale one, freezing old content into the HTML (found by the smoke test). Use `sharedState()` from `lib/shared-state.ts`, and do not cache a failed read.
+- **pnpm 12 stops on undecided install scripts** (`ERR_PNPM_IGNORED_BUILDS`). The decisions live in `pnpm-workspace.yaml` (`allowBuilds`); a new dependency with an install script needs an entry there, or CI fails.
+- **Developer styling is opt-in.** The default look is the clean style. Use `terminal:` Tailwind classes (`terminal:font-mono`, `terminal:uppercase`) or `<ByStyle clean=… terminal=… />` for anything prompt-like; never hard-code monospace, `~/` paths or `SYS_` wording into the default look.
 - **Do not add a `packageManager` field** to `package.json`: pnpm then rewrites `pnpm-lock.yaml` with a large extra section. CI installs `pnpm@12.14.0` explicitly.
 - **Do not put `lucide-react` in `serverExternalPackages`**; it conflicts with Next's default handling of that package. Only `react-icons` is external.
 - **`otplib` v13** has no default export: `import { generateSecret, generateURI, verifySync } from 'otplib'`. `verifySync` takes `epochTolerance`; the result's `timeStep` may need a fallback.
@@ -117,7 +118,7 @@ When a statement in these docs no longer matches the code, fix the doc in the sa
 ## Definition of done
 
 - [ ] Meets every non-negotiable above.
-- [ ] `pnpm lint`, `tsc --noEmit`, Prettier on touched files and `pnpm build` pass.
+- [ ] `pnpm verify` passes, and `pnpm test:smoke` for anything touching data, uploads or revalidation.
 - [ ] Behavior verified against a real database where it matters; results reported honestly.
 - [ ] First Load JS did not grow without a reason.
 - [ ] Docs and `CHANGELOG.md` updated.

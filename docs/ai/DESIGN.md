@@ -21,6 +21,10 @@ A dark, **developer-terminal** look: monospace labels, prompt-style headings, so
 - **Accent is `primary`** (emerald by default). Blue is the supporting accent for the `~/section` path inside prompts (`text-blue-500` in existing sections; prefer `text-secondary` in new code so it follows the theme).
 - The page background is the theme background with a subtle dot-grid (`components/dot-weave.tsx`), never a solid decorative image.
 
+### Clean and terminal styles
+
+The default look is **clean**: plain section headings with an accent bar, sans-serif text, everyday wording (Home, About, Tools, Explore, Connect) and no status widgets, so the site suits any profession. The developer look is the opt-in **terminal** style (Admin → Appearance → Style): command-prompt headings, monospace text, `_home` style nav labels, typing and decoding effects, the system-status widget. It is one switch (`data-ui` on `<html>`), used through Tailwind's `terminal:` variant and `<ByStyle>`; never hard-code developer wording or monospace into the default look. Brand text accepts any language, so do not letter-space, uppercase or split it by character.
+
 ## 3. Color: tokens only
 
 In new public-site code, never write a raw hex or a fixed Tailwind palette color (`text-emerald-400`) for brand-level color. Use the semantic tokens; the owner can change them in Admin → Appearance. (Existing components still contain a few fixed colors, and the kits' closed accent palette is the one deliberate exception; do not copy the old habit.)

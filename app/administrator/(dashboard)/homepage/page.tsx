@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProfilePictureCard } from '@/components/admin/profile-picture-card';
+import { HERO_DEFAULTS } from '@/lib/content-defaults';
 import { extractApiErrorMessage } from '@/lib/utils';
 
 export default function HomepageCMS() {
@@ -24,9 +26,7 @@ export default function HomepageCMS() {
       .then((data) => {
         setFormData({
           greeting: data.greeting || '',
-          aiPhrases:
-            data.aiPhrases ||
-            'checking environment..., analyzing repository..., hunking data..., punking algorithms..., compiling assets...',
+          aiPhrases: data.aiPhrases || HERO_DEFAULTS.aiPhrases,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           subtitle: data.subtitle || '',
@@ -116,11 +116,14 @@ export default function HomepageCMS() {
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-3xl mx-auto space-y-6">
+          <ProfilePictureCard />
+
           <div className="bg-blue-950/30 border border-blue-900/50 p-4 rounded-xl flex gap-3 items-start">
             <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
             <div className="text-sm text-blue-200 leading-relaxed">
-              <strong className="text-blue-300">Admin Hint:</strong> Keep the subtitle relatively
-              short so it fits nicely in the hacker-text typing animation.
+              <strong className="text-blue-300">Tip:</strong> keep the subtitle short so it reads
+              well under your name. The typing and decoding effects only appear in the Terminal
+              style (Appearance → Style).
             </div>
           </div>
 
@@ -139,14 +142,14 @@ export default function HomepageCMS() {
                   name="greeting"
                   value={formData.greeting}
                   onChange={handleChange}
-                  placeholder="e.g. WELCOME TO MY PORTFOLIO..."
+                  placeholder="e.g. Welcome to my portfolio"
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-sm"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
-                  AI Magic Phrases (Comma-separated)
+                  Typing phrases (Terminal style only, comma-separated)
                 </label>
                 <textarea
                   name="aiPhrases"

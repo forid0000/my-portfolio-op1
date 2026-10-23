@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Terminal } from 'lucide-react';
 import { HERO_DEFAULTS } from '@/lib/content-defaults';
+import { graphemes } from '@/lib/text-script';
 
 const DEFAULT_PHRASES = HERO_DEFAULTS.aiPhrases.split(',').map((s) => s.trim());
 
@@ -17,7 +18,8 @@ export default function AiTypingText({
   finalGreeting?: string;
   aiPhrases?: string;
 }) {
-  const [text, setText] = useState('');
+  // Start with the greeting so the server HTML has real text before the effect runs.
+  const [text, setText] = useState(finalGreeting);
   const [done, setDone] = useState(false);
 
   const phrases = useMemo(() => {
@@ -45,13 +47,13 @@ export default function AiTypingText({
 
     const tick = () => {
       if (cancelled) return;
-      const phrase = phrases[index];
+      const chars = graphemes(phrases[index]);
       const isLast = index === phrases.length - 1;
 
       if (!deleting) {
         length += 1;
-        setText(phrase.slice(0, length));
-        if (length >= phrase.length) {
+        setText(chars.slice(0, length).join(''));
+        if (length >= chars.length) {
           if (isLast) {
             setDone(true); // settle on the greeting; no more timers
             return;
@@ -63,7 +65,7 @@ export default function AiTypingText({
         timer = setTimeout(tick, 40 + Math.random() * 35);
       } else {
         length -= 1;
-        setText(phrase.slice(0, length));
+        setText(chars.slice(0, length).join(''));
         if (length <= 0) {
           deleting = false;
           index += 1;

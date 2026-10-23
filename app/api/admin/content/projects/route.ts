@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { revalidatePublicContent } from '@/lib/revalidate';
 import { notifyProfileReadme } from '@/lib/github-dispatch';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
@@ -6,6 +6,7 @@ import connectToDatabase from '@/lib/db';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import { PROJECTS_DEFAULTS } from '@/lib/content-defaults';
 import { projectsContentSchema } from '@/lib/validation/content-schemas';
+import { destroyMedia, mediaRefs, removedRefs } from '@/lib/media-server';
 
 export async function GET() {
   try {
@@ -56,17 +57,30 @@ export async function POST(request: Request) {
     const db = await connectToDatabase();
     const collection = db.connection.client.db('portfolio_cms').collection('homepage');
 
+    const previous = await collection.findOne({ type: 'projects_content' });
+
     await collection.updateOne(
       { type: 'projects_content' },
       {
         $set: {
           projects: data.projects,
+          ...(data.ctaLabel !== undefined ? { ctaLabel: data.ctaLabel } : {}),
+          ...(data.ctaUrl !== undefined ? { ctaUrl: data.ctaUrl } : {}),
           type: 'projects_content',
           updatedAt: new Date(),
         },
       },
       { upsert: true }
     );
+
+    // Pictures and videos the owner removed (or whose project was deleted) are deleted from
+    // Cloudinary now that the save succeeded. Only files that were in the previously stored
+    // document are ever touched, never ids supplied by the browser.
+    const stale = removedRefs(
+      mediaRefs((previous?.projects ?? []).map((p: { media?: unknown }) => p.media)),
+      mediaRefs(data.projects.map((p) => p.media))
+    );
+    if (stale.length) after(() => destroyMedia(stale));
 
     revalidatePublicContent();
     notifyProfileReadme('projects');

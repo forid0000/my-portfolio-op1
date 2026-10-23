@@ -35,15 +35,16 @@ Nothing in browser storage is sent anywhere except the visit counter that accomp
 
 ## Third-party requests made by the site
 
-| Service                                 | When                                                                         | What is sent                                                                                  |
-| --------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Dev.to API                              | Articles page, sitemap, `llms.txt` (only if a Dev.to username is configured) | The configured username, from your server                                                     |
-| Cloudinary (`res.cloudinary.com`)       | Gallery, avatar (if you upload images)                                       | Image requests, fetched by your server's image optimizer or directly by the visitor's browser |
-| `api.ipapi.is`, `ipwho.is`              | System-info kit (visitor's browser); contact form (your server)              | Visitor IP (looks up "my IP" in the kit)                                                      |
-| `open.er-api.com`                       | Currency kit                                                                 | Requested currency code                                                                       |
-| `api.aladhan.com`, `api.open-meteo.com` | Prayer-times kit                                                             | Latitude / longitude of the chosen city, or of "My location" rounded to about 1 km            |
-| Sentry (`*.ingest.*.sentry.io`)         | Only if `NEXT_PUBLIC_SENTRY_DSN` is set                                      | Error reports and 10% performance samples                                                     |
-| Vercel Speed Insights                   | Only when hosted on Vercel                                                   | Anonymous performance metrics                                                                 |
+| Service                                 | When                                                                         | What is sent                                                                                            |
+| --------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Dev.to API                              | Articles page, sitemap, `llms.txt` (only if a Dev.to username is configured) | The configured username, from your server                                                               |
+| Cloudinary (`res.cloudinary.com`)       | Gallery, avatar, project and certificate pictures and videos (if you upload) | Image and video requests, fetched by your server's image optimizer or directly by the visitor's browser |
+| Cloudinary (`api.cloudinary.com`)       | Only in the admin, when you upload a picture or video                        | The file itself, sent from the owner's browser with a signature your server issued                      |
+| `api.ipapi.is`, `ipwho.is`              | System-info kit (visitor's browser); contact form (your server)              | Visitor IP (looks up "my IP" in the kit)                                                                |
+| `open.er-api.com`                       | Currency kit                                                                 | Requested currency code                                                                                 |
+| `api.aladhan.com`, `api.open-meteo.com` | Prayer-times kit                                                             | Latitude / longitude of the chosen city, or of "My location" rounded to about 1 km                      |
+| Sentry (`*.ingest.*.sentry.io`)         | Only if `NEXT_PUBLIC_SENTRY_DSN` is set                                      | Error reports and 10% performance samples                                                               |
+| Vercel Speed Insights                   | Only when hosted on Vercel                                                   | Anonymous performance metrics                                                                           |
 
 The QR scanner kit uses the camera entirely in the browser; images are not uploaded.
 

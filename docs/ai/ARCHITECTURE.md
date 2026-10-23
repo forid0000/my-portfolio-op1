@@ -20,6 +20,7 @@ It is generic and public: no name, link, email, domain or secret of any real per
 | Validation | Zod, **server only** (route handlers). Browser code uses plain functions.                                     |
 | Auth       | `jose` JWT (HS512) in an HttpOnly cookie, `otplib` v13 TOTP, scrypt passwords, AES-256-GCM for stored secrets |
 | Packages   | pnpm (lockfile v9). Node 20.9+ (`engines`). CI uses Node 22 and pnpm 12.14.0.                                 |
+| Tests      | Vitest unit tests (`tests/unit`); end-to-end smoke test with a fake Cloudinary (`tests/smoke`); one CI job    |
 | Hosting    | Vercel-first (serverless), also `next start` behind a TLS proxy. Vercel Speed Insights is inert elsewhere.    |
 | Optional   | Cloudinary (media), SMTP via nodemailer (contact form), Cloudflare R2 (notes images), GitHub dispatch, Sentry |
 
@@ -62,7 +63,8 @@ app/
 components/             public section components, header/footer, ui/ primitives, admin/ shared admin UI
 hooks/                  use-unsaved-warning, use-safe-dnd-sensors
 lib/                    all server logic (see §5)
-scripts/                create-indexes, setup-code, reset-admin-auth, generate-icon-names
+scripts/                setup-code, reset-admin-auth, generate-icon-names
+tests/                  unit/ (Vitest) and smoke/ (fake Cloudinary + end-to-end run)
 middleware.ts           Edge: admin session gate + CSRF check
 instrumentation*.ts     Sentry, only when a DSN is configured
 docs/                   human guide (GETTING-STARTED.md) and these AI docs
@@ -70,35 +72,35 @@ docs/                   human guide (GETTING-STARTED.md) and these AI docs
 
 ## 5. `lib/` module map
 
-| Area            | Modules                                                                                                                      | Role                                                                                       |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Config          | `site-config.ts`, `cache-ttl.ts`                                                                                             | Deployment settings from env (`SITE_URL`, geo); shared cache TTL (0 in dev, 180 s in prod) |
-| Default content | `content-defaults.ts`                                                                                                        | **Single source** of neutral placeholder content for every section                         |
-| Content loaders | `site.ts` (global), `theme.ts`, `sections-registry.ts`, `identity.ts`, `floating.ts`, `avatar-cache.ts`, `kits-registry.tsx` | Read a CMS document, merge over defaults, cache in-process, expose `invalidate*Cache()`    |
-| DB              | `db.ts`, `settings-store.ts`                                                                                                 | Cached Mongoose connection (serverless-tuned pool); key/value `settings` collection        |
-| Credentials     | `credentials.ts`, `integrations.ts`, `secret-box.ts`, `setup-code.ts`, `admin-session.ts`, `auth.ts`                         | Admin/notes passwords + TOTP, integration keys, encryption, session cookies, setup code    |
-| Writes          | `api/collection-crud.ts`, `validation/*`, `rate-limit.ts`, `revalidate.ts`, `github-dispatch.ts`                             | Shared CRUD factory, Zod schemas, in-memory limiter, on-demand revalidation                |
-| Icons           | `icons/resolve.ts`, `icons/icon-data.ts`, `icons/names.ts`, `icons/lucide-data.json`, `lucide-icon.ts`, `social-icon.tsx`    | Names → SVG data on the server (see §9)                                                    |
-| Media/mail      | `cloudinary.ts`, `r2.ts`                                                                                                     | Lazily configured from integration keys                                                    |
-| Contact, SEO    | `device-info.ts`, `ip-lookup.ts`, `user-agent.ts`, `json-ld.ts`                                                              | Contact-form context (server), safe JSON-LD                                                |
-| Client-only     | `visit-tracker.ts` (localStorage visit counter), `crypto-utils.ts` (secure random for the picker kit), `utils.ts`            | Never import these from server paths                                                       |
+| Area            | Modules                                                                                                                                                                                                          | Role                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Config          | `site-config.ts`, `cache-ttl.ts`                                                                                                                                                                                 | Deployment settings from env (`SITE_URL`, geo); shared cache TTL (0 in dev, 180 s in prod) |
+| Default content | `content-defaults.ts`                                                                                                                                                                                            | **Single source** of neutral placeholder content for every section                         |
+| Content loaders | `shared-state.ts` (process-wide cache store), `site.ts` (global), `theme.ts`, `sections-registry.ts`, `identity.ts`, `floating.ts`, `avatar-cache.ts`, `kits-registry.tsx`                                       | Read a CMS document, merge over defaults, cache in-process, expose `invalidate*Cache()`    |
+| DB              | `db.ts`, `db-bootstrap.ts` (automatic indexes), `settings-store.ts`                                                                                                                                              | Cached Mongoose connection (serverless-tuned pool); key/value `settings` collection        |
+| Credentials     | `credentials.ts`, `integrations.ts`, `secret-box.ts`, `setup-code.ts`, `admin-session.ts`, `auth.ts`                                                                                                             | Admin/notes passwords + TOTP, integration keys, encryption, session cookies, setup code    |
+| Writes          | `api/collection-crud.ts`, `validation/*`, `rate-limit.ts`, `revalidate.ts`, `github-dispatch.ts`                                                                                                                 | Shared CRUD factory, Zod schemas, in-memory limiter, on-demand revalidation                |
+| Icons           | `icons/resolve.ts`, `icons/icon-data.ts`, `icons/names.ts`, `icons/lucide-data.json`, `lucide-icon.ts`, `social-icon.tsx`                                                                                        | Names → SVG data on the server (see §9)                                                    |
+| Media/mail      | `cloudinary.ts`, `cloudinary-url.ts`, `media-types.ts`, `media-server.ts`, `media-sync.ts`, `avatar-store.ts`, `validation/media-schemas.ts`, `r2.ts`                                                            | Lazily configured from integration keys                                                    |
+| Contact, SEO    | `device-info.ts`, `ip-lookup.ts`, `user-agent.ts`, `json-ld.ts`                                                                                                                                                  | Contact-form context (server), safe JSON-LD                                                |
+| Client-only     | `image-resize.ts` (adaptive compression), `media-upload.ts` (direct upload), `text-script.ts`, `visit-tracker.ts` (localStorage visit counter), `crypto-utils.ts` (secure random for the picker kit), `utils.ts` | Never import these from server paths                                                       |
 
 ## 6. Data model
 
 Database `portfolio_cms` (the name is fixed in code; a database name in `MONGODB_URI` is ignored).
 
-| Collection                                                                | Shape                                                                                                       | Written by                                                   |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `homepage`                                                                | One doc per `type`, **unique index on `type`**                                                              | `/api/admin/content/*` (type-keyed routes)                   |
-| `education`, `certifications`, `testimonials`, `services`, `publications` | Many small docs with an `order` field                                                                       | `createCollectionHandlers()` in `lib/api/collection-crud.ts` |
-| `gallery`                                                                 | Cloudinary images, unique `public_id`, ordered                                                              | gallery routes                                               |
-| `avatars`, `resumes`                                                      | Uploaded files, **partial-unique `isActive`** (exactly one active)                                          | media-manager routes                                         |
-| `notes`                                                                   | Vault notes (plain text at rest; auth only)                                                                 | `/api/notes/*`                                               |
-| `settings`                                                                | `{ key, value, updatedAt }`, **unique `key`**: `admin_auth`, `integrations`, `notes_password`, `notes_totp` | `lib/settings-store.ts`                                      |
+| Collection                                                                | Shape                                                                                                                                                         | Written by                                                   |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `homepage`                                                                | One doc per `type`, **unique index on `type`**                                                                                                                | `/api/admin/content/*` (type-keyed routes)                   |
+| `education`, `certifications`, `testimonials`, `services`, `publications` | Many small docs with an `order` field                                                                                                                         | `createCollectionHandlers()` in `lib/api/collection-crud.ts` |
+| `gallery`                                                                 | Cloudinary images, unique `public_id`, ordered                                                                                                                | gallery routes                                               |
+| `avatars`, `resumes`                                                      | Profile pictures (Cloudinary `secure_url`, `public_id`, size, `etag` for duplicate detection) and résumés; **partial-unique `isActive`** (exactly one active) | media-manager routes                                         |
+| `notes`                                                                   | Vault notes (plain text at rest; auth only)                                                                                                                   | `/api/notes/*`                                               |
+| `settings`                                                                | `{ key, value, updatedAt }`, **unique `key`**: `admin_auth`, `integrations`, `notes_password`, `notes_totp`                                                   | `lib/settings-store.ts`                                      |
 
 `homepage` document types: `hero_content`, `about_content`, `experience_content` (`experiences[]`), `skills_content` (`categories[]`), `projects_content` (`projects[]`), `roadmap_content` (`roadmapItems[]`), `techstacks_content`, `expertises_content`, `contact_content`, `headings_content` (section texts + terminal prefix), `global_content` (brand, header, footer, socials, timezone), `layout_content` (section order/visibility), `theme_content`, `system_content` (SEO + error-page texts), `kits_content`, `floating_contact`.
 
-`scripts/create-indexes.mjs` creates the indexes (idempotent, recommended, **not required to boot**). `settingsCollection()` ensures the `settings.key` unique index itself, because first-run setup depends on it for an atomic claim.
+`lib/db-bootstrap.ts` creates the indexes and repairs known data problems automatically on the first connection of every server process (idempotent, versioned by `schema_version` in `settings`, background, never fails a request). `settingsCollection()` still ensures the `settings.key` unique index itself, because first-run setup depends on it for an atomic claim.
 
 ## 7. Read path: how a public page renders
 
@@ -168,6 +170,10 @@ Full threat model and known limits: [SECURITY.md](../../SECURITY.md).
 - **Articles** (`app/articles`): Dev.to feed, only when a username is set in Section Texts (an empty query would list other people's posts).
 - **SEO**: `generateMetadata` in the root layout and per-page metadata use `lib/identity.ts` (CMS-derived name, title, socials); JSON-LD via `safeJsonLd` (escapes `<`); `sitemap`, `robots`, `llms.txt` use `SITE_URL`.
 
+- **Media pipeline** (`lib/media-*.ts`, `components/admin/media-uploader.tsx`): the browser compresses an image (95% quality for slightly oversized files down to an 80% floor, then smaller dimensions; files that already fit are untouched), asks `/api/admin/media/sign` for a folder-locked signature and uploads **straight to Cloudinary** (images and videos up to 100 MB; no platform body limit). The server only stores `{ kind, src, public_id, … }`, validates that every reference is a Cloudinary URL inside the scope's folder, and deletes removed files (image or video resource type) after a successful save. Profile pictures are registered with `registerAvatar()`, which reads the real details back from Cloudinary. Deletes and renames in the Cloudinary explorer propagate (`lib/media-sync.ts`); `Re-sync` repairs drift. Videos are delivered as H.264 MP4 with a poster frame (`lib/cloudinary-url.ts`) and never autoplay unless the owner enables it per video. The CSP allows `api.cloudinary.com` (connect) and `res.cloudinary.com` (img, media).
+- **UI style**: `theme_content.uiStyle` (`clean` default, or `terminal`) sets `data-ui` on `<html>`; Tailwind's `terminal:` variant and `<ByStyle>` show the developer look only there. `adminAccentMode` re-tints the admin's emerald palette through `.admin-accent` CSS variables.
+- **Any language**: brand text accepts any script. `next/font/google` provides Noto fonts for Bangla, Arabic and Devanagari (downloaded only when such letters appear), `dir="auto"` on brand text, no letter-spacing on joined scripts, and effects split text by grapheme.
+
 ## 12. Caching layers (from outermost to innermost)
 
 | Layer                        | Lifetime                                  | Cleared by                                  |
@@ -177,7 +183,7 @@ Full threat model and known limits: [SECURITY.md](../../SECURITY.md).
 | `React.cache()`              | one request                               | n/a (dedupes `generateMetadata` + page)     |
 | Icon resolver map            | process lifetime                          | restart                                     |
 
-Because the in-process caches are per instance, other serverless instances may serve a changed value for up to the TTL. That is accepted.
+In-process caches live on `globalThis` (`lib/shared-state.ts`), not in module variables: in a production build each route and page has its own copy of every module, so a module-level cache could be invalidated in one copy while the page that regenerates reads another, freezing stale content into the static HTML. Separate serverless instances still keep separate caches, so another instance may serve a changed value for up to the TTL. That is accepted.
 
 ## 13. Performance architecture (the budget)
 
@@ -198,5 +204,6 @@ Required: `MONGODB_URI`, `JWT_SECRET`. Everything else is optional and degrades 
 - `middleware.ts` uses the pre-16 filename; Next prints a deprecation warning. Renaming to `proxy.ts` is optional and not yet done.
 - `node_modules` may hold a different `lucide-react` than `pnpm-lock.yaml`; the icon generator handles both data shapes (`iconNode` vs `icon.node`).
 - Admin UI uses `<img>` in two places (lint warnings, accepted).
-- Eight files are not Prettier-clean from before the open-source release; reformat them only in a dedicated change so diffs stay readable.
+- `next/font/google` (Noto fonts for Bangla, Arabic, Hindi) downloads the fonts at **build** time, so a build needs network access.
+- pnpm 12 refuses to install while a dependency's install script is undecided; the decisions are in `pnpm-workspace.yaml` (`allowBuilds`).
 - The 404 page redirects home after a 9-second countdown by design.

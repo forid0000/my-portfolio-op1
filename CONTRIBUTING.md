@@ -18,8 +18,7 @@ Requirements: Node.js 20.9+, [pnpm](https://pnpm.io), and a MongoDB database.
 ```bash
 pnpm install
 cp .env.example .env.local     # set MONGODB_URI and JWT_SECRET
-node scripts/create-indexes.mjs
-pnpm dev
+pnpm dev                       # the database sets itself up on first start
 ```
 
 The app runs at <http://localhost:3000>. On first visit to `/administrator` a setup wizard asks for the setup code printed in your terminal (or `node scripts/setup-code.mjs`) and enrols your authenticator; there is no development bypass. Credentials and integration keys are managed in Admin → Security & Keys.
@@ -31,13 +30,13 @@ The app runs at <http://localhost:3000>. On first visit to `/administrator` a se
 ## Checks to run before opening a pull request
 
 ```bash
-pnpm lint                 # ESLint
-npx tsc --noEmit          # type check
-pnpm format               # Prettier (project config in .prettierrc.json)
-pnpm build                # production build
+pnpm verify        # Prettier, ESLint, TypeScript, unit tests (Vitest) and the production build
+pnpm test:smoke    # end-to-end: production server + a throwaway MongoDB + a fake Cloudinary
 ```
 
-CI runs the same checks on every pull request.
+`pnpm format` rewrites files with Prettier (project config in `.prettierrc.json`); CI only checks. The smoke test is needed when you change data, uploads or revalidation.
+
+CI (one workflow, one job) runs all of the above on every pull request.
 
 ## Project conventions
 

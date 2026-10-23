@@ -10,12 +10,56 @@ import {
   PaintBucket,
   LayoutTemplate,
   AlertCircle,
+  Terminal,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
+import { shadesFromHex } from '@/lib/color';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { extractApiErrorMessage } from '@/lib/utils';
 
+type ColorKey =
+  | 'background'
+  | 'foreground'
+  | 'card'
+  | 'cardForeground'
+  | 'primary'
+  | 'primaryForeground'
+  | 'secondary'
+  | 'secondaryForeground'
+  | 'accent'
+  | 'muted'
+  | 'mutedForeground'
+  | 'border'
+  | 'input'
+  | 'ring';
+
+interface ThemeState extends Record<ColorKey, string> {
+  radius: string;
+  uiStyle: 'clean' | 'terminal';
+  adminAccentMode: 'default' | 'site' | 'custom';
+  adminAccent: string;
+}
+
+const COLOR_KEYS: ColorKey[] = [
+  'background',
+  'foreground',
+  'card',
+  'cardForeground',
+  'primary',
+  'primaryForeground',
+  'secondary',
+  'secondaryForeground',
+  'accent',
+  'muted',
+  'mutedForeground',
+  'border',
+  'input',
+  'ring',
+];
+
 // Kept in sync with THEME_DEFAULTS in lib/theme.ts
-const DEFAULTS = {
+const DEFAULTS: ThemeState = {
   background: '#1d232a',
   foreground: '#e5e7eb',
   card: '#2a3142',
@@ -31,6 +75,9 @@ const DEFAULTS = {
   input: '#252d38',
   ring: '#34d399',
   radius: '0.5rem',
+  uiStyle: 'clean',
+  adminAccentMode: 'default',
+  adminAccent: '#34d399',
 };
 
 const RADIUS_PRESETS = [
@@ -39,6 +86,81 @@ const RADIUS_PRESETS = [
   { label: 'Default', value: '0.5rem' },
   { label: 'Rounded', value: '0.75rem' },
   { label: 'Pill', value: '1rem' },
+];
+
+// One-click colour schemes. They change colours only, never the corner radius or the style.
+const PRESETS: { name: string; colors: Partial<Record<ColorKey, string>> }[] = [
+  { name: 'Emerald', colors: {} },
+  {
+    name: 'Ocean',
+    colors: {
+      background: '#0f1b2b',
+      card: '#18283d',
+      border: '#2d4260',
+      input: '#142235',
+      primary: '#38bdf8',
+      primaryForeground: '#0b1220',
+      accent: '#38bdf8',
+      ring: '#38bdf8',
+      secondary: '#818cf8',
+    },
+  },
+  {
+    name: 'Violet',
+    colors: {
+      background: '#17142a',
+      card: '#221d3d',
+      border: '#3b3466',
+      input: '#1c1834',
+      primary: '#a78bfa',
+      primaryForeground: '#120f24',
+      accent: '#a78bfa',
+      ring: '#a78bfa',
+      secondary: '#f472b6',
+    },
+  },
+  {
+    name: 'Rose',
+    colors: {
+      background: '#221619',
+      card: '#31202a',
+      border: '#5a3341',
+      input: '#2a1a21',
+      primary: '#fb7185',
+      primaryForeground: '#1f1014',
+      accent: '#fb7185',
+      ring: '#fb7185',
+      secondary: '#fbbf24',
+    },
+  },
+  {
+    name: 'Sunset',
+    colors: {
+      background: '#1f1a14',
+      card: '#2e261c',
+      border: '#54442f',
+      input: '#261f17',
+      primary: '#fbbf24',
+      primaryForeground: '#1a1409',
+      accent: '#fbbf24',
+      ring: '#fbbf24',
+      secondary: '#fb923c',
+    },
+  },
+  {
+    name: 'Mono',
+    colors: {
+      background: '#121212',
+      card: '#1c1c1c',
+      border: '#3a3a3a',
+      input: '#181818',
+      primary: '#e5e5e5',
+      primaryForeground: '#111111',
+      accent: '#e5e5e5',
+      ring: '#e5e5e5',
+      secondary: '#a3a3a3',
+    },
+  },
 ];
 
 const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
@@ -81,7 +203,7 @@ function ColorField({
 }
 
 export default function AppearancePage() {
-  const [theme, setTheme] = useState(DEFAULTS);
+  const [theme, setTheme] = useState<ThemeState>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -99,15 +221,31 @@ export default function AppearancePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleUpdate = (key: keyof typeof DEFAULTS, val: string) => {
+  const handleUpdate = <K extends keyof ThemeState>(key: K, val: ThemeState[K]) => {
     setTheme((prev) => ({ ...prev, [key]: val }));
   };
 
+  const applyPreset = (colors: Partial<Record<ColorKey, string>>) => {
+    setTheme((prev) => ({
+      ...prev,
+      ...Object.fromEntries(COLOR_KEYS.map((k) => [k, colors[k] ?? DEFAULTS[k]])),
+    }));
+  };
+
+  // The accent the admin panel will use, for the preview strip below.
+  const adminAccentSource =
+    theme.adminAccentMode === 'site'
+      ? theme.primary
+      : theme.adminAccentMode === 'custom'
+        ? theme.adminAccent
+        : DEFAULTS.adminAccent;
+  const adminShades = HEX_RE.test(adminAccentSource) ? shadesFromHex(adminAccentSource) : null;
+
   const handleSave = async () => {
     // Quick validation
-    const invalid = Object.values(theme).some(
-      (val) => !HEX_RE.test(val) && !val.includes('rem') && !val.includes('px') && val !== '0'
-    );
+    const invalid =
+      COLOR_KEYS.some((k) => !HEX_RE.test(theme[k])) ||
+      (theme.adminAccentMode === 'custom' && !HEX_RE.test(theme.adminAccent));
     if (invalid) {
       toast.error('Please ensure all colors are valid hex codes (e.g. #34d399).');
       return;
@@ -124,7 +262,10 @@ export default function AppearancePage() {
         throw new Error(extractApiErrorMessage(errorData));
       }
       markClean(theme);
-      toast.success('Theme saved. Reload the public site to see it live.');
+      toast.success('Theme saved.', {
+        description:
+          'Public pages refresh on their own. Reload the admin to see a new panel colour.',
+      });
     } catch (err) {
       toast.error('Failed to save', {
         description:
@@ -202,6 +343,172 @@ export default function AppearancePage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {/* Controls - Left Column (takes up 2/3 space) */}
           <div className="xl:col-span-2 space-y-6">
+            {/* Look & feel */}
+            <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-200 mb-1 flex items-center gap-2 border-b border-gray-800 pb-2">
+                <Sparkles className="w-5 h-5 text-emerald-400" /> Style
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                How section titles, the header and the footer are worded and drawn.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    [
+                      'clean',
+                      'Clean',
+                      'Plain headings and everyday words. Works for any profession.',
+                      Sparkles,
+                    ],
+                    [
+                      'terminal',
+                      'Terminal',
+                      'Developer look: command prompts, monospace text, typing effects.',
+                      Terminal,
+                    ],
+                  ] as const
+                ).map(([value, title, text, Icon]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleUpdate('uiStyle', value)}
+                    aria-pressed={theme.uiStyle === value}
+                    className={`text-left p-4 rounded-lg border transition-all ${
+                      theme.uiStyle === value
+                        ? 'bg-emerald-600/15 border-emerald-500/60'
+                        : 'bg-gray-950 border-gray-800 hover:bg-gray-800/60'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-semibold text-gray-100">
+                      <Icon className="w-4 h-4 text-emerald-400" /> {title}
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-400">{text}</span>
+                    <span
+                      className={`mt-3 block rounded border border-gray-800 bg-gray-900 px-3 py-2 text-gray-200 ${
+                        value === 'terminal' ? 'font-mono text-xs' : 'text-sm font-semibold'
+                      }`}
+                    >
+                      {value === 'terminal' ? (
+                        <>
+                          <span className="text-emerald-400">dev@portfolio</span>:~/projects$
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-2 inline-block h-3 w-1 rounded-full bg-emerald-400 align-middle" />
+                          Projects
+                        </>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-200 mb-1 flex items-center gap-2 border-b border-gray-800 pb-2">
+                <Palette className="w-5 h-5 text-emerald-400" /> Color schemes
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Start from a scheme, then fine-tune any color below. Nothing changes until you save.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {PRESETS.map((preset) => {
+                  const c = (k: ColorKey) => preset.colors[k] ?? DEFAULTS[k];
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => applyPreset(preset.colors)}
+                      className="p-3 rounded-lg border border-gray-800 bg-gray-950 hover:border-emerald-500/60 text-left transition-colors"
+                    >
+                      <span
+                        className="flex h-10 items-center gap-1.5 rounded-md px-2"
+                        style={{ backgroundColor: c('background') }}
+                      >
+                        <span
+                          className="h-5 w-5 rounded-full"
+                          style={{ backgroundColor: c('primary') }}
+                        />
+                        <span
+                          className="h-5 w-5 rounded-full"
+                          style={{ backgroundColor: c('secondary') }}
+                        />
+                        <span
+                          className="h-5 flex-1 rounded"
+                          style={{ backgroundColor: c('card') }}
+                        />
+                      </span>
+                      <span className="mt-2 block text-xs font-medium text-gray-300">
+                        {preset.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-200 mb-1 flex items-center gap-2 border-b border-gray-800 pb-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" /> Admin panel color
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                The accent color of this control panel (buttons, highlights). The panel itself
+                always stays dark so it is readable whatever you pick for the site.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {(
+                  [
+                    ['default', 'Default green'],
+                    ['site', 'Match my site'],
+                    ['custom', 'Pick a color'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleUpdate('adminAccentMode', value)}
+                    aria-pressed={theme.adminAccentMode === value}
+                    className={`px-4 py-2 text-sm rounded-lg border transition-all ${
+                      theme.adminAccentMode === value
+                        ? 'bg-emerald-600/20 border-emerald-500/60 text-emerald-300'
+                        : 'bg-gray-950 border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {theme.adminAccentMode === 'custom' && (
+                <div className="max-w-xs mb-4">
+                  <ColorField
+                    label="Admin accent"
+                    value={theme.adminAccent}
+                    onChange={(v) => handleUpdate('adminAccent', v)}
+                  />
+                </div>
+              )}
+              {adminShades && (
+                <div className="flex items-center gap-3">
+                  <div className="flex overflow-hidden rounded-md border border-gray-800">
+                    {['300', '400', '500', '600', '700', '800'].map((step) => (
+                      <span
+                        key={step}
+                        className="h-7 w-9"
+                        style={{ backgroundColor: adminShades[step] }}
+                        title={step}
+                      />
+                    ))}
+                  </div>
+                  <span
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: adminShades['600'] }}
+                  >
+                    Save Changes
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Global Settings */}
             <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
               <h3 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">

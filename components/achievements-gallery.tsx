@@ -80,9 +80,9 @@ const InteractiveCard = ({
 export default function AchievementsGallery({
   items = [],
   ownerName = GLOBAL_CONTENT_DEFAULTS.brandName,
-  heading = 'Captured',
+  heading = 'Gallery',
   highlight = 'Moments',
-  subtext = 'A randomized visual timeline of technical growth and personal milestones.',
+  subtext = 'A collection of moments from my work and life.',
 }: {
   items?: GalleryItem[];
   ownerName?: string;
@@ -259,7 +259,7 @@ export default function AchievementsGallery({
             </div>
 
             {/* Sub-label: System Status / Counter */}
-            <div className="flex items-center gap-4 text-[10px] sm:text-xs font-mono tracking-widest text-muted-foreground/60">
+            <div className="flex items-center gap-4 text-[10px] sm:text-xs terminal:font-mono tracking-widest text-muted-foreground/60">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary/50" />
                 LOAD_STATE: STABLE
@@ -295,7 +295,7 @@ export default function AchievementsGallery({
             {/* Top Bar Navigation HUD */}
             <div className="absolute top-0 inset-x-0 h-24 flex items-center justify-between px-6 z-50 pointer-events-none">
               <div className="bg-white/10 border border-white/10 px-4 py-2 rounded-full pointer-events-auto">
-                <span className="text-[10px] font-mono text-white/50 tracking-widest uppercase">
+                <span className="text-[10px] terminal:font-mono text-white/50 tracking-widest uppercase">
                   {selectedIndex !== null ? `${selectedIndex + 1} / ${currentGallery.length}` : ''}
                 </span>
               </div>

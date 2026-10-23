@@ -5,13 +5,7 @@
  * collection of many small documents - one per item - mirroring `gallery`.
  */
 import { z } from 'zod';
-
-/** Cloudinary-hosted media reference. Only the secure URL + public_id are ever
- * persisted - no base64/binary ever touches MongoDB. */
-export const cloudinaryMediaSchema = z.object({
-  src: z.string().min(1),
-  public_id: z.string().min(1),
-});
+import { mediaListSchema, singleMediaSchema } from '@/lib/validation/media-schemas';
 
 /** education collection - app/api/admin/content/education/route.ts */
 export const educationItemSchema = z.object({
@@ -35,7 +29,9 @@ export const certificationItemSchema = z.object({
   expiryDate: z.string().default(''),
   credentialId: z.string().default(''),
   credentialUrl: z.string().default(''),
-  badge: cloudinaryMediaSchema.optional(),
+  badge: singleMediaSchema('certifications').optional(),
+  /** Certificate scans, photos or videos; index 0 is the cover. */
+  media: mediaListSchema('certifications').optional(),
   order: z.number().default(0),
 });
 export type CertificationItem = z.infer<typeof certificationItemSchema>;
@@ -46,7 +42,7 @@ export const testimonialItemSchema = z.object({
   title: z.string().default(''),
   company: z.string().default(''),
   quote: z.string().min(1),
-  avatar: cloudinaryMediaSchema.optional(),
+  avatar: singleMediaSchema('testimonials').optional(),
   order: z.number().default(0),
 });
 export type TestimonialItem = z.infer<typeof testimonialItemSchema>;
@@ -62,7 +58,7 @@ export const serviceItemSchema = z.object({
   category: z.string().default(''),
   pricing: z.string().default(''),
   icon: z.string().default('Code2'),
-  banner: cloudinaryMediaSchema.optional(),
+  banner: singleMediaSchema('services').optional(),
   features: z.array(z.string()).default([]),
   ctaLabel: z.string().default(''),
   ctaLink: z.string().default(''),

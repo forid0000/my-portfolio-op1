@@ -60,8 +60,7 @@ cp .env.example .env.local
 #   MONGODB_URI   (your MongoDB connection string)
 #   JWT_SECRET    (openssl rand -base64 32)
 
-node scripts/create-indexes.mjs   # one-time: creates the indexes the app relies on
-pnpm dev                          # http://localhost:3000
+pnpm dev   # http://localhost:3000 (the database sets itself up on first start)
 ```
 
 Then open <http://localhost:3000/administrator>. A fresh install has no admin yet, so you land on a **first-run setup wizard**:
@@ -98,9 +97,10 @@ NEXT_BUILD_CPUS=2 pnpm dev                                               # fewer
 | Bio, stats, status                                      | Admin → About                                                    |
 | Experience, projects, skills…                           | Admin → the matching section                                     |
 | Section order and visibility                            | Admin → Sections                                                 |
-| Colors and glass effect                                 | Admin → Appearance                                               |
+| Style (clean or terminal), color schemes, admin color   | Admin → Appearance                                               |
 | Page title, description, keywords, error pages          | Admin → System                                                   |
-| Avatar and résumé                                       | Admin → Media Manager                                            |
+| Profile picture (live at once) and résumé               | Admin → Hero Section, or Media Manager                           |
+| Project and certificate pictures and videos             | Admin → Projects / Certifications                                |
 | Passwords, authenticators, email / Cloudinary / R2 keys | Admin → Security & Keys                                          |
 | Dev.to username                                         | Admin → Section Texts (leave empty to disable the articles feed) |
 | Public URL, geo tags, short links                       | Environment variables (see below)                                |
@@ -208,13 +208,21 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 **Vercel** (recommended; Speed Insights is already wired and is inert elsewhere):
 
 1. Import the repository and set `MONGODB_URI`, `JWT_SECRET` and `NEXT_PUBLIC_SITE_URL`.
-2. Run `node scripts/create-indexes.mjs` once against your production `MONGODB_URI`.
-3. Deploy. HTTPS must be enforced at the edge so `Secure` cookies and HSTS work.
-4. Open `/administrator`, read the **setup code** from the deployment's runtime logs (or run `node scripts/setup-code.mjs` with the production `JWT_SECRET`), and complete the setup wizard.
+2. Deploy. HTTPS must be enforced at the edge so `Secure` cookies and HSTS work.
+3. Open `/administrator`, read the **setup code** from the deployment's runtime logs (or run `node scripts/setup-code.mjs` with the production `JWT_SECRET`), and complete the setup wizard.
 
 **Self-hosted:** `pnpm build && pnpm start` behind a reverse proxy that terminates TLS (Caddy, Nginx). Node 20.9+.
 
-`scripts/create-indexes.mjs` is idempotent (unique `homepage.type`, unique `gallery.public_id` and `gallery.order`, partial-unique `isActive` on `avatars` and `resumes`, and an `order` index on each independent collection), so it is safe to re-run on any environment.
+**The database sets itself up.** The first time a server starts against a database (a fresh one, a restore, or a new deployment), it creates the indexes the app relies on (unique `homepage.type`, one live avatar and résumé, `gallery`, `settings.key`, the `order` indexes) and repairs known data problems. It is idempotent, versioned (`schema_version` in the `settings` collection), runs in the background and never blocks or fails a request. Nothing needs to be run by hand.
+
+## Checks and tests
+
+```bash
+pnpm verify        # Prettier, ESLint, TypeScript, unit tests, production build (CI runs these first)
+pnpm test:smoke    # starts the production server, a fake Cloudinary and runs the end-to-end test
+```
+
+`pnpm test:smoke` needs a throwaway MongoDB (`MONGODB_URI=mongodb://127.0.0.1:27017/portfolio_cms pnpm test:smoke`) and a prior `pnpm build`. It checks the first-start database setup, uploads and removal of pictures and videos, the avatar library and its Cloudinary sync, page refresh after saves, and that every public route answers. CI runs everything in one workflow (`.github/workflows/ci.yml`).
 
 ## Project structure
 
@@ -222,7 +230,8 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 app/            Next.js routes: public pages, /administrator, /notes, /kits, /articles, API routes
 components/     Section components, admin UI, shared primitives
 lib/            Auth and credentials, DB, validation (Zod), CMS defaults, identity/SEO, server-side icons, caches
-scripts/        create-indexes.mjs, setup-code.mjs, reset-admin-auth.mjs, generate-icon-names.mjs
+scripts/        setup-code.mjs, reset-admin-auth.mjs, generate-icon-names.mjs
+tests/          unit/ (Vitest) and smoke/ (fake Cloudinary + an end-to-end run against a real MongoDB)
 public/         Static assets (tech icons, placeholder avatar)
 docs/           GETTING-STARTED.md (beginner guide) and ai/ (architecture, conventions, design, playbooks for AI agents and contributors)
 AGENTS.md       Entry point for AI coding agents (CLAUDE.md imports it)

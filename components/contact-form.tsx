@@ -209,7 +209,9 @@ export default function ContactForm({ content }: ContactFormProps) {
                   Direct Email
                   <Copy className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </h4>
-                <p className="text-sm text-muted-foreground font-mono">{contactData.email}</p>
+                <p className="text-sm text-muted-foreground terminal:font-mono">
+                  {contactData.email}
+                </p>
               </div>
 
               {hasPhoneCard && (
@@ -228,7 +230,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                     {contactData.phoneLabel}
                     <Copy className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </h4>
-                  <p className="text-sm text-muted-foreground font-mono group-hover:text-blue-500 transition-colors">
+                  <p className="text-sm text-muted-foreground terminal:font-mono group-hover:text-blue-500 transition-colors">
                     {contactData.whatsappLink || contactData.phone}
                   </p>
                 </div>
@@ -398,7 +400,9 @@ export default function ContactForm({ content }: ContactFormProps) {
                         <MessageSquare className="w-4 h-4 text-primary" />
                         Message Payload *
                       </span>
-                      <span className="text-xs text-muted-foreground font-mono">Min 15 chars</span>
+                      <span className="text-xs text-muted-foreground terminal:font-mono">
+                        Min 15 chars
+                      </span>
                     </label>
                     <textarea
                       id="message"

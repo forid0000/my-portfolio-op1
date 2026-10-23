@@ -17,8 +17,8 @@ export interface SocialLinkDefault {
   icon: string;
 }
 
-/** Shared "terminal prompt" prefix shown in front of each section heading. */
-export const DEFAULT_TERMINAL_PREFIX = 'dev@portfolio';
+/** Prompt prefix shown in front of each section heading in the Terminal style (Admin -> Appearance). */
+export const DEFAULT_TERMINAL_PREFIX = 'hello@portfolio';
 
 /** Local placeholder avatar (public/avatar-placeholder.png). */
 export const AVATAR_PLACEHOLDER_URL = '/avatar-placeholder.png';
@@ -26,272 +26,212 @@ export const AVATAR_PLACEHOLDER_URL = '/avatar-placeholder.png';
 export const GLOBAL_CONTENT_DEFAULTS = {
   brandName: 'Your Name',
   footerText:
-    'Building scalable architectures, ensuring robust security, and deploying modern full-stack web applications.',
-  copyrightName: 'YOUR NAME',
+    'A short line about what you do and who you do it for. Edit it in the admin dashboard.',
+  copyrightName: 'Your Name',
   avatarUrl: '/api/avatar',
-  headerName: '~/YOUR.NAME',
-  headerTag: 'Full-Stack_Dev',
-  githubProfileUrl: 'https://github.com/your-username',
+  headerName: 'Your Name',
+  headerTag: 'Your Profession',
+  // Optional: where the "view all work" button under Projects points when no address is set there.
+  githubProfileUrl: '',
   locationLabel: 'Your City, Country',
   timeZone: 'UTC',
   socials: [
-    { href: 'https://github.com/your-username', label: 'GitHub', icon: 'Github' },
     { href: 'https://www.linkedin.com/in/your-username', label: 'LinkedIn', icon: 'Linkedin' },
-    { href: 'https://dev.to/your-username', label: 'Dev.to', icon: 'DevToIcon' },
     { href: 'mailto:you@example.com', label: 'Email', icon: 'Mail' },
   ] as SocialLinkDefault[],
   footerSocials: [
     { href: 'https://www.linkedin.com/in/your-username', label: 'LinkedIn', icon: 'Linkedin' },
-    { href: 'https://github.com/your-username', label: 'GitHub', icon: 'Github' },
-    { href: 'https://dev.to/your-username', label: 'Dev.to', icon: 'DevToIcon' },
-    { href: 'https://medium.com/@your-username', label: 'Medium', icon: 'MediumIcon' },
     { href: 'mailto:you@example.com', label: 'Email', icon: 'Mail' },
   ] as SocialLinkDefault[],
 };
 
 export const HERO_DEFAULTS = {
-  greeting: 'WELCOME TO MY PORTFOLIO...',
-  aiPhrases:
-    'checking environment..., analyzing repository..., hunking data..., punking algorithms..., compiling assets...',
-  firstName: 'YOUR',
-  lastName: 'NAME',
-  subtitle: 'Full-Stack Developer || Your Tagline Here --',
+  greeting: 'Welcome to my portfolio',
+  // Only used by the Terminal style's typing effect.
+  aiPhrases: 'warming up..., loading my story..., polishing the details...',
+  firstName: 'Your',
+  lastName: 'Name',
+  subtitle: 'Your profession or tagline goes here',
   description:
-    'Building scalable, secure web applications with modern technologies. Edit this text from the admin dashboard.',
+    'A short introduction about you and the work you do. Edit this text from the admin dashboard.',
 };
 
 export const ABOUT_DEFAULTS = {
   bioText:
-    '> Initializing user profile... \n\nI am **Your Name**, a software engineer who builds **secure, scalable systems**. Replace this bio from the admin dashboard (`/administrator/about`).',
+    'Hello, I am **Your Name**. Tell visitors who you are, what you care about and what it is like to work with you. Replace this bio from the admin dashboard (`/administrator/about`).',
   whatIDo: [
     {
-      title: 'Web_Development',
-      desc: 'Deploying responsive, production-grade interfaces using Next.js/React standard protocols.',
+      title: 'Your Specialty',
+      desc: 'Describe what you do best and who it helps.',
     },
     {
-      title: 'Backend_Architecture',
-      desc: 'Engineering robust REST/GraphQL pipelines with Node.js & PostgreSQL databases.',
+      title: 'Your Process',
+      desc: 'Explain how you work with clients or teams, from the first idea to the final delivery.',
     },
     {
-      title: 'DevOps_Automation',
-      desc: 'Configuring CI/CD flows, Docker containerization, and automated deployment scripts.',
-    },
-    {
-      title: 'Security_Protocol',
-      desc: 'Executing vulnerability assessments and implementing strict secure coding standards.',
+      title: 'Your Strengths',
+      desc: 'Highlight the skills or qualities that set your work apart.',
     },
   ],
-  quote: 'Code with purpose, learn with curiosity, build with ethics.',
+  quote: 'Do work you are proud of, and be kind along the way.',
   stats: [
-    { value: '10+', label: 'PROJECTS_SHIPPED', icon: 'Code2' },
-    { value: '05+', label: 'YEARS_UPTIME', icon: 'Globe' },
-    { value: '100%', label: 'SYS_SECURITY', icon: 'ShieldCheck' },
+    { value: '10+', label: 'Projects completed', icon: 'Briefcase' },
+    { value: '05+', label: 'Years of experience', icon: 'CalendarDays' },
+    { value: '100%', label: 'Commitment', icon: 'Heart' },
   ],
   statusTitle: 'Open to Collaboration',
-  statusLabel: 'AVAILABLE',
+  statusLabel: 'Available',
+  // Terminal style only.
   kernelValue: 'Linux 6.x',
   uptimeValue: '99.9%',
 };
 
 export const EXPERIENCE_DEFAULTS = [
   {
-    role: 'Software_Engineer',
-    displayRole: 'Software Engineer',
+    role: 'Your_Role',
+    displayRole: 'Your Role',
     company: 'Example Company',
     type: 'FULL_TIME',
     period: '2024 - Present',
     location: 'Remote',
     description:
-      'Describe what you build here. Shipping features, mentoring teammates, and keeping production healthy.',
-    skills: ['TypeScript', 'DevOps', 'Leadership'],
+      'Describe what you do here: the work you deliver, the people you work with and what you are proud of.',
+    skills: ['Skill one', 'Skill two', 'Skill three'],
   },
   {
-    role: 'Open_Source_Contributor',
-    displayRole: 'Open Source Contributor',
-    company: 'Example Community',
+    role: 'Previous_Role',
+    displayRole: 'Previous Role',
+    company: 'Example Studio',
     type: 'PART_TIME',
-    period: '2022 - Present',
+    period: '2022 - 2024',
     location: 'Remote',
     description:
-      'Describe community or volunteer work here. Add, reorder or remove entries from the admin dashboard.',
-    skills: ['Open Source', 'Documentation', 'Review'],
+      'Add, reorder or remove entries from the admin dashboard. Freelance, volunteer and personal projects all count.',
+    skills: ['Skill one', 'Skill two'],
   },
 ];
 
 export const SKILLS_DEFAULTS = [
   {
-    name: 'Frontend_Stack',
-    icon: 'Layout',
+    name: 'Core Skills',
+    icon: 'Star',
     skills: [
-      { name: 'React.js / Next.js', progress: 90 },
-      { name: 'TypeScript', progress: 85 },
-      { name: 'Tailwind CSS', progress: 90 },
-      { name: 'Accessibility', progress: 80 },
+      { name: 'Your main skill', progress: 90 },
+      { name: 'Another strong skill', progress: 85 },
+      { name: 'A supporting skill', progress: 80 },
     ],
   },
   {
-    name: 'Backend_Core',
-    icon: 'Server',
+    name: 'Tools',
+    icon: 'Wrench',
     skills: [
-      { name: 'Node.js & Express', progress: 90 },
-      { name: 'Python', progress: 80 },
-      { name: 'Redis (Caching)', progress: 75 },
-      { name: 'REST & GraphQL', progress: 85 },
+      { name: 'Tool or software', progress: 90 },
+      { name: 'Another tool', progress: 80 },
+      { name: 'A third tool', progress: 75 },
     ],
   },
   {
-    name: 'Database_&_ORM',
-    icon: 'Database',
-    skills: [
-      { name: 'PostgreSQL', progress: 85 },
-      { name: 'MongoDB', progress: 85 },
-      { name: 'Prisma ORM', progress: 80 },
-      { name: 'Supabase / Firebase', progress: 70 },
-    ],
-  },
-  {
-    name: 'DevOps_&_Cloud',
-    icon: 'Cpu',
-    skills: [
-      { name: 'Docker & Compose', progress: 85 },
-      { name: 'Cloud (AWS/Azure/GCP)', progress: 75 },
-      { name: 'CI/CD Pipelines', progress: 85 },
-      { name: 'Linux (Server)', progress: 90 },
-    ],
-  },
-  {
-    name: 'Infrastructure_&_Net',
-    icon: 'Globe',
-    skills: [
-      { name: 'Self-Hosting', progress: 80 },
-      { name: 'Nginx / Caddy', progress: 80 },
-      { name: 'System Hardening', progress: 75 },
-      { name: 'Reverse Proxies', progress: 80 },
-    ],
-  },
-  {
-    name: 'R&D_&_Workflow',
+    name: 'Ways of Working',
     icon: 'Users',
     skills: [
-      { name: 'Open Source Scouting', progress: 90 },
-      { name: 'Mentorship & Team Lead', progress: 80 },
-      { name: 'Rapid Prototyping', progress: 85 },
-      { name: 'Tech Exploration', progress: 90 },
+      { name: 'Communication', progress: 90 },
+      { name: 'Collaboration', progress: 85 },
+      { name: 'Attention to detail', progress: 85 },
     ],
   },
 ];
 
 export const PROJECTS_DEFAULTS = [
   {
-    title: 'Project_One',
+    title: 'Project One',
     description:
-      'A short description of your flagship project: the problem it solves, the stack behind it and the result it delivered. Replace this from the admin dashboard.',
-    tags: ['Next.js', 'TypeScript', 'Production'],
-    github: 'https://github.com/your-username/project-one',
-    demo: 'https://example.com',
+      'A short description of your flagship project: the problem it solves, how you approached it and the result it delivered. Replace this from the admin dashboard, and add pictures or videos to show it off.',
+    tags: ['Category', 'Tool', 'Result'],
+    links: [{ label: 'Live site', url: 'https://example.com' }],
     featured: true,
   },
   {
-    title: 'Project_Two',
+    title: 'Project Two',
     description:
-      'Another project worth showing: an API, a CLI tool or an open source library. Add a demo link only if there is a live one.',
-    tags: ['Node.js', 'PostgreSQL', 'Backend'],
-    github: 'https://github.com/your-username/project-two',
+      'Another project worth showing. Links are optional: add a case study, a live site, a gallery or nothing at all.',
+    tags: ['Category', 'Tool'],
+    links: [] as { label: string; url: string }[],
   },
   {
-    title: 'Project_Three',
+    title: 'Project Three',
     description:
-      'Use this slot for something experimental or educational. Tags help visitors skim what each project is built with.',
-    tags: ['Python', 'Automation', 'DevOps'],
-    github: 'https://github.com/your-username/project-three',
+      'Use this slot for something experimental or personal. Tags help visitors skim what each project is about.',
+    tags: ['Experiment', 'Personal'],
+    links: [] as { label: string; url: string }[],
   },
 ];
 
 export const ROADMAP_DEFAULTS = [
   {
     year: 'Phase 1',
-    title: 'Cloud_Infrastructure_Mastery',
-    description:
-      'Moving from console to code. Implementing infrastructure as code and immutable deployment patterns.',
-    tech: ['Terraform', 'CloudFormation', 'VPC', 'Lambda'],
-    icon: 'Server',
+    title: 'Learn Something New',
+    description: 'Describe a skill, course or milestone you are working towards right now.',
+    tech: ['Topic one', 'Topic two'],
+    icon: 'Target',
   },
   {
     year: 'Phase 2',
-    title: 'Kubernetes_Orchestration',
-    description:
-      'Deep dive into cluster management. Building self-healing workloads, ingress and service mesh architecture.',
-    tech: ['Docker', 'K8s', 'Helm', 'Istio'],
-    icon: 'Cpu',
-  },
-  {
-    year: 'Phase 3',
-    title: 'Security_Certification',
-    description:
-      'Structured study towards a security certification: threat modelling, hardening and incident response.',
-    tech: ['Recon', 'Hardening', 'Threat Modelling', 'Pentesting'],
-    icon: 'ShieldAlert',
-  },
-  {
-    year: 'Phase 4',
-    title: 'AI_DevOps_Integration',
-    description:
-      'Building automated pipelines that self-correct. AI-assisted log analysis and anomaly detection.',
-    tech: ['LLM Ops', 'Python', 'VectorDB', 'Data Visualization'],
-    icon: 'Bot',
+    title: 'Build Something Bigger',
+    description: 'What would you like to create or achieve next, and why does it matter to you?',
+    tech: ['Goal', 'Skill'],
+    icon: 'Rocket',
   },
   {
     year: 'Beyond',
-    title: 'Future_Tech_Exploration',
-    description: 'Exploring emerging technologies and next-generation frameworks as they mature.',
-    tech: ['Edge Computing', 'WebAssembly', 'AI Frameworks', 'Rust'],
-    icon: 'Zap',
+    title: 'Where This Leads',
+    description: 'A longer-term vision for your work and the people it will reach.',
+    tech: ['Vision'],
+    icon: 'Sparkles',
   },
 ];
 
 export const CONTACT_DEFAULTS = {
-  heading: "Let's Build Something",
-  highlight: 'Extraordinary.',
+  heading: "Let's Work",
+  highlight: 'Together.',
   subtext:
-    "Whether you need a complex full-stack architecture, a security audit, or a scalable DevOps pipeline, I'm ready to bring your vision into reality.",
+    "Have a project in mind or just want to say hello? Send a message and I'll get back to you as soon as I can.",
   email: 'you@example.com',
   // Left empty on purpose: the phone / WhatsApp card is hidden until you fill it in.
   phone: '',
   whatsappLink: '',
-  phoneLabel: 'Global Reach',
+  phoneLabel: 'Call or message',
 };
 
 export const SECTION_TEXT_DEFAULTS = {
-  galleryHeading: 'Captured',
+  galleryHeading: 'Gallery',
   galleryHighlight: 'Moments',
-  gallerySubtext: 'A randomized visual timeline of technical growth and personal milestones.',
-  roadmapHeading: 'System',
-  roadmapHighlight: 'Evolution_Path',
-  projectsHeading: 'My Projects',
-  skillsHeading: 'My technical arsenal...',
+  gallerySubtext: 'A collection of moments from my work and life.',
+  roadmapHeading: 'Roadmap',
+  roadmapHighlight: 'Ahead',
+  projectsHeading: 'Projects',
+  skillsHeading: 'Skills',
   experienceHeading: 'Experience',
   aboutHeading: 'About Me',
-  expertisesHeading: 'My Expertises',
-  techStacksHeading: 'Tech Stacks',
+  expertisesHeading: 'Expertise',
+  techStacksHeading: 'Tools & Technologies',
   terminalPrefix: DEFAULT_TERMINAL_PREFIX,
 };
 
 export const SYSTEM_DEFAULTS = {
-  seoTitle: 'Your Name - Full-Stack Developer',
+  seoTitle: 'Your Name - Your Profession',
   seoDescription:
-    'Full-Stack Developer portfolio. React, Node.js, Docker and cloud infrastructure. Edit this description from the admin dashboard (System settings).',
-  seoKeywords: 'Full-Stack Developer, Web Developer, Portfolio, React, Node.js, DevOps',
+    'Portfolio of Your Name: selected work, experience and ways to get in touch. Edit this description from the admin dashboard (System settings).',
+  seoKeywords: 'Portfolio, Your Profession, Your City',
 
   notFoundTitle: '404',
-  notFoundHeading: '>_ RESOURCE_NOT_FOUND _<',
-  notFoundSubtext:
-    "The entity you're tracking has vanished.\\nThe matrix has been altered, or the path is corrupted.",
-  notFoundButton: 'RETURN TO BASE',
+  notFoundHeading: 'Page not found',
+  notFoundSubtext: 'The page you are looking for does not exist or has moved.',
+  notFoundButton: 'Back to home',
 
-  errorHeading: 'System Fault Detected',
-  errorTitle: 'Service Unavailable',
+  errorHeading: 'Something went wrong',
+  errorTitle: 'Service unavailable',
   errorSubtext:
-    'We are experiencing temporary difficulties connecting to the core systems. Please try again later. If the issue persists, feel free to reach out directly.',
+    'We are having a temporary problem. Please try again in a moment. If it keeps happening, feel free to reach out directly.',
   errorButton: 'Try Again',
   // Empty = the "Contact Me" button on the error page is hidden.
   errorEmail: '',

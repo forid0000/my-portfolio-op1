@@ -9,6 +9,7 @@
  * one entry in SECTION_COMPONENT_MAP, one entry in app/page.tsx's sectionProps
  * lookup. No database migration.
  */
+import { sharedState } from '@/lib/shared-state';
 import type { ComponentType } from 'react';
 import dynamicImport from 'next/dynamic';
 import Hero from '@/components/hero';
@@ -136,10 +137,13 @@ export function mergeLayoutSections(stored: unknown): PortfolioSectionConfig[] {
 // Short in-process cache so the public homepage (rendered on every request)
 // doesn't hit MongoDB just for the layout doc on top of everything else it
 // already fetches. Admin saves invalidate it.
-let cache: { value: PortfolioSectionConfig[]; at: number } | null = null;
+const store = sharedState<{ cache: { value: PortfolioSectionConfig[]; at: number } | null }>(
+  'layout',
+  () => ({ cache: null })
+);
 
 export function invalidateLayoutCache() {
-  cache = null;
+  store.cache = null;
 }
 
 /**
@@ -149,7 +153,7 @@ export function invalidateLayoutCache() {
  * the public homepage never renders a blank page because of a DB hiccup.
  */
 export async function getLayoutSections(): Promise<PortfolioSectionConfig[]> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.value;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.value;
   let value = SECTION_DEFAULTS;
   try {
     const db = await connectToDatabase();
@@ -162,7 +166,7 @@ export async function getLayoutSections(): Promise<PortfolioSectionConfig[]> {
     console.error('Failed to fetch layout_content, using defaults', error);
     value = SECTION_DEFAULTS;
   }
-  cache = { value, at: Date.now() };
+  store.cache = { value, at: Date.now() };
   return value;
 }
 

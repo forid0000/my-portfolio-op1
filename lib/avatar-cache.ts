@@ -5,6 +5,7 @@
  * fallback chain and one cache, instead of three copies drifting apart.
  * Mirrors the pattern used by lib/site.ts and lib/theme.ts.
  */
+import { sharedState } from '@/lib/shared-state';
 import connectToDatabase from '@/lib/db';
 import { CACHE_TTL_MS } from '@/lib/cache-ttl';
 import { AVATAR_PLACEHOLDER_URL } from '@/lib/content-defaults';
@@ -18,15 +19,20 @@ export const AVATAR_FALLBACK_URL = AVATAR_PLACEHOLDER_URL;
 
 type AvatarCacheEntry = { url: string; at: number };
 
-let cache: AvatarCacheEntry | null = null;
-let fetchPromise: Promise<string> | null = null;
+const store = sharedState<{ cache: AvatarCacheEntry | null; fetchPromise: Promise<string> | null }>(
+  'avatar',
+  () => ({
+    cache: null,
+    fetchPromise: null,
+  })
+);
 
 export function invalidateAvatarCache() {
-  cache = null;
+  store.cache = null;
 }
 
 export function setAvatarCache(url: string) {
-  cache = { url, at: Date.now() };
+  store.cache = { url, at: Date.now() };
 }
 
 /**
@@ -36,10 +42,10 @@ export function setAvatarCache(url: string) {
  * fallback logic.
  */
 export async function getActiveAvatarUrl(): Promise<string> {
-  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.url;
-  if (fetchPromise) return fetchPromise;
+  if (store.cache && Date.now() - store.cache.at < CACHE_TTL_MS) return store.cache.url;
+  if (store.fetchPromise) return store.fetchPromise;
 
-  fetchPromise = (async () => {
+  store.fetchPromise = (async () => {
     try {
       const fetchAvatar = async () => {
         const db = await connectToDatabase();
@@ -62,9 +68,9 @@ export async function getActiveAvatarUrl(): Promise<string> {
       );
       return AVATAR_FALLBACK_URL;
     } finally {
-      fetchPromise = null;
+      store.fetchPromise = null;
     }
   })();
 
-  return fetchPromise;
+  return store.fetchPromise;
 }

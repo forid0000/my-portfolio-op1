@@ -1,8 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import HackerText from './HackerText';
-import AiTypingText from './ai-typing-text';
+import dynamic from 'next/dynamic';
+import { ByStyle } from '@/components/by-style';
+import { hasComplexScript } from '@/lib/text-script';
+
+// Terminal-style effects only: the clean style never loads them.
+const HackerText = dynamic(() => import('./HackerText'));
+const AiTypingText = dynamic(() => import('./ai-typing-text'));
 // import SpiderCanvas from "./spider-canvas";
 import { X, Download } from 'lucide-react';
 import Image from 'next/image';
@@ -29,13 +34,18 @@ interface HeroProps {
     socials: { href: string; label: string; icon: string }[];
     avatarUrl?: string;
   };
+  /** 'terminal' restores the typing and decoding effects; the default is a plain, fast hero. */
+  uiStyle?: 'clean' | 'terminal';
 }
 
-export default function Hero({ content, global, icons }: HeroProps) {
+export default function Hero({ content, global, icons, uiStyle = 'clean' }: HeroProps) {
   const avatarUrl = global?.avatarUrl || AVATAR_PLACEHOLDER_URL;
   const firstName = content?.firstName || HERO_DEFAULTS.firstName;
   const lastName = content?.lastName || HERO_DEFAULTS.lastName;
   const fullName = `${firstName} ${lastName}`;
+  const greeting = content?.greeting || HERO_DEFAULTS.greeting;
+  const subtitle = content?.subtitle || HERO_DEFAULTS.subtitle;
+  const nameComplex = hasComplexScript(fullName);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -93,12 +103,27 @@ export default function Hero({ content, global, icons }: HeroProps) {
             candidate and shouldn't wait on an entrance animation. */}
         <div className="space-y-6 md:space-y-8 order-last md:order-first text-center md:text-left">
           <div className="space-y-4">
-            <AiTypingText
-              finalGreeting={content?.greeting || HERO_DEFAULTS.greeting}
-              aiPhrases={content?.aiPhrases}
-            />
+            {uiStyle === 'terminal' ? (
+              <AiTypingText finalGreeting={greeting} aiPhrases={content?.aiPhrases} />
+            ) : (
+              greeting && (
+                <p
+                  dir="auto"
+                  className={`text-sm font-semibold text-primary ${
+                    hasComplexScript(greeting) ? '' : 'uppercase tracking-[0.2em]'
+                  }`}
+                >
+                  {greeting}
+                </p>
+              )
+            )}
 
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight">
+            <h1
+              dir="auto"
+              className={`text-3xl sm:text-5xl md:text-6xl font-bold leading-tight ${
+                nameComplex ? 'tracking-normal' : 'tracking-tight'
+              }`}
+            >
               {firstName}
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-blue-500 animate-gradient-x">
@@ -106,12 +131,18 @@ export default function Hero({ content, global, icons }: HeroProps) {
               </span>
             </h1>
 
-            <div className="flex justify-center md:justify-start">
-              <HackerText
-                text={content?.subtitle || HERO_DEFAULTS.subtitle}
-                className="text-base sm:text-xl font-medium text-muted-foreground font-mono block min-h-[50px] md:min-h-[60px]"
-              />
-            </div>
+            {uiStyle === 'terminal' ? (
+              <div className="flex justify-center md:justify-start">
+                <HackerText
+                  text={subtitle}
+                  className="text-base sm:text-xl font-medium text-muted-foreground font-mono block min-h-[50px] md:min-h-[60px]"
+                />
+              </div>
+            ) : (
+              <p dir="auto" className="text-lg sm:text-2xl font-medium text-muted-foreground">
+                {subtitle}
+              </p>
+            )}
           </div>
 
           <p className="section-subtitle text-sm sm:text-lg max-w-lg leading-relaxed text-muted-foreground/60 mx-auto md:mx-0">
@@ -125,8 +156,8 @@ export default function Hero({ content, global, icons }: HeroProps) {
 
             <div className="relative group w-full sm:w-auto">
               {/* Decorative Tech logic: outer brackets */}
-              <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
-              <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
+              <div className="absolute hidden terminal:block -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
+              <div className="absolute hidden terminal:block -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary/40 group-hover:border-primary transition-colors duration-500" />
 
               <a
                 href="/api/resume"
@@ -139,8 +170,8 @@ export default function Hero({ content, global, icons }: HeroProps) {
                 <div className="wave"></div>
                 <div className="wave"></div>
 
-                <span className="relative z-10 text-xs font-black tracking-[0.3em] uppercase text-primary group-hover:text-primary-foreground transition-colors duration-500">
-                  Download_CV
+                <span className="relative z-10 text-sm font-semibold terminal:text-xs terminal:font-black terminal:tracking-[0.3em] terminal:uppercase text-primary group-hover:text-primary-foreground transition-colors duration-500">
+                  <ByStyle clean="Download CV" terminal="Download_CV" />
                 </span>
                 <div className="relative z-10 w-8 h-px bg-primary/30 group-hover:bg-primary-foreground/30 group-hover:w-12 transition-all duration-500" />
                 <Download className="relative z-10 w-5 h-5 text-primary group-hover:text-primary-foreground transition-all duration-500 group-hover:animate-bounce" />
@@ -175,7 +206,7 @@ export default function Hero({ content, global, icons }: HeroProps) {
                     </div>
 
                     <div className="flex items-center max-w-0 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:max-w-[200px] group-hover:ml-1">
-                      <span className="text-sm font-medium text-foreground whitespace-nowrap opacity-0 transition-opacity duration-300 delay-75 group-hover:opacity-100 group-hover:text-primary font-bold font-mono">
+                      <span className="text-sm font-medium text-foreground whitespace-nowrap opacity-0 transition-opacity duration-300 delay-75 group-hover:opacity-100 group-hover:text-primary font-bold terminal:font-mono">
                         {link.label}
                       </span>
                     </div>

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import SectionHeading from '@/components/section-heading';
 import { Award, ExternalLink } from 'lucide-react';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
@@ -28,15 +29,7 @@ export default function Certifications({
   return (
     <section id="certifications" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Award className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/{heading}</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading title={heading} prefix={terminalPrefix} path={heading} icon={<Award />} />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {content.map((item, idx) => (
@@ -62,8 +55,8 @@ export default function Certifications({
               )}
               <div className="min-w-0">
                 <h3 className="text-sm font-bold text-foreground truncate">{item.name}</h3>
-                <p className="text-xs text-primary font-mono truncate">{item.issuer}</p>
-                <p className="text-[11px] text-muted-foreground/70 mt-1 font-mono">
+                <p className="text-xs text-primary terminal:font-mono truncate">{item.issuer}</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 terminal:font-mono">
                   {item.issueDate}
                   {item.expiryDate ? ` → ${item.expiryDate}` : ''}
                 </p>

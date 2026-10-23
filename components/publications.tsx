@@ -1,4 +1,5 @@
 import { Newspaper, Mic, Video, FileText, ExternalLink } from 'lucide-react';
+import SectionHeading from '@/components/section-heading';
 import { GithubIcon } from '@/components/icon/github';
 import type React from 'react';
 
@@ -37,15 +38,12 @@ export default function Publications({
   return (
     <section id="publications" className="section-spacing relative overflow-hidden">
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <Newspaper className="w-6 h-6 text-primary animate-pulse" />
-          <h2 className="text-xl md:text-2xl font-mono font-bold tracking-tight">
-            <span className="text-primary">{terminalPrefix}</span>
-            <span className="text-muted-foreground">:</span>
-            <span className="text-blue-500">~/{heading}</span>
-            <span className="text-muted-foreground">$</span>
-          </h2>
-        </div>
+        <SectionHeading
+          title={heading}
+          prefix={terminalPrefix}
+          path={heading}
+          icon={<Newspaper />}
+        />
 
         <div className="space-y-3">
           {content.map((item, idx) => {
@@ -64,7 +62,7 @@ export default function Publications({
                   <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                     {item.title}
                   </p>
-                  <p className="text-xs text-muted-foreground/70 font-mono truncate">
+                  <p className="text-xs text-muted-foreground/70 terminal:font-mono truncate">
                     {[item.platform, item.date].filter(Boolean).join(' · ')}
                   </p>
                 </div>

@@ -4,6 +4,45 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Profile picture that works.** Upload from Admin → Hero Section or Media Manager: drag, click or paste (Ctrl+V); large photos are compressed in the browser; it goes live immediately (untick the box to only add it to the library); the same picture uploaded twice is detected. Two-way sync with Cloudinary: deleting or renaming a file in the Cloudinary explorer updates the library and every saved reference, missing files are flagged, and **Re-sync** repairs drift.
+- **Pictures and videos for projects and certifications**: several per item, the first is the main cover, reorder, make cover, remove, drag-and-drop and paste. Videos stream from Cloudinary as web-safe MP4 with a poster frame and **never autoplay unless you turn it on** (per video: autoplay, loop, muted, controls). Visitors can click any picture or video to see it larger (arrow keys, swipe, Esc).
+- **Direct uploads to Cloudinary** with smart, size-aware compression (95% quality for slightly oversized images, down to an 80% floor, then smaller dimensions; images that already fit are not touched), so there is no 4.5 MB / 10 MiB request limit and videos up to 100 MB work.
+- **Links list on projects** (live site, case study, Behance, repository, anything) and an optional "see more" button. No GitHub link is required any more.
+- **Appearance**: a Clean or Terminal **style**, one-click **color schemes**, and an **admin panel color** (default, match the site, or custom).
+- **Any language in the brand and headings** (Bangla, Arabic, Hindi…): fonts load only when needed, text direction is automatic, joined scripts are never letter-spaced, and the typing and decoding effects no longer corrupt them.
+- **Automatic database setup**: indexes and data repairs are applied on the first start of any deployment (versioned, background, never blocks a request).
+- **Tests and one CI workflow**: Vitest unit tests, an end-to-end smoke test (production server, real MongoDB, fake Cloudinary), `pnpm verify`, `pnpm test`, `pnpm test:smoke`, `pnpm format:check`, `pnpm typecheck`.
+
+### Changed
+
+- **The default look is now the clean style.** Terminal prompts (`dev@portfolio:~/about$`), monospace text, uppercase nav labels, the system-status widget and decorative effects moved behind the opt-in Terminal style. Existing sites change look on upgrade; switch back in Admin → Appearance → Style → Terminal.
+- Placeholder content is neutral instead of developer-specific. Saved content is unaffected.
+- The favicon is a round PNG cut from the avatar by Cloudinary (set in the page metadata) and the share image is a JPEG variant; both follow the avatar automatically. The generated `/icon` route is gone.
+- `/kits` and `/articles` show the real avatar in the header instead of a redirect that could not render.
+- Prettier is enforced across the whole repository (previously unformatted files were formatted).
+
+### Fixed
+
+- **CI failed at "Install dependencies"** (`ERR_PNPM_IGNORED_BUILDS`): `pnpm-workspace.yaml` held unfilled placeholders. The install scripts are now decided explicitly.
+- **Remove did nothing** in the Services banner, Testimonial photo and Certification badge editors: the emptied field was left out of the save and the old file stayed. It is now removed from the database and from Cloudinary.
+- **Static pages kept stale content after an admin save in production** (module-level caches are per bundle). Caches now live on `globalThis`, and a failed database read is no longer cached as defaults.
+- Avatar uploads over about 7.5 MB failed (base64 in JSON, cut off by Next's middleware buffer) and could not work at all on Vercel's 4.5 MB limit.
+- The Media Manager crashed on any error response; "Set active" on an unknown id switched every avatar off.
+- The hero greeting and subtitle were empty in the server HTML.
+
+### Removed
+
+- `scripts/create-indexes.mjs` (automatic now) and the server-side `section-media` upload route (replaced by direct uploads).
+
+### Migration
+
+- Nothing to run. Indexes are created on the next start. Make sure Cloudinary keys are saved in Admin → Security & Keys: uploads now go from the browser to `api.cloudinary.com`, which the Content-Security-Policy allows.
+- Old project links (`github`, `demo`) still show and become ordinary links when you open the Projects editor.
+
 ## [0.1.0] - Initial public release
 
 The project started as one developer's personal portfolio and was generalized for public use. If you are upgrading from a private fork of that earlier version, read **Migration** below.

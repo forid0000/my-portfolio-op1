@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SiteFakeUptime from './SiteFakeUptime';
+import { ByStyle } from '@/components/by-style';
+import { hasComplexScript } from '@/lib/text-script';
 import { AVATAR_PLACEHOLDER_URL, GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
 
 interface HeaderBrand {
@@ -40,7 +42,16 @@ const NAV_TOGGLE_FALLBACK: NavToggles = {
   kits: true,
 };
 
-export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggles?: NavToggles }) {
+export default function Header({
+  brand,
+  toggles,
+  uiStyle = 'clean',
+}: {
+  brand?: HeaderBrand;
+  toggles?: NavToggles;
+  /** 'terminal' brings back the developer-prompt look and the system-status widget. */
+  uiStyle?: 'clean' | 'terminal';
+}) {
   // SSR pages pass `brand`/`toggles` (no flash). Client-only pages (kits,
   // calendar) omit them, so we self-fetch from the public /api/site endpoint.
   const [fetchedBrand, setFetchedBrand] = useState<HeaderBrand | null>(null);
@@ -63,6 +74,8 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
     };
   }, [brand, toggles]);
   const b = { ...BRAND_FALLBACK, ...(brand || fetchedBrand || {}) };
+  const nameComplex = hasComplexScript(b.headerName);
+  const tagComplex = hasComplexScript(b.headerTag);
   const t = { ...NAV_TOGGLE_FALLBACK, ...(toggles || fetchedToggles || {}) };
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
@@ -150,7 +163,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
 
   // Helper for Link Classes
   const getNavLinkClass = (id: string) =>
-    `nav-link whitespace-nowrap relative px-3 py-1.5 text-sm font-mono font-medium transition-colors rounded-md hover:bg-primary/10 hover:text-primary ${
+    `nav-link whitespace-nowrap relative px-3 py-1.5 text-sm terminal:font-mono font-medium transition-colors rounded-md hover:bg-primary/10 hover:text-primary ${
       pathname === '/' && activeSection === id
         ? 'active text-primary bg-primary/5'
         : 'text-muted-foreground'
@@ -164,7 +177,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
         {/* === LEFT: SYSTEM IDENTITY === */}
         <Link href="/#" className="group block focus:outline-none">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 overflow-hidden rounded-xl border border-primary/20 group-hover:border-primary/50 transition-colors shadow-sm shrink-0">
+            <div className="relative w-10 h-10 overflow-hidden rounded-full terminal:rounded-xl border border-primary/20 group-hover:border-primary/50 transition-colors shadow-sm shrink-0">
               <Image
                 src={b.avatarUrl}
                 alt={b.headerName}
@@ -173,18 +186,30 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
                 sizes="40px"
               />
               {/* Scanline overlay */}
-              <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 hidden terminal:block bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex flex-col justify-center">
-              <span className="text-[13px] md:text-sm font-bold tracking-tight font-mono group-hover:text-primary transition-colors leading-none mb-1">
+              <span
+                dir="auto"
+                className={`block max-w-[11rem] truncate text-sm md:text-base font-bold ${
+                  nameComplex ? 'tracking-normal' : 'tracking-tight'
+                } terminal:font-mono terminal:text-[13px] terminal:md:text-sm group-hover:text-primary transition-colors leading-snug`}
+              >
                 {b.headerName}
               </span>
-              <div className="flex items-center text-[9px] md:text-[10px] font-mono opacity-70 group-hover:opacity-100 transition-opacity leading-none">
-                <span className="text-primary mr-1 font-bold">#</span>
-                <span className="text-muted-foreground tracking-[0.2em] uppercase">
-                  {b.headerTag}
-                </span>
-              </div>
+              {b.headerTag && (
+                <div className="flex items-center text-[11px] md:text-xs terminal:text-[10px] terminal:font-mono opacity-80 group-hover:opacity-100 transition-opacity leading-none">
+                  <span className="hidden terminal:inline text-primary mr-1 font-bold">#</span>
+                  <span
+                    dir="auto"
+                    className={`block max-w-[11rem] truncate text-muted-foreground ${
+                      tagComplex ? '' : 'terminal:tracking-[0.2em] terminal:uppercase'
+                    }`}
+                  >
+                    {b.headerTag}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </Link>
@@ -192,21 +217,21 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
         {/* === CENTER: COMMAND DOCK (Desktop) === */}
         <nav className="hidden md:flex items-center gap-1 bg-card/95 px-2 py-1.5 rounded-full border border-border/40 shadow-sm">
           <Link href="/#" className={getNavLinkClass('')}>
-            _home
+            <ByStyle clean="Home" terminal="_home" />
           </Link>
           {t.about && (
             <Link href="/#about" className={getNavLinkClass('about')}>
-              _about
+              <ByStyle clean="About" terminal="_about" />
             </Link>
           )}
           {t.projects && (
             <Link href="/#projects" className={getNavLinkClass('projects')}>
-              _projects
+              <ByStyle clean="Projects" terminal="_projects" />
             </Link>
           )}
           {t.gallery && (
             <Link href="/#gallery" className={getNavLinkClass('gallery')}>
-              _gallery
+              <ByStyle clean="Gallery" terminal="_gallery" />
             </Link>
           )}
 
@@ -214,7 +239,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
 
           <Link
             href={blog}
-            className="px-3 py-1.5 text-sm font-mono font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 whitespace-nowrap"
+            className="px-3 py-1.5 text-sm terminal:font-mono font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 whitespace-nowrap"
           >
             <Newspaper className="w-3.5 h-3.5" />
             Articles
@@ -223,7 +248,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
           {t.kits && (
             <Link
               href="/kits"
-              className={`px-4 py-2 text-sm font-mono font-medium rounded-lg transition-all duration-500 flex items-center gap-2 group relative border-2 whitespace-nowrap ${
+              className={`px-4 py-2 text-sm terminal:font-mono font-medium rounded-lg transition-all duration-500 flex items-center gap-2 group relative border-2 whitespace-nowrap ${
                 isKitsPage
                   ? 'bg-gradient-to-r from-primary/20 to-green-400/20 text-primary border-primary/50 shadow-lg shadow-primary/25'
                   : 'text-muted-foreground hover:text-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-green-400/10 border-transparent hover:border-primary/30 hover:shadow-md hover:shadow-primary/20'
@@ -231,7 +256,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
             >
               <div className="relative flex items-center">
                 {/* Pulsing background glow */}
-                <div className="absolute -inset-2 bg-gradient-to-r from-primary/40 to-green-400/40 rounded-full blur-md opacity-60 animate-pulse" />
+                <div className="absolute -inset-2 hidden terminal:block bg-gradient-to-r from-primary/40 to-green-400/40 rounded-full blur-md opacity-60 animate-pulse" />
 
                 <Wrench
                   className={`w-4 h-4 relative z-10 transition-all duration-300 ${
@@ -242,7 +267,9 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
                 />
               </div>
 
-              <span className="relative z-10 font-semibold">/kits</span>
+              <span className="relative z-10 font-semibold">
+                <ByStyle clean="Tools" terminal="/kits" />
+              </span>
             </Link>
           )}
         </nav>
@@ -260,9 +287,11 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
 
           <div className="h-6 w-px bg-border/40 hidden sm:block" />
 
-          <div className="">
-            <SiteFakeUptime compact timeZone={b.timeZone} locationLabel={b.locationLabel} />
-          </div>
+          {uiStyle === 'terminal' && (
+            <div className="">
+              <SiteFakeUptime compact timeZone={b.timeZone} locationLabel={b.locationLabel} />
+            </div>
+          )}
           {/* Mobile Menu Button */}
           <button
             ref={buttonRef}
@@ -275,7 +304,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
         </div>
       </div>
 
-      {/* === MOBILE MENU (SYSTEM DROPDOWN) === */}
+      {/* === MOBILE MENU === */}
       <div
         ref={menuRef}
         className={`
@@ -291,7 +320,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
       >
         <div className="p-4 space-y-4">
           {/* Mobile Header Stat */}
-          <div className="flex items-center justify-center px-4 pb-4 border-b border-border/30 text-xs font-mono text-muted-foreground">
+          <div className="hidden terminal:flex items-center justify-center px-4 pb-4 border-b border-border/30 text-xs terminal:font-mono text-muted-foreground">
             <span className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span> SYSTEM: ONLINE
             </span>
@@ -300,14 +329,16 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
           <nav className="flex flex-col gap-2">
             {[
               {
-                name: '_home',
+                name: 'Home',
+                terminalName: '_home',
                 href: '/#',
                 active: pathname === '/' && activeSection === '',
               },
               ...(t.about
                 ? [
                     {
-                      name: '_about',
+                      name: 'About',
+                      terminalName: '_about',
                       href: '/#about',
                       active: pathname === '/' && activeSection === 'about',
                     },
@@ -316,7 +347,8 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
               ...(t.projects
                 ? [
                     {
-                      name: '_projects',
+                      name: 'Projects',
+                      terminalName: '_projects',
                       href: '/#projects',
                       active: pathname === '/' && activeSection === 'projects',
                     },
@@ -325,7 +357,8 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
               ...(t.gallery
                 ? [
                     {
-                      name: '_gallery',
+                      name: 'Gallery',
+                      terminalName: '_gallery',
                       href: '/#gallery',
                       active: pathname === '/' && activeSection === 'gallery',
                     },
@@ -337,7 +370,7 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
                 href={link.href}
                 onClick={() => setIsMenuOpen(false)}
                 className={`
-                    group flex items-center gap-3 px-4 py-3 rounded-lg border font-mono transition-all
+                    group flex items-center gap-3 px-4 py-3 rounded-lg border terminal:font-mono transition-all
                     ${
                       link.active
                         ? 'bg-primary/10 border-primary/30 text-primary'
@@ -350,9 +383,11 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
                     link.active ? 'bg-primary' : 'bg-muted-foreground/30 group-hover:bg-primary/50'
                   }`}
                 />
-                {link.name}
+                <ByStyle clean={link.name} terminal={link.terminalName} />
                 {link.active && (
-                  <span className="ml-auto text-[10px] opacity-70">&lt;CURRENT&gt;</span>
+                  <span className="ml-auto hidden text-[10px] opacity-70 terminal:inline">
+                    &lt;CURRENT&gt;
+                  </span>
                 )}
               </Link>
             ))}
@@ -362,15 +397,17 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
               <Link
                 href="/notes"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border/40 bg-card/50 hover:border-primary/30 hover:text-primary font-mono text-xs transition-all"
+                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border/40 bg-card/50 hover:border-primary/30 hover:text-primary terminal:font-mono text-xs transition-all"
               >
                 <NotebookPen className="w-4 h-4" />
-                <span>/notes</span>
+                <span>
+                  <ByStyle clean="Notes" terminal="/notes" />
+                </span>
               </Link>
               <Link
                 href={blog}
                 onClick={() => setIsMenuOpen(false)}
-                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border/40 bg-card/50 hover:border-primary/30 hover:text-primary font-mono text-xs"
+                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-border/40 bg-card/50 hover:border-primary/30 hover:text-primary terminal:font-mono text-xs"
               >
                 <Newspaper className="w-4 h-4" />
                 <span>Articles</span>
@@ -379,14 +416,16 @@ export default function Header({ brand, toggles }: { brand?: HeaderBrand; toggle
                 <Link
                   href="/kits"
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex flex-col items-center justify-center gap-1 p-3 rounded-lg border font-mono text-xs transition-all ${
+                  className={`flex flex-col items-center justify-center gap-1 p-3 rounded-lg border terminal:font-mono text-xs transition-all ${
                     isKitsPage
                       ? 'border-primary/30 bg-primary/5 text-primary'
                       : 'border-border/40 bg-card/50 hover:border-primary/30 hover:text-primary'
                   }`}
                 >
                   <Wrench className="w-4 h-4" />
-                  <span>/kits</span>
+                  <span>
+                    <ByStyle clean="Tools" terminal="/kits" />
+                  </span>
                 </Link>
               )}
             </div>

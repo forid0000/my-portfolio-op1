@@ -1,81 +1,110 @@
 'use client';
 
-import { ExternalLink, Activity } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { GithubIcon } from '@/components/icon/github';
+import MediaGallery from '@/components/media-gallery';
 import TargetCard from './target-card';
+import { toHref } from '@/lib/safe-href';
+import type { MediaItem } from '@/lib/media-types';
 
-interface ProjectCardProps {
-  project: {
-    title: string;
-    description: string;
-    tags: string[];
-    github: string;
-    demo?: string;
-    featured?: boolean;
-  };
+export interface ProjectLink {
+  label: string;
+  url: string;
 }
 
+export interface ProjectData {
+  title: string;
+  description: string;
+  tags: string[];
+  /** Labelled links of any kind (live site, case study, Behance, repository...). */
+  links?: ProjectLink[];
+  /** Pictures and videos; the first is the main cover. */
+  media?: MediaItem[];
+  // Legacy single links from before `links` existed; still shown when `links` is absent.
+  github?: string;
+  demo?: string;
+  featured?: boolean;
+}
+
+interface ProjectCardProps {
+  project: ProjectData;
+}
+
+/** The links to show: the new list when present, otherwise the old github/demo pair. */
+export function projectLinks(project: ProjectData): ProjectLink[] {
+  const raw: ProjectLink[] = Array.isArray(project.links)
+    ? project.links
+    : [
+        ...(project.github ? [{ label: 'Code', url: project.github }] : []),
+        ...(project.demo ? [{ label: 'Demo', url: project.demo }] : []),
+      ];
+  return raw.filter((l) => l.label && toHref(l.url));
+}
+
+const isCodeLabel = (label: string) => /code|github|source|repo/i.test(label);
+
 export default function ProjectCard({ project }: ProjectCardProps) {
+  const links = projectLinks(project);
+  const media = project.media ?? [];
+
   return (
     <div className="group h-full transition-transform duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02]">
       <TargetCard className="rounded-xl bg-card border border-border/50 h-full overflow-hidden relative">
-        <div className="relative h-full p-6 sm:p-8 bg-card border border-border/50 rounded-xl overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_15px_rgba(0,255,200,0.15)]">
-          {/* SCANNER EFFECT ON HOVER */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-primary/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_15px_rgba(0,255,200,0.8)] z-20 group-hover:animate-[scan_2s_linear_infinite]" />
-
+        <div className="relative h-full bg-card border border-border/50 rounded-xl overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_15px_rgba(0,255,200,0.15)]">
           {/* Neon gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10" />
+
+          {media.length > 0 && <MediaGallery items={media} title={project.title} />}
 
           {/* Content */}
-          <div className="relative z-10 flex flex-col h-full gap-4">
-            {/* Header: Title */}
-            <div className="flex justify-between items-start">
-              <h3 className="text-lg sm:text-xl font-bold font-mono text-foreground group-hover:text-primary transition-colors duration-300">
-                {project.title}
-              </h3>
-            </div>
+          <div className="relative z-10 flex flex-col gap-4 p-6 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+              {project.title}
+            </h3>
 
-            {/* Description */}
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed flex-grow font-mono border-l-2 border-primary/10 pl-3">
-              {project.description}
-            </p>
+            {project.description && (
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed flex-grow border-l-2 border-primary/10 pl-3 whitespace-pre-line">
+                {project.description}
+              </p>
+            )}
 
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 pt-2">
-              {project.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2.5 py-1 bg-primary/5 text-primary/80 rounded border border-primary/20 group-hover:border-primary/50 transition-colors duration-300 font-mono"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {project.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {project.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-2.5 py-1 bg-primary/5 text-primary/80 rounded border border-primary/20 group-hover:border-primary/50 transition-colors duration-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            {/* Links */}
-            <div className="flex items-center gap-4 pt-4 border-t border-border/30">
-              <a
-                href={project.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors duration-300 font-medium group/link"
-              >
-                <GithubIcon className="w-4 h-4 group-hover/link:animate-bounce" />
-                <span className="font-mono">Code</span>
-              </a>
-
-              {project.demo && (
-                <a
-                  href={project.demo}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 font-medium group/link"
-                >
-                  <ExternalLink className="w-4 h-4 group-hover/link:scale-110 transition-transform" />
-                  <span className="font-mono">Demo</span>
-                </a>
-              )}
-            </div>
+            {links.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 border-t border-border/30">
+                {links.map((link, i) => (
+                  <a
+                    key={`${link.label}-${i}`}
+                    href={toHref(link.url) as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-2 text-sm transition-colors duration-300 font-medium group/link ${
+                      i === 0
+                        ? 'text-primary hover:text-primary/80'
+                        : 'text-muted-foreground hover:text-primary'
+                    }`}
+                  >
+                    {isCodeLabel(link.label) ? (
+                      <GithubIcon className="w-4 h-4" />
+                    ) : (
+                      <ExternalLink className="w-4 h-4 group-hover/link:scale-110 transition-transform" />
+                    )}
+                    <span>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </TargetCard>

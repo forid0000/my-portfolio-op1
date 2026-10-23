@@ -167,9 +167,9 @@ export default function ExpertisesPage() {
         <div className="bg-blue-950/30 border border-blue-900/50 p-4 rounded-xl flex gap-3 items-start">
           <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-200 leading-relaxed">
-            <strong className="text-blue-300">Admin Hint:</strong> Each card needs a Title
-            (shown as-is, so use underscores like <code>Frontend_Architecture</code> for the
-            terminal look) and an Icon — pick one from the picker or type any exact name from{' '}
+            <strong className="text-blue-300">Admin Hint:</strong> Each card needs a Title (shown
+            as-is, so use underscores like <code>Frontend_Architecture</code> for the terminal look)
+            and an Icon — pick one from the picker or type any exact name from{' '}
             <code>lucide.dev/icons</code>. An unrecognized icon name silently falls back to a
             generic code-brackets glyph on the live site rather than breaking the page, but the
             picker will warn you first. Drag the grip to reorder cards; order is saved exactly as
@@ -178,7 +178,10 @@ export default function ExpertisesPage() {
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={data.map((it) => it._dndId!)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={data.map((it) => it._dndId!)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="space-y-6">
               {data.map((item, index) => (
                 <SortableItem
