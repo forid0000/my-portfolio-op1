@@ -104,7 +104,7 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'checklist',
     title: 'Your getting-started list',
     body: 'The Dashboard keeps a checklist of what is done and what is left, with a button for each task. Work through it at your own pace; it ticks itself off as you configure things. You can restart this tour any time from the sidebar.',
-    target: 'checklist',
+    target: 'checklist-head',
     fallbackTarget: 'nav-dashboard',
     placement: 'bottom',
   },

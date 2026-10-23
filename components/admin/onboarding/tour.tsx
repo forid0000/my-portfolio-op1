@@ -212,7 +212,13 @@ export default function Tour({
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     return () => {
-      if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
+      // Back to whatever started the tour; if that is gone (the welcome dialog), the sidebar's
+      // "Take the tour" button, so keyboard users are never dropped onto <body>.
+      const target =
+        opener && opener !== document.body && document.contains(opener)
+          ? opener
+          : document.querySelector<HTMLElement>('[data-tour="tour-launcher"]');
+      target?.focus({ preventScroll: true });
     };
   }, []);
   useEffect(() => {

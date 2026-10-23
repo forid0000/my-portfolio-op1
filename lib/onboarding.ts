@@ -293,7 +293,9 @@ export async function getOnboardingOverview(): Promise<OnboardingOverview> {
 
   const completed = items.filter((i) => i.done || i.skipped).length;
   const total = items.length;
-  const next = items.find((i) => !i.done && !i.skipped);
+  // Suggest required steps before optional ones, so the highlighted "Next" is what matters most.
+  const pending = items.filter((i) => !i.done && !i.skipped);
+  const next = pending.find((i) => !i.optional) ?? pending[0];
 
   return {
     state,

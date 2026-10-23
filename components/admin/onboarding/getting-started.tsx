@@ -120,7 +120,7 @@ export function GettingStarted() {
   if (loading && !overview) {
     return (
       <section
-        data-tour="checklist"
+        data-tour="checklist-head"
         className="rounded-xl border border-gray-800 bg-gray-900 p-6"
         aria-busy="true"
       >
@@ -134,7 +134,10 @@ export function GettingStarted() {
 
   if (!overview) {
     return (
-      <section data-tour="checklist" className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+      <section
+        data-tour="checklist-head"
+        className="rounded-xl border border-gray-800 bg-gray-900 p-6"
+      >
         <p className="text-sm text-gray-400">{error ?? 'The checklist is unavailable.'}</p>
         <button
           type="button"
@@ -154,7 +157,7 @@ export function GettingStarted() {
   if (state.checklistDismissed) {
     return (
       <section
-        data-tour="checklist"
+        data-tour="checklist-head"
         className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-800 bg-gray-900/60 px-5 py-3"
       >
         <p className="text-sm text-gray-400">
@@ -183,36 +186,38 @@ export function GettingStarted() {
   }
 
   return (
-    <section data-tour="checklist" className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-100">Getting started</h2>
-          <p className="mt-1 text-sm text-gray-400">
-            {allDone
-              ? 'Everything is set up.'
-              : 'Work through these at your own pace. Each one ticks itself off when it is done.'}
-          </p>
+    <section className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+      <div data-tour="checklist-head">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-100">Getting started</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              {allDone
+                ? 'Everything is set up.'
+                : 'Work through these at your own pace. Each one ticks itself off when it is done.'}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-sm text-gray-300">
+              {completed} <span className="text-gray-600">/</span> {total}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">steps</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="font-mono text-sm text-gray-300">
-            {completed} <span className="text-gray-600">/</span> {total}
-          </p>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">steps</p>
-        </div>
-      </div>
 
-      <div
-        role="progressbar"
-        aria-label="Setup progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        className="mt-4 h-2 overflow-hidden rounded-full bg-gray-800"
-      >
         <div
-          className="h-full rounded-full bg-emerald-500 transition-[width] duration-500"
-          style={{ width: `${percent}%` }}
-        />
+          role="progressbar"
+          aria-label="Setup progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          className="mt-4 h-2 overflow-hidden rounded-full bg-gray-800"
+        >
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-[width] duration-500"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
       </div>
 
       {allDone && (
