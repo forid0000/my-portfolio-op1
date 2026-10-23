@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
   const staticRoutes = [
     '',
-    '/kits',
+    // /kits is a redirect to /kits/system, so only the real tool pages are listed.
     '/kits/age',
     '/kits/currency',
     '/kits/password',

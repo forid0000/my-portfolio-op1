@@ -24,6 +24,10 @@ pnpm dev
 
 The app runs at <http://localhost:3000>. On first visit to `/administrator` a setup wizard asks for the setup code printed in your terminal (or `node scripts/setup-code.mjs`) and enrols your authenticator; there is no development bypass. Credentials and integration keys are managed in Admin → Security & Keys.
 
+## Understand the codebase first
+
+[`docs/ai/`](docs/ai/README.md) is the contributor handbook, written for humans and AI coding agents alike: [architecture](docs/ai/ARCHITECTURE.md), [conventions and pitfalls](docs/ai/CONVENTIONS.md), [design and behavior rules](docs/ai/DESIGN.md), and file-by-file [playbooks](docs/ai/PLAYBOOKS.md) for common changes. Read the conventions before your first pull request.
+
 ## Checks to run before opening a pull request
 
 ```bash

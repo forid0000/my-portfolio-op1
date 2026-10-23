@@ -9,6 +9,8 @@ my-portfolio-op1 is an open-source **portfolio website and content management sy
 
 It also ships a private, password-protected **notes vault**, a set of client-side **utility kits** (QR codes, subnet calculator, password generator and more), a **Dev.to article feed**, and an `/llms.txt` endpoint, so one deployment covers the portfolio, a small blog, and a toolbox.
 
+> **New to this? Never used a terminal?** Follow the step-by-step [Getting started guide](docs/GETTING-STARTED.md). It takes you from nothing to a live site with no coding. Developers and AI agents: see [docs/](docs/README.md).
+
 > **Placeholder content.** A fresh install shows neutral placeholder content ("Your Name", `example.com` links). Replace it from `/administrator` after your first login. Nothing in the source code describes a real person.
 
 ## Why my-portfolio-op1
@@ -43,6 +45,8 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 - Syndicates your Dev.to posts with native routing. Choose in the admin whether canonical URLs point at Dev.to or at your own site.
 
 ## Quick start
+
+> Not a developer? Use the [step-by-step guide](docs/GETTING-STARTED.md) instead; this section assumes you are comfortable with a terminal.
 
 **Requirements:** Node.js 20.9 or newer, [pnpm](https://pnpm.io), and a MongoDB database ([Atlas free tier](https://www.mongodb.com/atlas) or local).
 
@@ -220,6 +224,8 @@ components/     Section components, admin UI, shared primitives
 lib/            Auth and credentials, DB, validation (Zod), CMS defaults, identity/SEO, server-side icons, caches
 scripts/        create-indexes.mjs, setup-code.mjs, reset-admin-auth.mjs, generate-icon-names.mjs
 public/         Static assets (tech icons, placeholder avatar)
+docs/           GETTING-STARTED.md (beginner guide) and ai/ (architecture, conventions, design, playbooks for AI agents and contributors)
+AGENTS.md       Entry point for AI coding agents (CLAUDE.md imports it)
 ```
 
 Key files: `lib/content-defaults.ts` (placeholder content), `lib/site-config.ts` (deployment settings from env), `lib/identity.ts` (SEO identity from CMS), `lib/credentials.ts` and `lib/integrations.ts` (admin-panel credentials and keys), `lib/icons/` (server-side icon resolution), `lib/sections-registry.ts` (homepage sections).

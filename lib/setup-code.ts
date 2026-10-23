@@ -46,12 +46,19 @@ export function verifySetupCode(input: unknown): boolean {
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-let announced = false;
+/** Re-announce at most this often per process, so opening the setup page never floods the log. */
+const ANNOUNCE_EVERY_MS = 30_000;
+let lastAnnounced = 0;
 
-/** Prints the setup code to the server log, once per process. */
+/**
+ * Prints the setup code to the server log whenever the setup page is opened while
+ * setup is pending (throttled). Once per process would be easy to miss on a
+ * serverless host, where the log is opened after the first request.
+ */
 export function announceSetupCode(): void {
-  if (announced) return;
-  announced = true;
+  const now = Date.now();
+  if (now - lastAnnounced < ANNOUNCE_EVERY_MS) return;
+  lastAnnounced = now;
   const bar = '='.repeat(62);
   console.warn(
     [
