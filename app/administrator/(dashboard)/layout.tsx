@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   LogOut,
@@ -129,6 +129,7 @@ function AdminClock({ className }: { className?: string }) {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [sessionStatus, setSessionStatus] = useState<'loading' | 'active' | 'expired'>('loading');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -171,9 +172,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (sessionStatus !== 'expired') return;
     fetch('/api/admin/logout', { method: 'POST' }).finally(() => {
-      window.location.href = '/administrator/login';
+      router.replace('/administrator/login');
+      router.refresh();
     });
-  }, [sessionStatus]);
+  }, [sessionStatus, router]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -189,7 +191,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
     } catch (err) {}
-    window.location.href = '/';
+    router.replace('/');
+    router.refresh();
   };
 
   const [isRefreshing, setIsRefreshing] = useState(false);

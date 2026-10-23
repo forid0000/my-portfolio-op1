@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePublicContent } from '@/lib/revalidate';
+import { revalidateSiteChrome } from '@/lib/revalidate';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     );
 
     invalidateLayoutCache();
-    revalidatePublicContent();
+    revalidateSiteChrome();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(

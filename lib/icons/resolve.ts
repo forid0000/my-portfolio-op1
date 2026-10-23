@@ -3,8 +3,15 @@
  *
  * Icons are stored in the CMS by name ("Github", "FaAws", "TbBrandDocker"...).
  * A name's prefix identifies its react-icons pack ("Fa" -> react-icons/fa), so
- * only that one pack is loaded (lazily, on the server) - never all 33 packs, and
- * never in the browser. Names without a pack prefix are lucide icons.
+ * only that one pack is loaded (lazily, on the server) - never all 31 packs, and
+ * never in the browser. Names without a pack prefix are lucide icons, read from a
+ * precomputed data file (lib/icons/lucide-data.json, see
+ * scripts/generate-icon-names.mjs) so lucide's ~1,900 icon modules are never
+ * bundled or loaded just to look one up.
+ *
+ * `react-icons` is listed in `serverExternalPackages` (next.config.mjs): the
+ * bundler must not compile the packs (that alone was ~60 MB of code and >2 GB of
+ * RAM in `next dev`); Node loads just the requested pack at runtime.
  */
 import 'server-only';
 import type { IconData, IconMap, IconNode } from '@/lib/icons/icon-data';
@@ -124,6 +131,18 @@ const REACT_ICONS_SVG_ATTRS = {
   strokeWidth: '0',
 } as const;
 
+interface LucideData {
+  icons: Record<string, [string, Record<string, string | number>][]>;
+  aliases: Record<string, string>;
+}
+
+/** lucide icon by name (or alias such as "MailIcon" / "Code2"), from the generated data file. */
+async function lucideData(name: string): Promise<IconData | null> {
+  const { icons, aliases } = (await import('./lucide-data.json')).default as unknown as LucideData;
+  const nodes = icons[aliases[name] ?? name];
+  return nodes ? { attrs: { ...LUCIDE_SVG_ATTRS }, nodes: nodes as IconNode[] } : null;
+}
+
 const cache = new Map<string, IconData | null>();
 
 async function findExport(requested: string): Promise<unknown> {
@@ -136,9 +155,7 @@ async function findExport(requested: string): Promise<unknown> {
       if (name in mod) return mod[name];
     }
   }
-  if (NON_ICON_EXPORTS.has(name)) return undefined;
-  const lucide = (await import('lucide-react')) as unknown as Pack;
-  return lucide[name];
+  return undefined;
 }
 
 function cleanAttrs(raw: Record<string, unknown>): Record<string, string | number> {
@@ -174,22 +191,12 @@ function extract(component: unknown): IconData | null {
   try {
     if (typeof component === 'function') {
       element = (component as (p: object) => typeof element)({});
-    } else if (component && typeof (component as { render?: unknown }).render === 'function') {
-      element = (component as { render: (p: object, r: null) => typeof element }).render({}, null);
     }
   } catch {
     return null;
   }
   const props = element?.props;
   if (!props) return null;
-
-  // lucide: <Icon iconNode={[[tag, attrs], ...]} />
-  if (Array.isArray(props.iconNode)) {
-    const nodes = (props.iconNode as [string, Record<string, unknown>][]).map(
-      ([tag, attrs]): IconNode => [tag, cleanAttrs(attrs)]
-    );
-    return { attrs: { ...LUCIDE_SVG_ATTRS }, nodes };
-  }
 
   // react-icons: <IconBase attr={{ viewBox, ... }}>{children}</IconBase>
   if (props.attr && typeof props.attr === 'object') {
@@ -211,7 +218,7 @@ export async function resolveIconData(name: string | undefined | null): Promise<
   let data: IconData | null = null;
   try {
     const found = await findExport(name);
-    data = found ? extract(found) : null;
+    data = found ? extract(found) : await lucideData(name);
   } catch {
     data = null;
   }

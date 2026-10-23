@@ -1113,6 +1113,20 @@
   @apply text-primary;
 }
 
+/* Route loading bar (app/loading.tsx): transform-only, so it never triggers layout or paint. */
+@keyframes route-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.route-progress-bar {
+  animation: route-progress 1.1s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* People who ask their OS for less motion get none of the decorative loops. */
 @media (prefers-reduced-motion: reduce) {
   *,

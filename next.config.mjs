@@ -36,6 +36,26 @@ const shortLinks = [
 const nextConfig = {
   // output: "export",
   productionBrowserSourceMaps: false,
+
+  // Build output directory. Overridable (NEXT_DIST_DIR) so a test build can never clobber a
+  // running dev server's cache.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
+  // Icon packs are resolved on the server by name (lib/icons/resolve.ts). Keep them out of the
+  // bundler: Node loads only the one pack a name needs, at runtime. Bundling all 31 packs made
+  // `next dev` compile ~60 MB of icon code and use well over 2 GB of RAM.
+  serverExternalPackages: ['react-icons'],
+
+  // Static generation and dev compilation fan out one worker per CPU core, and every worker
+  // loads the whole app: on a 12-core, 8 GB machine that alone meant a 2.5 GB build. This site
+  // has ~100 small pages, so a few workers are plenty. Raise it with NEXT_BUILD_CPUS.
+  experimental: {
+    cpus: Number(process.env.NEXT_BUILD_CPUS) || 3,
+  },
+
+  // Without a Sentry DSN, replace the SDK with a no-op stub so it is never compiled or
+  // bundled (it is ~1,000 modules). Setting NEXT_PUBLIC_SENTRY_DSN restores the real SDK.
+  turbopack: sentryDsn ? {} : { resolveAlias: { '@sentry/nextjs': './lib/sentry-disabled.ts' } },
   // --- Image settings ---
   images: {
     contentDispositionType: 'inline',
@@ -166,6 +186,12 @@ const nextConfig = {
       {
         source: '/dev',
         destination: '/administrator',
+        permanent: false,
+      },
+      // /kits has no page of its own; answering here (no render, no database read) is instant.
+      {
+        source: '/kits',
+        destination: '/kits/system',
         permanent: false,
       },
       {

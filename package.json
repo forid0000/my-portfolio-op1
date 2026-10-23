@@ -19,6 +19,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "preview": "next build && next start",
     "lint": "eslint --config eslint.config.mjs .",
     "format": "prettier --write .",
     "start": "next start"

@@ -68,6 +68,23 @@ Then open <http://localhost:3000/administrator>. A fresh install has no admin ye
 
 Everything else (the notes-vault password, email, Cloudinary, R2 keys) is configured later in **Admin → Security & Keys**, not in `.env`. Lost your authenticator? See [Recovery](#authentication-and-security).
 
+### Running on a small machine
+
+`pnpm dev` compiles each route the first time you open it and keeps every compiled module in memory, so it is by far the heaviest way to run the project: expect roughly 1.4 GB after visiting a handful of routes (the first visit to a route takes a few seconds). The production server is tiny by comparison (around 120 MB, with page responses in single-digit milliseconds). If you only want to use the site and the admin panel, or your machine is short on RAM:
+
+```bash
+pnpm preview                      # next build && next start (build takes ~20 s)
+```
+
+Admin edits appear immediately in the production build too: saving revalidates the affected pages on demand. If you do run `pnpm dev` on a tight machine, cap it so it can never take the whole system down, and optionally lower the worker count:
+
+```bash
+systemd-run --user --scope -p MemoryMax=2G -p MemorySwapMax=0 pnpm dev   # Linux
+NEXT_BUILD_CPUS=2 pnpm dev                                               # fewer parallel workers
+```
+
+`NEXT_DIST_DIR` sets a different build directory (default `.next`) so a second build can sit next to a running dev server.
+
 ### Make it yours
 
 | What                                                    | Where                                                            |
@@ -146,6 +163,8 @@ The public pages are kept deliberately light, and a few rules keep them that way
 - **No icon library in the browser.** Icons are stored by name and may be any of ~50,000 lucide / react-icons glyphs. They are resolved **on the server** (`lib/icons/resolve.ts`), which loads only the one pack a name needs and sends just the SVG data of the icons a page actually uses. The admin icon picker searches through `/api/admin/icons`, so it never loads a catalog either.
 - **Everything visible arrives with the HTML.** The header, footer, social links and icons are rendered on the server; nothing waits for hydration or a follow-up fetch.
 - **Animations are cheap and stop.** The dot-grid background is static CSS and only upgrades to an interactive canvas on a desktop with a mouse, drawing only while the pointer moves. Text effects run once. Nothing animates layout-expensive properties forever, and `prefers-reduced-motion` turns decoration off.
+- **Navigation is never blocked.** Route loading shows a thin progress bar along the top edge (`app/loading.tsx`, a server component with a CSS-only animation), never a full-screen overlay, so the page and header stay usable while a route loads.
+- **The dev server stays lean too.** `react-icons` is loaded by Node instead of the bundler (`serverExternalPackages`), lucide's glyph data is a generated JSON file (`lib/icons/lucide-data.json`) rather than ~1,900 modules, and the Sentry SDK is replaced by a no-op stub unless a DSN is set. After upgrading `react-icons` or `lucide-react`, run `node scripts/generate-icon-names.mjs` to refresh the icon catalog.
 - **Optional integrations cost nothing when off:** the Sentry SDK is not bundled unless configured, and forms use plain validation instead of a schema library.
 
 ### SEO and discoverability

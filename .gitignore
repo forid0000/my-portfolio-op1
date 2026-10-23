@@ -71,3 +71,6 @@ __pycache__/
 /public/gallery/
 /scripts/.*-results.json
 *.local.json
+
+# test builds written with NEXT_DIST_DIR=.next-test
+/.next-*/

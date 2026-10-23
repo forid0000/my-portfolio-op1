@@ -11,3 +11,6 @@ public
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# generated: huge single-line JSON
+lib/icons/lucide-data.json

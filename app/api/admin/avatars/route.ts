@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePublicContent } from '@/lib/revalidate';
+import { revalidateSiteChrome } from '@/lib/revalidate';
 import { z } from 'zod';
 import cloudinary, { configureCloudinary } from '@/lib/cloudinary';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
@@ -7,7 +7,6 @@ import connectToDatabase from '@/lib/db';
 import mongoose from 'mongoose';
 import { invalidateAvatarCache } from '@/lib/avatar-cache';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
-
 
 const AVATAR_FOLDER = 'avatars';
 
@@ -52,10 +51,7 @@ async function migrateLegacyDoc(collection: any, doc: AvatarDoc): Promise<Avatar
       public_id: uploadResponse.public_id,
       updatedAt: new Date(),
     };
-    await collection.updateOne(
-      { _id: doc._id },
-      { $set: update, $unset: { base64: '' } }
-    );
+    await collection.updateOne({ _id: doc._id }, { $set: update, $unset: { base64: '' } });
     return { ...doc, ...update, base64: undefined };
   } catch (error) {
     console.error(`Failed to migrate legacy avatar doc ${doc._id}`, error);
@@ -75,9 +71,7 @@ export async function GET() {
 
     const migrated = await Promise.all(docs.map((doc) => migrateLegacyDoc(collection, doc)));
 
-    return NextResponse.json(
-      migrated.map(({ base64: _base64, ...rest }) => rest)
-    );
+    return NextResponse.json(migrated.map(({ base64: _base64, ...rest }) => rest));
   } catch (error: any) {
     return NextResponse.json(
       { error: 'Failed to fetch avatars', details: error.message },
@@ -150,7 +144,7 @@ export async function POST(request: Request) {
     const result = await collection.insertOne(doc);
     if (data.isActive) {
       invalidateAvatarCache();
-      revalidatePublicContent();
+      revalidateSiteChrome();
     }
     return NextResponse.json({ success: true, id: result.insertedId, secure_url: doc.secure_url });
   } catch (error: any) {
@@ -197,7 +191,7 @@ export async function PATCH(request: Request) {
       { $set: { isActive: true, updatedAt: new Date() } }
     );
     invalidateAvatarCache();
-    revalidatePublicContent();
+    revalidateSiteChrome();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(
@@ -251,7 +245,7 @@ export async function DELETE(request: Request) {
 
     if (doc?.isActive) {
       invalidateAvatarCache();
-      revalidatePublicContent();
+      revalidateSiteChrome();
     }
     return NextResponse.json({ success: true });
   } catch (error: any) {

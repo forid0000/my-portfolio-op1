@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePublicContent } from '@/lib/revalidate';
+import { revalidateSiteChrome } from '@/lib/revalidate';
 import { verifyAdminSession as checkAuth } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { THEME_DEFAULTS, sanitizeTheme, invalidateThemeCache } from '@/lib/theme';
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       );
 
     invalidateThemeCache();
-    revalidatePublicContent();
+    revalidateSiteChrome();
     return NextResponse.json({ success: true, theme });
   } catch (error: any) {
     console.error('theme Save Error:', error);

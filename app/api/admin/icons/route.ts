@@ -18,11 +18,15 @@ let catalogs: Record<Scope, readonly string[]> | null = null;
 function getCatalogs() {
   if (!catalogs) {
     // lucide first (small, general purpose), then react-icons. "social" pickers
-    // favour brand logos, which Simple Icons ("Si...") covers.
+    // favour brand logos.
     const all = Array.from(new Set([...ALL_LUCIDE_ICON_NAMES, ...ALL_REACT_ICON_NAMES]));
     const social = [
       ...ALL_LUCIDE_ICON_NAMES,
-      ...ALL_REACT_ICON_NAMES.filter((n) => n.startsWith('Si')),
+      // Brand logos: Simple Icons, Font Awesome brands, Ionicons logos. (Simple Icons has
+      // dropped some brands, e.g. LinkedIn, which Font Awesome still has.)
+      ...ALL_REACT_ICON_NAMES.filter(
+        (n) => n.startsWith('Si') || n.startsWith('Fa') || n.startsWith('IoLogo')
+      ),
     ];
     catalogs = { all, social };
   }
