@@ -1,99 +1,100 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
-import { verifyNotesSession } from '@/lib/auth';
-import connectToDatabase from '@/lib/db';
 import mongoose from 'mongoose';
+import { verifyNotesSession } from '@/lib/auth';
+import { isSameOrigin, problem } from '@/lib/api/respond';
+import { clientIp, rateLimit } from '@/lib/rate-limit';
+import { notesCollection, serializeNote } from '@/lib/notes';
+import { cleanSlug, isReservedSlug } from '@/lib/notes-model';
+import { revalidateNotes } from '@/lib/revalidate';
+import { objectIdSchema, publishSchema } from '@/lib/validation/note-schemas';
 
-// GET /api/notes/publish?slug=xxx&excludeId=yyy - check slug availability
+const unauthorized = () => NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+// GET /api/notes/publish?slug=xxx&excludeId=yyy - is this address free?
 export async function GET(request: Request) {
-  if (!(await verifyNotesSession()))
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await verifyNotesSession())) return unauthorized();
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get('slug')?.trim().toLowerCase();
-    const excludeId = searchParams.get('excludeId') || '';
-
-    if (!slug) return NextResponse.json({ available: false, error: 'Slug required' });
-
-    const db = await connectToDatabase();
-    const collection = db.connection.client.db('portfolio_cms').collection('notes');
-
-    const query: Record<string, unknown> = { slug };
-    if (excludeId) {
-      try {
-        query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
-      } catch {
-        /* invalid id, ignore */
-      }
+    const slug = cleanSlug(searchParams.get('slug') ?? '');
+    if (!slug) return NextResponse.json({ available: false, error: 'Address required' });
+    if (isReservedSlug(slug)) {
+      return NextResponse.json({ available: false, reserved: true });
     }
 
+    const query: Record<string, unknown> = { slug };
+    const excludeId = searchParams.get('excludeId') || '';
+    if (excludeId && objectIdSchema.safeParse(excludeId).success) {
+      query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+    }
+    const collection = await notesCollection();
     const existing = await collection.findOne(query, { projection: { _id: 1 } });
-    return NextResponse.json({ available: !existing });
-  } catch (error: unknown) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ available: !existing, slug });
+  } catch (error) {
+    console.error('[notes/publish]', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }
 
-// PATCH /api/notes/publish - publish or unpublish a note
+// PATCH /api/notes/publish - publish a note at an address, or take it back to private
 export async function PATCH(request: Request) {
-  if (!(await verifyNotesSession()))
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await verifyNotesSession())) return unauthorized();
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: 'Cross-site requests are not allowed.' }, { status: 403 });
+  }
+  const rl = rateLimit(`notes-write:${clientIp(request)}`, 600, 10 * 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+    );
+  }
+
   try {
-    const { id, published, slug } = await request.json();
-    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
-
-    const db = await connectToDatabase();
-    const collection = db.connection.client.db('portfolio_cms').collection('notes');
-
-    let oid: mongoose.Types.ObjectId;
-    try {
-      oid = new mongoose.Types.ObjectId(id);
-    } catch {
-      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
+    const parsed = publishSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid payload data', details: parsed.error.issues },
+        { status: 400 }
+      );
     }
+    const oid = new mongoose.Types.ObjectId(parsed.data.id);
+    const collection = await notesCollection();
+    const before = await collection.findOne({ _id: oid });
+    if (!before) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const update: Record<string, unknown> = {};
-
-    if (published === true) {
-      if (!slug?.trim())
-        return NextResponse.json({ error: 'Slug required to publish' }, { status: 400 });
-
-      const cleanSlug = slug
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-
-      // Conflict check - exclude current note from the search
+    if (parsed.data.published) {
+      const slug = cleanSlug(parsed.data.slug);
+      if (!slug) return problem(['slug'], 'Use letters, numbers and hyphens for the address.');
+      if (isReservedSlug(slug)) {
+        return problem(['slug'], 'That address is used by the site itself. Pick another.');
+      }
       const conflict = await collection.findOne(
-        { slug: cleanSlug, _id: { $ne: oid } },
+        { slug, _id: { $ne: oid } },
         { projection: { _id: 1 } }
       );
       if (conflict) {
-        return NextResponse.json({ error: 'Slug already taken', conflict: true }, { status: 409 });
+        return NextResponse.json(
+          { error: 'Address already taken', conflict: true },
+          { status: 409 }
+        );
       }
-
       update.published = true;
-      update.slug = cleanSlug;
-      update.publishedAt = new Date();
-    } else if (published === false) {
+      update.slug = slug;
+      if (!before.published || !before.publishedAt) update.publishedAt = new Date();
+    } else {
+      // The address stays stored so it can be reused when the note is published again.
       update.published = false;
-      // Keep slug stored so it can be re-used on republish
     }
 
     await collection.updateOne({ _id: oid }, { $set: update });
     const note = await collection.findOne({ _id: oid });
 
-    // On-demand revalidation: the notes list, the individual note page, and the
-    // sitemap all reflect published state, so refresh them the moment it changes
-    // (public note pages stay static + on-demand — no timer writes).
-    revalidatePath('/notes');
-    if (note?.slug) revalidatePath(`/notes/${note.slug}`);
-    revalidatePath('/sitemap.xml');
-
-    return NextResponse.json({ success: true, note });
-  } catch (error: unknown) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    // The list, the note's page (also its old address), the sitemap and llms.txt follow at once.
+    revalidateNotes(before.slug, note?.slug);
+    return NextResponse.json({ success: true, note: serializeNote(note!) });
+  } catch (error) {
+    console.error('[notes/publish]', error);
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 });
   }
 }

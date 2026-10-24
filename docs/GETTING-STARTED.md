@@ -149,8 +149,8 @@ Open **Security & Keys** in the dashboard. Everything here is stored encrypted a
 
 - **Contact form email:** the form works only after you add the details of an email sending service (SMTP). Brevo has a free plan; any SMTP provider works. Fill in the host, port, username and password from the provider, plus the address that should **receive** messages and the address they are **sent from**. Until then the form politely says it is not set up.
 - **Cloudinary** (free plan): needed for the photo gallery and some image uploads. Create an account, then paste the **cloud name**, **API key** and **API secret**.
-- **Cloudflare R2** and **GitHub profile sync** are for the private notes feature and for developers; skip them unless you need them.
-- **Notes vault:** the private notes page stays locked until you set a password or turn on authenticator quick-unlock here.
+- **GitHub profile sync** is for developers; skip it unless you need it.
+- **Private notes:** visitors see only the notes you publish at `/notes`. Your own notes (`/notes/vault`) stay locked until you set a password or turn on authenticator quick-unlock here. You can attach pictures, documents and whole folders from your computer to a note; they are kept privately in your database.
 
 ## Step 9: Your own web address (optional)
 

@@ -119,7 +119,7 @@ const NAV_GROUPS: NavGroup[] = [
       },
       {
         href: '/administrator/notes-config',
-        label: 'Notes Config',
+        label: 'Notes',
         icon: NotebookPen,
         tour: 'nav-notes',
       },

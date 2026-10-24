@@ -36,7 +36,7 @@ const STATIC_ROUTES = [
   { href: '/administrator/data', label: 'MongoDB Data', section: 'System' },
   { href: '/administrator/system', label: 'System & SEO', section: 'System' },
   { href: '/administrator/security', label: 'Security & Keys', section: 'System' },
-  { href: '/administrator/notes-config', label: 'Notes Config', section: 'System' },
+  { href: '/administrator/notes-config', label: 'Notes', section: 'System' },
 ];
 
 export function CommandPalette() {

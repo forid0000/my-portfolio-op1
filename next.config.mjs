@@ -164,22 +164,30 @@ const nextConfig = {
       'upgrade-insecure-requests',
     ].join('; ');
 
+    // Headers every response gets, whatever its content security policy.
+    const baseHeaders = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      // camera: QR scanner kit. geolocation: optional "use my location" in the prayer kit.
+      { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self)' },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+    ];
+
     return [
       {
-        source: '/:path*',
+        // Everything except the notes' attached files, which set their own policy: a PDF has to be
+        // shown inside this site's own pages (frame-ancestors 'self'), which the page policy forbids.
+        source: '/((?!api/notes/files/).*)',
         headers: [
           { key: 'Content-Security-Policy', value: csp },
           { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          // camera: QR scanner kit. geolocation: optional "use my location" in the prayer kit.
-          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self)' },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
+          ...baseHeaders,
         ],
       },
+      { source: '/api/notes/files/:path*', headers: baseHeaders },
     ];
   },
 

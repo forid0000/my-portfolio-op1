@@ -9,7 +9,7 @@ import {
   normalizeTotpCode,
   verifyPassword,
 } from '@/lib/credentials';
-import { settingsCollection } from '@/lib/settings-store';
+import { fileLimitBytes, getNotesSettings } from '@/lib/notes-settings';
 import { rateLimit, resetRateLimit, clientIp } from '@/lib/rate-limit';
 
 const NOTES_LIMIT = 30;
@@ -101,21 +101,15 @@ export async function POST(request: Request) {
       maxAge: maxAgeSec,
     });
 
-    const col = await settingsCollection();
-    const [asDoc, ppDoc, vtDoc, ltDoc] = await Promise.all([
-      col.findOne({ key: 'notes_autosave_interval' }),
-      col.findOne({ key: 'notes_per_page' }),
-      col.findOne({ key: 'notes_vault_title' }),
-      col.findOne({ key: 'notes_lock_title' }),
-    ]);
-
+    const settings = await getNotesSettings();
     return NextResponse.json({
       success: true,
       expiresAt: Date.now() + maxAgeSec * 1000,
-      autosaveInterval: (asDoc?.value ?? 30) as number,
-      notesPerPage: (ppDoc?.value ?? 20) as number,
-      vaultTitle: (vtDoc?.value ?? 'Notes Vault') as string,
-      lockTitle: (ltDoc?.value ?? 'VAULT LOCKED') as string,
+      autosaveInterval: settings.autosaveInterval,
+      notesPerPage: settings.notesPerPage,
+      vaultTitle: settings.vaultTitle,
+      lockTitle: settings.lockTitle,
+      maxFileBytes: fileLimitBytes(settings),
     });
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1537,3 +1537,48 @@ html [data-sonner-toaster][data-sonner-theme] {
 .article-block-right > * {
   text-align: inherit;
 }
+
+/* ---------------------------------------------------------------------------
+   Notes reuse the article typography (so a note looks the same in the editor's preview, in the
+   vault and on the public page) and differ in a few places: everything wraps instead of scrolling
+   sideways, pictures keep their own size, and the text fills the space it is given.
+   --------------------------------------------------------------------------- */
+.note-doc {
+  --article-size: 1.0625rem;
+  --article-width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.note-doc .article-prose {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.note-doc .article-prose pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+}
+.note-doc .article-prose pre code {
+  white-space: inherit;
+  overflow-wrap: inherit;
+}
+.note-doc .article-prose td,
+.note-doc .article-prose th {
+  overflow-wrap: anywhere;
+  min-width: 5rem;
+}
+.note-doc .article-prose > :first-child {
+  margin-top: 0;
+}
+.note-doc .article-figure img,
+.note-doc .article-figure video {
+  width: auto;
+  max-width: 100%;
+  max-height: 32rem;
+  margin-inline: auto;
+}
+.note-doc .article-zoom {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+}

@@ -16,7 +16,7 @@ const DB_NAME = 'portfolio_cms';
 const STATE_KEY = 'schema_version';
 
 /** Bump when INDEXES or a repair step changes, so existing databases pick it up. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** The few driver methods the setup uses, so it can be tested without a database. */
 interface SetupCollection {
@@ -55,6 +55,8 @@ const ORDERED_COLLECTIONS = [
  *    isActive: true), so two racing "set active" calls can never leave two live pictures; avatars
  *    also keep one entry per Cloudinary file.
  *  - the list sections: the `order` sort every public read uses.
+ *  - notes: a unique address per published note, the vault's list order and the lookup of
+ *    which note keeps an attached file;
  *  - articles: a unique address (slug) per article and the "newest published first" listing;
  *    comments by article and moderation status; at most one reaction of each kind per visitor.
  */
@@ -83,6 +85,16 @@ export const INDEXES: IndexSpec[] = [
     keys: { articleId: 1, visitor: 1, kind: 1 },
     options: { unique: true },
   },
+  // Notes: one published note per address (the unique index only covers notes that have one),
+  // the "newest published first" listing, the vault list order, and "who keeps this file".
+  {
+    collection: 'notes',
+    keys: { slug: 1 },
+    options: { unique: true, partialFilterExpression: { slug: { $type: 'string' } } },
+  },
+  { collection: 'notes', keys: { published: 1, publishedAt: -1 } },
+  { collection: 'notes', keys: { updatedAt: -1 } },
+  { collection: 'notes', keys: { 'attachments.id': 1 } },
 ];
 
 /**

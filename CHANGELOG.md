@@ -23,6 +23,11 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Unsaved-changes counter** at the top-left of the admin (above every page): how many fields differ from the last save, a list of what changed, and a confirmation after saving.
 - **Resizable, collapsible admin menu**: drag its edge (208 to 460 px), double-click the edge or use the arrow to fold it into an icon rail, arrow keys when focused. The size is remembered in the browser.
 - **npm works as well as pnpm.** CI installs and checks the project with both (`pnpm` first), and `npm run verify` mirrors `pnpm verify`.
+- **Public notes and a private vault.** `/notes` is now a public page that shows only the notes you published (search, tags, inside the normal header and footer) with a quiet button to your private notes; the vault itself moved to `/notes/vault` (the lock screen explains what the place is and links back; old `/notes?id=…` bookmarks still lead there). The wording of the public page and the button is set in Admin → Notes. The sitemap lists `/notes`, never the vault.
+- **A sturdier note editor.** The writing and preview panes sit in a split you can drag: each side keeps at least a quarter of the space, dragging further and letting go gives one side the whole area, double-click restores half and half, arrow keys move it, the preview can sit beside or below the text, and the choice is remembered. Long words, links and code lines always wrap (in the text box, the preview and the saved page); the preview is the same renderer as the saved page, so formatting looks identical before and after saving. Narrow screens get Write / Preview tabs instead of a hidden preview. New formatting bar (headings menu, bold, italic, strikethrough, code, lists, checklists, quote, link, table, code block, divider, alignment and note/tip/warning boxes, undo/redo), Enter continues a list and Tab indents it, scroll sync, font and size choices, and a clear "Saved / Unsaved / Saving" state. Every colour follows the global palette.
+- **Files from your computer in notes.** Pick, drop or paste pictures, PDFs, documents, audio, video, text files and whole folders. Pictures can go straight into the text; every file stays with the note, listed by folder, with a preview window for pictures, video, sound, PDF, text, JSON and Markdown files and a download button for everything else. Files are stored privately in your MongoDB database (no extra service), can be up to the size you set in Admin → Notes (default 10 MB, capped by the host), are served only to you until the note is published, and are deleted with the note or when you remove them.
+- Admin → Notes: public page wording, the largest file size, and a plain-language walkthrough.
+- Notes titled by their first line when you did not type a title, so nothing you wrote is ever lost on leaving.
 - **Tests and one CI workflow**: Vitest unit tests, an end-to-end smoke test (production server, real MongoDB, fake Cloudinary), `pnpm verify`, `pnpm test`, `pnpm test:smoke`, `pnpm format:check`, `pnpm typecheck`.
 
 ### Changed
@@ -34,6 +39,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Dependency updates merged from Dependabot (Next.js 16.4, React 19.3, Sentry 11, Nodemailer 10, Zod 4.6, Radix). **ESLint stays on 9 and TypeScript on 5.9** on purpose: `eslint-plugin-react` (via `eslint-config-next`) does not support ESLint 10 yet, and `typescript-eslint` does not support TypeScript 7. `next.config.mjs` loads Sentry in a way that works with v10 and v11.
 - Section Texts: the editor's starting values are the same neutral wording the site uses (they used to be developer-flavoured and were saved if you pressed Save on a new site). The contact form says "Send message" instead of "Launch Transmission" (the old wording remains in the Terminal style).
 - The default text colour on secondary buttons is dark instead of white (white on light blue was hard to read).
+- The private notes list now loads a summary of each note instead of its whole text, and a note is fetched when you open it. The vault options are read in one place for the login, the session check and the admin page.
+- Note summaries on cards and in lists no longer show checklist marks or table lines.
 - Prettier is enforced across the whole repository (previously unformatted files were formatted).
 
 ### Fixed
@@ -46,15 +53,21 @@ All notable changes to this project are documented here. The format follows [Kee
 - The hero greeting and subtitle were empty in the server HTML.
 - `--destructive`, `--popover`, `--primary-rgb` and `hsl(var(--x))` colours were used but never defined, so error text, article/markdown styles and glows had no colour. They are defined now.
 - Several kits, the floating contact panel and the notes tags kept dark colours on a light theme; they follow the palette now.
+- **Editing a published note did not update its public page.** It does now (and so do unpublishing, renaming and deleting, the sitemap and `llms.txt`).
+- Notes search treated what you typed as a pattern (a typo such as `(` failed, `.*` matched everything); it is plain text now.
+- The notes list could save the same new note twice on a slow connection; saves now wait for each other. Leaving a note without a title no longer dropped what was written.
+- The notes API answered with raw database errors; it returns a short message, validates every write, accepts same-site requests only and is rate limited.
 - A page for a missing or unpublished article answered 200 with a "not found" page; it is a real 404.
 
 ### Removed
 
+- The Cloudflare R2 upload path of the notes (`/api/notes/upload`, R2 keys in Security & Keys, the two AWS SDK packages): nothing in the notes used it, and files now live in the database. `R2_PUBLIC_URL` stays as an optional extra picture host for the Content-Security-Policy.
 - `scripts/create-indexes.mjs` (automatic now) and the server-side `section-media` upload route (replaced by direct uploads).
 
 ### Migration
 
 - Nothing to run. Indexes are created on the next start. Make sure Cloudinary keys are saved in Admin → Security & Keys: uploads now go from the browser to `api.cloudinary.com`, which the Content-Security-Policy allows.
+- Your notes keep working. Open them at `/notes/vault` (the public `/notes` page now lists only published notes). Stored R2 keys are ignored and can be deleted; pictures already hosted elsewhere still display. Indexes for notes are created on the next start.
 - Old project links (`github`, `demo`) still show and become ordinary links when you open the Projects editor.
 
 ## [0.1.0] - Initial public release

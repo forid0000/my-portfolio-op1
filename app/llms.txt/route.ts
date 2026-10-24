@@ -224,7 +224,7 @@ ${kitsLines}
 
 ## Notes
 
-Selected public notes, published individually with their own SEO metadata. Anything not explicitly published stays private behind the Notes Vault's own authentication.
+Selected public notes, published individually with their own SEO metadata. Anything not explicitly published stays private behind the private notes' own authentication.
 
 ${noteLines}
 `;

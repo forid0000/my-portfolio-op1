@@ -35,9 +35,12 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 - Editors for every section, a Cloudinary media explorer, avatar and résumé manager (the résumé is stored in MongoDB), theme engine, SEO and error-page texts, section order and visibility, navigation and visibility, and a guarded MongoDB inspector (system databases and critical collections are write-protected).
 - A rejected save scrolls to the field at fault and outlines it in red with the reason. An unsaved-changes counter sits at the top-left of every page, and the left menu can be dragged wider or narrower and folded into an icon rail (remembered in your browser).
 
-**Notes vault (`/notes`)**
+**Notes (`/notes`, private vault at `/notes/vault`)**
 
-- Private Markdown notes with their own login, split-pane editor, auto-save, image uploads to Cloudflare R2, tags, search, export (`.md` / `.txt` / PDF), and optional publishing of individual notes to `/notes/<slug>` with full SEO metadata.
+- **Visitors** who open `/notes` see only the notes you published, with search and tags, inside the normal site header and footer. A quiet button leads to your private notes.
+- **Your private notes** (`/notes/vault`) have their own login, a formatting bar (headings, bold, italic, lists, checklists, tables, code, links, centered / right-aligned text, note / tip / warning boxes), a live preview that is the same renderer as the saved page, and auto-save. The divider between writing and preview can be dragged (each side keeps at least a quarter of the space; drag further to give one side the whole area; double-click for half and half), the preview can sit beside or below the text, and long words, links and code lines always wrap.
+- **Files from your computer:** add pictures, PDFs, documents, audio, video, text files or a whole folder (drop, paste, or pick). Pictures can go straight into the text; every file stays with the note, shown with a preview when the browser can show it (pictures, video, sound, PDF, text, JSON, Markdown) and a download button otherwise. Files are stored privately in your MongoDB database and become public only with their note.
+- Tags, search, export (`.md` / `.txt` / print or save as PDF), and publishing of individual notes to `/notes/<slug>` with full SEO metadata.
 
 **Utility kits (`/kits`)**
 
@@ -73,7 +76,7 @@ Then open <http://localhost:3000/administrator>. A fresh install has no admin ye
 2. Scan the QR code with an authenticator app. The authenticator is **required** for every sign-in.
 3. Optionally add a password as an extra factor.
 
-Everything else (the notes-vault password, email, Cloudinary, R2 keys) is configured later in **Admin → Security & Keys**, not in `.env`. Lost your authenticator? See [Recovery](#authentication-and-security).
+Everything else (the notes-vault password, email, Cloudinary keys) is configured later in **Admin → Security & Keys**, not in `.env`. Lost your authenticator? See [Recovery](#authentication-and-security).
 
 ### Running on a small machine
 
@@ -94,20 +97,20 @@ NEXT_BUILD_CPUS=2 pnpm dev                                               # fewer
 
 ### Make it yours
 
-| What                                                    | Where                                                            |
-| ------------------------------------------------------- | ---------------------------------------------------------------- |
-| Name, tagline, intro                                    | Admin → Homepage (hero)                                          |
-| Brand, header, footer, socials, location, time zone     | Admin → Global Settings                                          |
-| Bio, stats, status                                      | Admin → About                                                    |
-| Experience, projects, skills…                           | Admin → the matching section                                     |
-| Section order and visibility                            | Admin → Sections                                                 |
-| Style (clean or terminal), color schemes, admin color   | Admin → Appearance                                               |
-| Page title, description, keywords, error pages          | Admin → System                                                   |
-| Profile picture (live at once) and résumé               | Admin → Hero Section, or Media Manager                           |
-| Project and certificate pictures and videos             | Admin → Projects / Certifications                                |
-| Passwords, authenticators, email / Cloudinary / R2 keys | Admin → Security & Keys                                          |
-| Dev.to username                                         | Admin → Section Texts (leave empty to disable the articles feed) |
-| Public URL, geo tags, short links                       | Environment variables (see below)                                |
+| What                                                  | Where                                                            |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
+| Name, tagline, intro                                  | Admin → Homepage (hero)                                          |
+| Brand, header, footer, socials, location, time zone   | Admin → Global Settings                                          |
+| Bio, stats, status                                    | Admin → About                                                    |
+| Experience, projects, skills…                         | Admin → the matching section                                     |
+| Section order and visibility                          | Admin → Sections                                                 |
+| Style (clean or terminal), color schemes, admin color | Admin → Appearance                                               |
+| Page title, description, keywords, error pages        | Admin → System                                                   |
+| Profile picture (live at once) and résumé             | Admin → Hero Section, or Media Manager                           |
+| Project and certificate pictures and videos           | Admin → Projects / Certifications                                |
+| Passwords, authenticators, email / Cloudinary keys    | Admin → Security & Keys                                          |
+| Dev.to username                                       | Admin → Section Texts (leave empty to disable the articles feed) |
+| Public URL, geo tags, short links                     | Environment variables (see below)                                |
 
 ## Configuration
 
@@ -125,16 +128,16 @@ Copy `.env.example` to `.env.local` for local work, or set the variables in your
 - the admin authenticator (mandatory) and password (optional);
 - the notes-vault password and authenticator quick unlock (both optional);
 - contact-form email (SMTP host, port, user, password, recipient, sender);
-- Cloudinary, Cloudflare R2 (keys, account, bucket) and GitHub profile sync credentials.
+- Cloudinary and GitHub profile sync credentials.
 
-Secrets are encrypted before they reach the database and are never shown again. For the integrations, the matching environment variables (`SMTP_*`, `CONTACT_*`, `CLOUDINARY_*`, `R2_*`, `GITHUB_*`) still work as a **fallback** when a value is not set in the panel, which is convenient for platforms with their own secret manager.
+Secrets are encrypted before they reach the database and are never shown again. For the integrations, the matching environment variables (`SMTP_*`, `CONTACT_*`, `CLOUDINARY_*`, `GITHUB_*`) still work as a **fallback** when a value is not set in the panel, which is convenient for platforms with their own secret manager.
 
 **Optional environment variables** (build-time or public values that cannot live in the database):
 
 | Variable                                                                             | Purpose                                                                                                                                                                       |
 | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL`                                                               | Public origin (`https://your-domain.com`). Drives canonical URLs, sitemap, robots, llms.txt, JSON-LD. Falls back to Vercel's production domain, then `http://localhost:3000`. |
-| `R2_PUBLIC_URL`                                                                      | Public base URL of your R2 bucket. Needed at build time by the Content-Security-Policy, so it stays an environment variable.                                                  |
+| `R2_PUBLIC_URL`                                                                      | Optional. Web address of a bucket or CDN that already hosts pictures you embed in notes; the Content-Security-Policy allows it. Not needed for files you add in the vault.    |
 | `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`        | Error tracking and source-map upload. Off unless a DSN is set; when off, no Sentry code is shipped to browsers. The CSP is extended automatically.                            |
 | `SEO_GEO_REGION`, `SEO_GEO_PLACENAME`, `SEO_GEO_LAT`, `SEO_GEO_LON`                  | Geo-targeting meta tags. Nothing is emitted unless set.                                                                                                                       |
 | `SOCIAL_GITHUB_URL`, `SOCIAL_LINKEDIN_URL`, `SOCIAL_FACEBOOK_URL`, `WHATSAPP_NUMBER` | Registers `/github`, `/linkedin`, `/facebook`, `/whatsapp` short links. Each exists only when its variable is set.                                                            |
@@ -146,7 +149,7 @@ Secrets are encrypted before they reach the database and are never shown again. 
 - **Framework:** Next.js 16 (App Router, React 19), TypeScript in strict mode.
 - **Styling:** Tailwind CSS v4, Radix UI primitives, shadcn-style components, `@dnd-kit` for drag-and-drop.
 - **Data:** MongoDB through Mongoose. The connection is cached on `global` so hot reloads and serverless invocations reuse it, with a tuned pool (`maxPoolSize: 10`) and a 5 s server-selection timeout so fallbacks kick in promptly.
-- **Media:** Cloudinary for site images (only `{ src, public_id }` is stored in MongoDB, never binary data), Cloudflare R2 for Notes vault images via pre-signed URLs.
+- **Media:** Cloudinary for site images (only `{ src, public_id }` is stored in MongoDB, never binary data). Files attached to notes are the exception: they are kept in MongoDB (GridFS), so the private notes need no extra service and a private note's files are really private.
 - **Email:** Nodemailer over any SMTP provider.
 - **Validation:** Zod schemas on every mutating admin route (`lib/validation/`).
 
@@ -179,7 +182,7 @@ The public pages are kept deliberately light, and a few rules keep them that way
 
 - Metadata, JSON-LD, and `llms.txt` are derived from CMS content through `lib/identity.ts` and the canonical origin in `lib/site-config.ts`.
 - All JSON-LD is serialized through `lib/json-ld.ts`, which escapes `<` so CMS-editable text can never break out of its `<script>` tag.
-- `robots.txt` disallows `/administrator/` and `/api/`; `sitemap.xml` includes your Dev.to articles and published notes.
+- `robots.txt` disallows `/administrator/` and `/api/`; `sitemap.xml` includes your Dev.to articles, the public notes page and published notes (never the private vault).
 
 ## Authentication and security
 
@@ -196,10 +199,11 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 
 **Recovery.** If you lose your authenticator, run `node scripts/reset-admin-auth.mjs --yes` with the same `MONGODB_URI` the app uses. It removes only the admin credentials (not your content, notes or keys); then open `/administrator/setup` again. This requires access to the database, which is exactly the point: only the owner of the deployment can do it.
 
-**Notes vault (`/notes`)** is fully independent of the admin session:
+**The private notes (`/notes/vault`)** are fully independent of the admin session; the public `/notes` page shows published notes only:
 
 1. **Vault password** (optional, 7-day session) and **authenticator quick unlock** (optional, 45-minute session). The vault stays locked for everyone until at least one is set. There is deliberately no clock- or formula-based key: anything derivable from open-source code would be a public backdoor.
-2. Separate `notes_session` cookie, 30 attempts per 15 minutes per IP, image-only upload allow-list, and a strict link allow-list (`https:`, `mailto:`, `/`, `#`) when rendering Markdown.
+2. Separate `notes_session` cookie, 30 attempts per 15 minutes per IP, same-site-only writes, a size limit per file (set in Admin → Notes, capped by the host), and a strict link allow-list (`https:`, `mailto:`, `/`, `#`) when rendering Markdown.
+3. **Files are served safely.** A file is readable by the owner, or by anyone once its note is published; anything else answers 404. Pages, scripts and text are always sent as plain text, unknown types as downloads, everything with `nosniff` and a sandboxing policy (a PDF is shown only inside this site's own pages).
 
 > **Notes are access-controlled, not encrypted at rest.** They are stored as plain text in your MongoDB database. Anyone with database access can read them, so enable encryption at rest on your MongoDB provider and keep credentials private. Do not store secrets you would not trust your database host with.
 

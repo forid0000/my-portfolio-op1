@@ -166,3 +166,68 @@ export function wrapBlock(
   const innerStart = result.value.indexOf(inner, Math.max(0, s.start - 1));
   return { ...result, start: innerStart, end: innerStart + inner.length };
 }
+
+const LIST_LINE = /^(\s*)((?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?)(.*)$/;
+
+/**
+ * Enter inside a list: starts the next item with the same marker (a numbered list counts on, a
+ * checklist starts unchecked). Enter on an empty item ends the list. Returns null when the caret
+ * is not at the end of a list line, so the editor leaves Enter alone.
+ */
+export function continueList(s: EditState): EditState | null {
+  if (s.start !== s.end) return null;
+  const lineStart = s.value.lastIndexOf('\n', s.start - 1) + 1;
+  const lineEndIndex = s.value.indexOf('\n', s.start);
+  const lineEnd = lineEndIndex === -1 ? s.value.length : lineEndIndex;
+  if (s.start !== lineEnd) return null;
+  const match = LIST_LINE.exec(s.value.slice(lineStart, lineEnd));
+  if (!match) return null;
+  const [, indent, marker, text] = match;
+  if (!text.trim()) {
+    // An empty item: remove the marker and leave the list, with a blank line after it (without
+    // one, the next line would be read as part of the last item).
+    return replace(s, lineStart, lineEnd, '\n', lineStart + 1, lineStart + 1);
+  }
+  const number = /^(\d+)\./.exec(marker);
+  const next = number
+    ? marker.replace(/^\d+/, String(Number(number[1]) + 1))
+    : marker.replace(/\[[xX]\]/, '[ ]');
+  const insert = `\n${indent}${next}`;
+  const caret = s.start + insert.length;
+  return replace(s, s.start, s.end, insert, caret, caret);
+}
+
+/** Tab / Shift+Tab on list lines: indents or outdents by two spaces. Null on other lines. */
+export function indentLines(s: EditState, outdent = false): EditState | null {
+  const { from, to } = lineBounds(s);
+  const lines = s.value.slice(from, to).split('\n');
+  const multi = lines.length > 1;
+  if (!multi && !LIST_LINE.test(lines[0])) return null;
+  const next = lines
+    .map((line) => (outdent ? line.replace(/^ {1,2}/, '') : line ? `  ${line}` : line))
+    .join('\n');
+  if (!multi) {
+    // One list line: keep the caret (or selection) where it was in the line.
+    const shift = next.length - (to - from);
+    return replace(
+      s,
+      from,
+      to,
+      next,
+      Math.max(from, s.start + shift),
+      Math.max(from, s.end + shift)
+    );
+  }
+  return replace(s, from, to, next, from, from + next.length);
+}
+
+/** Turns the selected heading lines back into normal paragraphs. */
+export function clearHeading(s: EditState): EditState {
+  const { from, to } = lineBounds(s);
+  const next = s.value
+    .slice(from, to)
+    .split('\n')
+    .map((line) => line.replace(/^#{1,6}\s+/, ''))
+    .join('\n');
+  return replace(s, from, to, next, from, from + next.length);
+}

@@ -717,6 +717,8 @@ group('9. Every public route answers');
   const routes = [
     ['/', 200],
     ['/articles', 200],
+    ['/notes', 200],
+    ['/notes/vault', 200],
     ['/kits/system', 200],
     ['/administrator/login', 200],
     ['/sitemap.xml', 200],
@@ -1407,6 +1409,459 @@ group('14. Articles: write, publish, react, comment, delete');
       })
     ).status === 401
   );
+}
+
+// ---------------------------------------------------------------------------------------
+group('15. Notes: a public page, a private vault, files from the computer');
+{
+  const conn = (await mongoose.connect(process.env.MONGODB_URI)).connection.client.db(
+    'portfolio_cms'
+  );
+  const nIat = Math.floor(Date.now() / 1000);
+  const notesToken = await new SignJWT({ auth: 'notes' })
+    .setProtectedHeader({ alg: 'HS512' })
+    .setExpirationTime(nIat + 900)
+    .setIssuedAt(nIat)
+    .sign(new TextEncoder().encode(secret));
+  const vault = (p, options = {}) =>
+    api(p, {
+      ...options,
+      auth: false,
+      headers: { cookie: `notes_session=${notesToken}`, ...(options.headers ?? {}) },
+    });
+
+  /** Sends raw file bytes the way the browser does (the file is the request body). */
+  async function sendFile(name, bytes, type, { path: folder, cookie = true } = {}) {
+    const query = new URLSearchParams({ name, ...(folder ? { path: folder } : {}) });
+    const res = await fetch(`${BASE}/api/notes/files?${query}`, {
+      method: 'POST',
+      headers: {
+        'content-type': type,
+        'x-forwarded-for': clientAddress,
+        ...(cookie ? { cookie: `notes_session=${notesToken}` } : {}),
+      },
+      body: bytes,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(text);
+    } catch {}
+    return { status: res.status, json };
+  }
+  const fileRequest = (id, { cookie = true, headers = {}, query = '' } = {}) =>
+    fetch(`${BASE}/api/notes/files/${id}${query}`, {
+      headers: {
+        'x-forwarded-for': clientAddress,
+        ...(cookie ? { cookie: `notes_session=${notesToken}` } : {}),
+        ...headers,
+      },
+    });
+  // a real 1x1 PNG
+  const PNG = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64'
+  );
+
+  // ---- the public page and the private door
+  let r = await api('/notes', { auth: false });
+  check('the public notes page is open to everyone', r.status === 200);
+  check(
+    'it says nothing is published yet and offers the way to the private notes',
+    r.text.includes('Nothing has been published yet') && r.text.includes('href="/notes/vault"'),
+    r.text.slice(0, 300)
+  );
+  check(
+    'the public page can be indexed',
+    !/<meta name="robots" content="[^"]*noindex/.test(r.text)
+  );
+  const door = await api('/notes/vault', { auth: false });
+  check(
+    'the private notes page is never indexed',
+    /<meta name="robots" content="[^"]*noindex/.test(door.text)
+  );
+  check(
+    'the old private address (/notes?id=) still opens a page',
+    (await api('/notes?id=000000000000000000000000', { auth: false })).status === 200
+  );
+  check(
+    'the vault says whether it has a password',
+    (await api('/api/notes/auth', { auth: false })).json?.configured === false
+  );
+
+  // ---- locked without a session
+  for (const [label, res] of [
+    ['reading the list', await api('/api/notes', { auth: false })],
+    [
+      'creating a note',
+      await api('/api/notes', { method: 'POST', auth: false, body: { title: 'x' } }),
+    ],
+    ['uploading a file', await sendFile('a.png', PNG, 'image/png', { cookie: false })],
+    ['the session check', await api('/api/notes/session', { auth: false })],
+  ]) {
+    check(`${label} needs the vault to be unlocked`, res.status === 401, String(res.status));
+  }
+  check('an admin session does not open the vault', (await api('/api/notes')).status === 401);
+
+  // ---- writing
+  r = await vault('/api/notes', { method: 'POST', body: { title: '', content: 'x' } });
+  check(
+    'a note without a title names the field',
+    r.status === 400 && r.json.details.some((d) => d.path[0] === 'title'),
+    JSON.stringify(r.json)
+  );
+  r = await vault('/api/notes', {
+    method: 'POST',
+    headers: { 'sec-fetch-site': 'cross-site' },
+    body: { title: 'sneaky' },
+  });
+  check('a request from another site is refused', r.status === 403, String(r.status));
+
+  r = await vault('/api/notes', {
+    method: 'POST',
+    body: { title: 'Trip plan', content: 'Pack **light**.', tags: ['#Travel', 'travel', 'Plans!'] },
+  });
+  const noteId = r.json?.note?._id;
+  check('a note is created', r.status === 200 && !!noteId, JSON.stringify(r.json));
+  check(
+    'tags are cleaned and not repeated',
+    JSON.stringify(r.json.note.tags) === JSON.stringify(['travel', 'plans']),
+    JSON.stringify(r.json.note.tags)
+  );
+  r = await vault('/api/notes?search=trip');
+  check(
+    'the list finds it by a word',
+    r.json.notes.length === 1 && r.json.notes[0].title === 'Trip plan'
+  );
+  check(
+    'the list sends a summary, not the whole text',
+    r.json.notes[0].excerpt.includes('Pack light') && r.json.notes[0].content === undefined
+  );
+  check(
+    'search text is never treated as a pattern',
+    (await vault('/api/notes?search=(.*')).status === 200
+  );
+  check(
+    'every note is not matched by ".*"',
+    (await vault('/api/notes?search=.*')).json.notes.length === 0
+  );
+
+  // ---- files from the computer
+  const png = await sendFile('holiday photo.png', PNG, 'image/png', { path: 'Trip/Day 1' });
+  check(
+    'a picture uploads',
+    png.status === 200 && png.json.file?.type === 'image/png',
+    JSON.stringify(png.json)
+  );
+  check(
+    'its size and folder are recorded',
+    png.json.file.size === PNG.length && png.json.file.path === 'Trip/Day 1'
+  );
+  const pngId = png.json.file.id;
+  let f = await fileRequest(pngId);
+  const got = Buffer.from(await f.arrayBuffer());
+  check(
+    'the owner gets the exact bytes back',
+    f.status === 200 && got.equals(PNG),
+    String(f.status)
+  );
+  check(
+    'a picture is shown inline, and never sniffed',
+    f.headers.get('content-type') === 'image/png' &&
+      f.headers.get('content-disposition').startsWith('inline') &&
+      f.headers.get('x-content-type-options') === 'nosniff'
+  );
+  check(
+    'a private file is not served to a visitor',
+    (await fileRequest(pngId, { cookie: false })).status === 404
+  );
+  f = await fileRequest(pngId, { headers: { range: 'bytes=0-9' } });
+  check(
+    'video and audio players can ask for a part of a file',
+    f.status === 206 &&
+      f.headers.get('content-range') === `bytes 0-9/${PNG.length}` &&
+      (await f.arrayBuffer()).byteLength === 10
+  );
+  check(
+    'a repeat visit is answered "not modified"',
+    (await fileRequest(pngId, { headers: { 'if-none-match': `"${pngId}"` } })).status === 304
+  );
+  check(
+    'a wrong range is refused',
+    (await fileRequest(pngId, { headers: { range: 'bytes=9999-' } })).status === 416
+  );
+  check('an unknown file is a 404', (await fileRequest('0'.repeat(24))).status === 404);
+  check('a made-up file id is a 404', (await fileRequest('not-an-id')).status === 404);
+
+  const page = await sendFile('index.html', Buffer.from('<script>alert(1)</script>'), 'text/html');
+  check(
+    'a web page is stored as plain text',
+    page.json?.file?.type === 'text/plain',
+    JSON.stringify(page.json)
+  );
+  f = await fileRequest(page.json.file.id);
+  check(
+    'and served as text that cannot run',
+    f.headers.get('content-type').startsWith('text/plain') &&
+      /sandbox/.test(f.headers.get('content-security-policy') ?? '') &&
+      (await f.text()) === '<script>alert(1)</script>'
+  );
+  const zip = await sendFile('bundle.zip', Buffer.from('PK\u0003\u0004zip'), 'application/zip');
+  f = await fileRequest(zip.json.file.id);
+  check(
+    'a file that cannot be shown is a download',
+    f.headers.get('content-disposition').startsWith('attachment')
+  );
+  f = await fileRequest(pngId, { query: '?download=1' });
+  check(
+    'a download can be asked for',
+    f.headers.get('content-disposition').startsWith('attachment')
+  );
+  const pdf = await sendFile('paper.pdf', Buffer.from('%PDF-1.4 test'), 'application/pdf');
+  f = await fileRequest(pdf.json.file.id);
+  check(
+    'a PDF can be shown inside the site, but not elsewhere',
+    f.headers.get('content-type') === 'application/pdf' &&
+      f.headers.get('x-frame-options') === 'SAMEORIGIN' &&
+      /frame-ancestors 'self'/.test(f.headers.get('content-security-policy') ?? '')
+  );
+  const odd = await sendFile('weird\u0001"name<>.txt', Buffer.from('hi'), 'text/plain');
+  check(
+    'awkward file names are made safe',
+    odd.json?.file?.name === 'weird__name__.txt',
+    JSON.stringify(odd.json)
+  );
+  const big = await sendFile(
+    'big.bin',
+    Buffer.alloc(11 * 1024 * 1024, 1),
+    'application/octet-stream'
+  );
+  check(
+    'a file over the limit is refused with the reason',
+    big.status === 413 && /up to 10\.0 MB/.test(big.json?.error ?? ''),
+    JSON.stringify(big)
+  );
+  check(
+    'a refused upload leaves nothing behind',
+    (await conn.collection('note_files.files').countDocuments({ filename: 'big.bin' })) === 0
+  );
+  check('a missing name is refused', (await sendFile('', PNG, 'image/png')).status === 400);
+
+  // ---- keeping files with the note
+  r = await vault('/api/notes', {
+    method: 'PUT',
+    body: {
+      id: noteId,
+      title: 'Trip plan',
+      content: `Pack **light**.\n\n![photo](/api/notes/files/${pngId})`,
+      tags: ['travel'],
+      attachments: [
+        { id: pngId, name: 'lies.exe', type: 'application/x-evil', size: 1, path: 'Trip/Day 1' },
+        { id: page.json.file.id, name: 'index.html', type: 'text/plain', size: 25 },
+        { id: pdf.json.file.id, name: 'paper.pdf', type: 'application/pdf', size: 13 },
+      ],
+    },
+  });
+  check(
+    'a note keeps its files',
+    r.status === 200 && r.json.note.attachments.length === 3,
+    JSON.stringify(r.json)
+  );
+  check(
+    'name, type and size come from storage, not from the browser',
+    r.json.note.attachments[0].name === 'holiday photo.png' &&
+      r.json.note.attachments[0].type === 'image/png' &&
+      r.json.note.attachments[0].size === PNG.length
+  );
+  r = await vault('/api/notes', {
+    method: 'PUT',
+    body: {
+      id: noteId,
+      title: 'x',
+      attachments: [{ id: 'f'.repeat(24), name: 'a', type: '', size: 0 }],
+    },
+  });
+  check(
+    'a file that is not stored is refused, naming it',
+    r.status === 400 && r.json.details[0].path.join('.') === 'attachments.0',
+    JSON.stringify(r.json)
+  );
+  r = await vault(`/api/notes/files/${zip.json.file.id}`, { method: 'DELETE' });
+  check(
+    'an unsaved file can be removed',
+    r.status === 200 && r.json.deleted === true,
+    JSON.stringify(r.json)
+  );
+  r = await vault(`/api/notes/files/${pngId}`, { method: 'DELETE' });
+  check('a file a note keeps is not removed this way', r.json?.deleted === false);
+  check(
+    'the stored file count matches',
+    (await conn.collection('note_files.files').countDocuments({})) === 3 + 1 /* odd.txt */,
+    String(await conn.collection('note_files.files').countDocuments({}))
+  );
+
+  // ---- the old upload files are cleaned up
+  const { GridFSBucket } = mongoose.mongo;
+  const bucket = new GridFSBucket(conn, { bucketName: 'note_files' });
+  const stale = bucket.openUploadStream('stale.txt', { metadata: { type: 'text/plain' } });
+  await new Promise((resolve) => stale.end(Buffer.from('old'), resolve));
+  await conn
+    .collection('note_files.files')
+    .updateOne({ _id: stale.id }, { $set: { uploadDate: new Date(Date.now() - 3 * 86400_000) } });
+  await sendFile('fresh.txt', Buffer.from('new'), 'text/plain');
+  check(
+    'files from a draft that was never saved are cleaned up after a day',
+    (await conn.collection('note_files.files').countDocuments({ _id: stale.id })) === 0
+  );
+  check(
+    'but a file kept by a note is never cleaned up',
+    (await conn
+      .collection('note_files.files')
+      .countDocuments({ _id: new mongoose.Types.ObjectId(pngId) })) === 1
+  );
+
+  // ---- publishing
+  r = await vault('/api/notes/publish', {
+    method: 'PATCH',
+    body: { id: noteId, published: true, slug: 'vault' },
+  });
+  check(
+    'the address of the vault cannot be used',
+    r.status === 400 && r.json.details[0].path[0] === 'slug',
+    JSON.stringify(r.json)
+  );
+  r = await vault('/api/notes/publish?slug=vault');
+  check('the address check says so too', r.json.available === false && r.json.reserved === true);
+  r = await vault('/api/notes/publish', {
+    method: 'PATCH',
+    body: { id: noteId, published: true, slug: 'Trip Plan 2026' },
+  });
+  check(
+    'a note is published at a clean address',
+    r.status === 200 && r.json.note.slug === 'trip-plan-2026',
+    JSON.stringify(r.json)
+  );
+  const second = await vault('/api/notes', {
+    method: 'POST',
+    body: { title: 'Another', content: 'other' },
+  });
+  r = await vault('/api/notes/publish', {
+    method: 'PATCH',
+    body: { id: second.json.note._id, published: true, slug: 'trip-plan-2026' },
+  });
+  check('two notes cannot share an address', r.status === 409, String(r.status));
+
+  let pub = await pageWhere('/notes/trip-plan-2026', (t) => t.includes('Pack'));
+  check('the published note has a public page', pub.ok, String(pub.status));
+  check(
+    'the page shows the text, the picture and the file list',
+    pub.text.includes('<strong>light</strong>') &&
+      pub.text.includes(`/api/notes/files/${pngId}`) &&
+      pub.text.includes('paper.pdf')
+  );
+  check(
+    'a visitor can read the files of a published note',
+    (await fileRequest(pngId, { cookie: false })).status === 200
+  );
+  check(
+    'but not the files of a private one',
+    (await fileRequest(odd.json.file.id, { cookie: false })).status === 404
+  );
+  const index = await pageWhere('/notes', (t) => t.includes('Trip plan'));
+  check(
+    'the public list shows it, and not the private note',
+    index.ok && !index.text.includes('Another')
+  );
+  const map = await api('/sitemap.xml', { auth: false });
+  check(
+    'the sitemap lists /notes and the note, not the vault',
+    map.text.includes('/notes</loc>') &&
+      map.text.includes('/notes/trip-plan-2026') &&
+      !map.text.includes('/notes/vault')
+  );
+
+  r = await vault('/api/notes', {
+    method: 'PUT',
+    body: {
+      id: noteId,
+      title: 'Trip plan',
+      content: 'Pack **very** light.',
+      tags: ['travel'],
+      attachments: [
+        { id: pngId, name: 'x', type: '', size: 0 },
+        { id: pdf.json.file.id, name: 'x', type: '', size: 0 },
+      ],
+    },
+  });
+  check('an edit saves', r.status === 200);
+  pub = await pageWhere('/notes/trip-plan-2026', (t) => t.includes('very'));
+  check('and shows on the public page right away', pub.ok);
+  check(
+    'a file taken out of the note is deleted',
+    (await conn
+      .collection('note_files.files')
+      .countDocuments({ _id: new mongoose.Types.ObjectId(page.json.file.id) })) === 0
+  );
+
+  r = await vault('/api/notes/publish', {
+    method: 'PATCH',
+    body: { id: noteId, published: false },
+  });
+  check('a note can be made private again', r.status === 200 && r.json.note.published === false);
+  const gone = await pageWhere('/notes/trip-plan-2026', () => false, 3000);
+  const gone404 = await api('/notes/trip-plan-2026', { auth: false, headers: BOT });
+  check('its public page stops working', gone404.status === 404, String(gone404.status));
+  void gone;
+  check(
+    'and its files are private again',
+    (await fileRequest(pngId, { cookie: false })).status === 404
+  );
+  const afterIndex = await pageWhere('/notes', (t) => !t.includes('Trip plan'));
+  check('and it leaves the public list', afterIndex.ok);
+
+  // ---- wording of the public page
+  const cfg = await api('/api/admin/notes-config');
+  check(
+    'the notes options load, with the largest allowed file',
+    cfg.status === 200 && cfg.json.maxFileMb === 10 && cfg.json.publicTitle === 'Notes',
+    JSON.stringify(cfg.json)
+  );
+  r = await api('/api/admin/notes-config', { method: 'POST', body: { vaultButton: '' } });
+  check(
+    'an empty button label names the field',
+    r.status === 400 && r.json.details[0].path[0] === 'vaultButton'
+  );
+  r = await api('/api/admin/notes-config', {
+    method: 'POST',
+    body: { publicTitle: 'Field notes', vaultButton: 'Owner entrance', maxFileMb: 12 },
+  });
+  check('the wording saves', r.status === 200);
+  const reworded = await pageWhere(
+    '/notes',
+    (t) => t.includes('Field notes') && t.includes('Owner entrance')
+  );
+  check('and shows on the public page', reworded.ok);
+  r = await vault('/api/notes/session');
+  check(
+    'the session reports the new file limit',
+    r.json.maxFileBytes === 12 * 1024 * 1024,
+    JSON.stringify(r.json)
+  );
+  await api('/api/admin/notes-config', {
+    method: 'POST',
+    body: { publicTitle: 'Notes', vaultButton: 'Private notes', maxFileMb: 10 },
+  });
+
+  // ---- deleting
+  const before = await conn.collection('note_files.files').countDocuments({});
+  r = await vault('/api/notes', { method: 'DELETE', body: { id: noteId } });
+  check('a note is deleted', r.status === 200 && r.json.deletedCount === 1);
+  check(
+    'with all of its files',
+    (await conn.collection('note_files.files').countDocuments({})) === before - 2,
+    `${before} -> ${await conn.collection('note_files.files').countDocuments({})}`
+  );
+  await vault('/api/notes', { method: 'DELETE', body: { id: second.json.note._id } });
 }
 
 // ---------------------------------------------------------------------------------------

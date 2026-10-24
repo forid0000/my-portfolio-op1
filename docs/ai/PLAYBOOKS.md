@@ -183,6 +183,13 @@ Add one `light(...)`, `dark(...)` or `mixed(...)` entry to `THEME_PRESETS` in `l
 
 `ArticleInput` (`lib/validation/article-schemas.ts`) → `buildArticleDoc` (`lib/article-write.ts`) → `toView` (`lib/articles.ts`) → `components/admin/article-editor.tsx` (state, load, save payload, a control with `data-field`) → the public renderer (`components/articles/native-article.tsx` / `article-body.tsx`). For a typography option add a `data-*` attribute on `.article` and a rule in `app/globals.css` that uses only theme tokens. Extend `tests/unit/article-write.test.ts` and, if it changes the page, the articles section of `tests/smoke/e2e.mjs`.
 
+## Change what a note can preview or accept
+
+1. `lib/notes-model.ts`: add the extension to `BY_EXTENSION` (a media type) or `TEXT_EXTENSIONS` (shown as text); `fileKind()` / `canPreview()` / `servesInline()` follow. Add a case to `tests/unit/notes-model.test.ts`.
+2. A new way to show a kind: `Preview` in `components/notes/attachment-preview.tsx`, and the icon in `attachment-list.tsx`.
+3. Size limit: the owner sets it in Admin → Notes (`maxFileMb`); the platform cap is `PLATFORM_FILE_LIMIT`. Files are never read into memory (`storeFile` streams).
+4. Run `pnpm test` and `pnpm test:smoke` (section 15 uploads, serves, publishes and cleans up real files).
+
 ## Upgrade dependencies
 
 - Use pnpm. Do not add a `packageManager` field. Keep both lockfiles consistent: `pnpm install`, then `npm install --package-lock-only --ignore-scripts`, then hand both to the owner (CI runs `pnpm install --frozen-lockfile` and `npm ci`).

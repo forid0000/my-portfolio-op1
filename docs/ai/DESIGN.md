@@ -55,7 +55,7 @@ Use opacity modifiers for depth (`border-border/30`, `bg-primary/10`, `bg-foregr
 
 - **No web fonts are loaded.** Text uses Tailwind's system stacks (`font-sans` for body, `font-mono` for terminal-style labels, headings in prompts, numbers and code). Do not add a font download for decoration.
 - Page-level headings use `.section-title` (`text-4xl → 6xl`, bold, tight, balanced); supporting copy uses `.section-subtitle` (`text-muted-foreground`, relaxed leading, `max-w-3xl`). Terminal headings are `text-xl md:text-2xl font-mono font-bold tracking-tight`.
-- Long-form Markdown (notes, articles) renders inside `.prose`, with a link allow-list on render.
+- Long-form Markdown renders through one typography: `.article-prose` (articles) and `.note-doc` on top of it (notes: everything wraps, pictures keep their own size). Colours are theme tokens only; the notes vault (list, editor, lock screen, preview windows) follows the site palette and has no colours of its own. A link allow-list applies on render.
 
 ## 5. Layout and spacing
 

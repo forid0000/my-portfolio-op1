@@ -202,6 +202,8 @@ export function plainText(markdown: string): string {
     .replace(/`[^`]*`/g, ' ')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*\|?(?:\s*:?-{3,}:?\s*\|?)+\s*$/gm, ' ') // rules and table separator rows
+    .replace(/^\s{0,3}(?:[-*+]|\d+\.)\s+\[[ xX]\]\s+/gm, '') // checklist marks
     .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
     .replace(/[*_~|]/g, '')
     .replace(/\s+/g, ' ')

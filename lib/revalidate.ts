@@ -38,8 +38,8 @@ export function revalidateKitsContent() {
 /**
  * Refresh every statically generated page that renders the shared site chrome:
  * the header (brand, avatar, nav toggles), the footer (socials, location), and the
- * theme variables in the root layout. That is the homepage plus the /kits and
- * /articles trees. Used by the few admin routes whose data appears on all of them
+ * theme variables in the root layout. That is the homepage plus the /kits, /articles
+ * and public /notes trees. Used by the few admin routes whose data appears on all of them
  * (global settings, section layout, avatar, theme); content that only the homepage
  * shows keeps using the cheaper revalidatePublicContent().
  */
@@ -47,6 +47,7 @@ export function revalidateSiteChrome() {
   revalidatePath('/');
   revalidatePath('/kits', 'layout');
   revalidatePath('/articles', 'layout');
+  revalidatePath('/notes', 'layout');
 }
 
 /**
@@ -60,5 +61,18 @@ export function revalidateArticleIndex(...slugs: (string | null | undefined)[]) 
   revalidatePath('/llms.txt');
   for (const slug of new Set(slugs)) {
     if (slug) revalidatePath(`/articles/${slug}`);
+  }
+}
+
+/**
+ * Refresh the public notes page and the pages that list published notes. `slugs` are the
+ * addresses whose own page changed (pass the old one too when a note was renamed or unpublished).
+ */
+export function revalidateNotes(...slugs: (string | null | undefined)[]) {
+  revalidatePath('/notes');
+  revalidatePath('/sitemap.xml');
+  revalidatePath('/llms.txt');
+  for (const slug of new Set(slugs)) {
+    if (slug) revalidatePath(`/notes/${slug}`);
   }
 }

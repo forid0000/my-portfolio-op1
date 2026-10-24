@@ -143,8 +143,9 @@ export default function Header({
     return () => window.removeEventListener('scroll', onScroll);
   }, [pathname, anchorsKey]);
 
-  // Notes vault is a full-screen app - no site nav needed there
-  if (pathname === '/notes') return null;
+  // The private notes vault is a full-screen app and has no site header; the layout of the
+  // public notes pages (/notes, /notes/<slug>) does render it.
+  if (pathname === '/notes/vault') return null;
 
   const isActive = (item: ResolvedNavItem) => {
     if (item.anchor) return pathname === '/' && activeSection === item.anchor;

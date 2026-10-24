@@ -82,7 +82,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'notes',
     title: 'Private notes and publishing',
-    body: 'Notes Config holds the vault settings. The vault itself is at /notes: write Markdown notes there, and use the Publish button on a note to give it a public page at /notes/your-note. The vault stays locked until you set a password or quick-unlock in Security & Keys.',
+    body: 'The Notes page holds the options for the public notes page and your private notes. Visitors see only the notes you publish at /notes; your private notes are at /notes/vault. Write there, attach files from your computer, and use the Publish button to give a note a public page at /notes/your-note. They stay locked until you set a password or quick-unlock in Security & Keys.',
     target: 'nav-notes',
     placement: 'right',
   },

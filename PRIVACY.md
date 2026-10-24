@@ -62,8 +62,10 @@ The QR scanner kit uses the camera entirely in the browser; images are not uploa
 
 ## Credentials and keys
 
-Passwords are stored as scrypt hashes, and authenticator seeds and integration keys (email, Cloudinary, R2, GitHub) are stored encrypted in your MongoDB database. They are only used by your own server and are never sent to visitors or to this project's authors.
+Passwords are stored as scrypt hashes, and authenticator seeds and integration keys (email, Cloudinary, GitHub) are stored encrypted in your MongoDB database. They are only used by your own server and are never sent to visitors or to this project's authors.
 
-## Notes vault
+## Notes
 
-Notes are stored as plain text in your MongoDB database and are visible to anyone with database access. See [SECURITY.md](SECURITY.md).
+Notes, and the files you attach to them (pictures, documents, whole folders), are stored in your own MongoDB database and are visible to anyone with database access. See [SECURITY.md](SECURITY.md). A note and its files become visible to visitors only when you publish it; making it private again hides them at once. The public notes page reads only published notes and sets no cookie.
+
+The private notes remember a few display choices in **this browser only** (`localStorage`): how wide each side of the editor is (`notes.split`) and the editor's font, text size and scroll setting (`notes.editor`). They are never sent to the server.

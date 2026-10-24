@@ -1,5 +1,5 @@
 /**
- * Third-party integration settings (email, Cloudinary, R2, GitHub sync) managed
+ * Third-party integration settings (email, Cloudinary, GitHub sync) managed
  * from Admin -> Security -> Integrations.
  *
  * Values are stored in `settings` (key "integrations"); secret fields are
@@ -14,7 +14,7 @@ import { CACHE_TTL_MS } from '@/lib/cache-ttl';
 import { getSetting, settingsCollection } from '@/lib/settings-store';
 import { sealSecret, tryOpenSecret } from '@/lib/secret-box';
 
-export type IntegrationGroup = 'email' | 'cloudinary' | 'r2' | 'github';
+export type IntegrationGroup = 'email' | 'cloudinary' | 'github';
 
 export interface IntegrationField {
   key: string;
@@ -38,11 +38,6 @@ export const INTEGRATION_GROUPS: Record<IntegrationGroup, { label: string; descr
     cloudinary: {
       label: 'Cloudinary',
       description: 'Media explorer, avatar and gallery uploads.',
-    },
-    r2: {
-      label: 'Cloudflare R2',
-      description:
-        'Image uploads inside the Notes Vault. The public base URL of the bucket is still set with the R2_PUBLIC_URL environment variable (the Content-Security-Policy needs it at build time).',
     },
     github: {
       label: 'GitHub profile sync',
@@ -92,10 +87,6 @@ export const INTEGRATION_FIELDS: IntegrationField[] = [
   { key: 'CLOUDINARY_CLOUD_NAME', label: 'Cloud name', group: 'cloudinary', secret: false },
   { key: 'CLOUDINARY_API_KEY', label: 'API key', group: 'cloudinary', secret: true },
   { key: 'CLOUDINARY_API_SECRET', label: 'API secret', group: 'cloudinary', secret: true },
-  { key: 'R2_ACCOUNT_ID', label: 'Account ID', group: 'r2', secret: false },
-  { key: 'R2_ACCESS_KEY_ID', label: 'Access key ID', group: 'r2', secret: true },
-  { key: 'R2_SECRET_ACCESS_KEY', label: 'Secret access key', group: 'r2', secret: true },
-  { key: 'R2_BUCKET_NAME', label: 'Bucket name', group: 'r2', secret: false },
   {
     key: 'GITHUB_PROFILE_REPO',
     label: 'Profile repository',

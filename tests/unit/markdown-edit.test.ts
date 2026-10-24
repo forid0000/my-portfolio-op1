@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clearHeading,
+  continueList,
+  indentLines,
   insertBlock,
   insertLink,
   insertText,
@@ -69,5 +72,41 @@ describe('markdown editing', () => {
     const empty = wrapBlock(at('', 0), 'note');
     expect(empty.value).toBe('::: note\nWrite here\n:::');
     expect(sel(empty)).toBe('Write here');
+  });
+});
+
+describe('writing helpers for lists and headings', () => {
+  it('continues a bullet, numbered and checklist item on Enter', () => {
+    expect(continueList(at('- one', 5))?.value).toBe('- one\n- ');
+    expect(continueList(at('1. one', 6))?.value).toBe('1. one\n2. ');
+    expect(continueList(at('- [x] done', 10))?.value).toBe('- [x] done\n- [ ] ');
+    expect(continueList(at('  - nested', 10))?.value).toBe('  - nested\n  - ');
+    const next = continueList(at('- one', 5))!;
+    expect(next.start).toBe(next.value.length);
+  });
+
+  it('ends the list on Enter in an empty item', () => {
+    const s = continueList(at('- one\n- ', 8))!;
+    expect(s.value).toBe('- one\n\n');
+    expect(s.start).toBe(7);
+  });
+
+  it('leaves Enter alone outside a list, mid-line, or with a selection', () => {
+    expect(continueList(at('plain text', 10))).toBeNull();
+    expect(continueList(at('- one two', 5))).toBeNull();
+    expect(continueList(at('- one', 2, 5))).toBeNull();
+  });
+
+  it('indents and outdents list lines only', () => {
+    expect(indentLines(at('- a', 3))?.value).toBe('  - a');
+    expect(indentLines(at('  - a', 5), true)?.value).toBe('- a');
+    expect(indentLines(at('plain', 5))).toBeNull();
+    const many = indentLines(at('x\ny', 0, 3))!;
+    expect(many.value).toBe('  x\n  y');
+  });
+
+  it('turns headings back into paragraphs', () => {
+    expect(clearHeading(at('## Title', 3)).value).toBe('Title');
+    expect(clearHeading(at('Plain', 0)).value).toBe('Plain');
   });
 });

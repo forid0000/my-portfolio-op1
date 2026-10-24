@@ -78,11 +78,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/kits/subnet',
     '/kits/system',
     '/articles', // Include articles index
+    '/notes', // Public notes (the private vault, /notes/vault, is not listed)
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: buildDate,
     changeFrequency: 'monthly' as const,
-    priority: route === '' ? 1 : route === '/articles' ? 0.9 : 0.8,
+    priority: route === '' ? 1 : route === '/articles' ? 0.9 : route === '/notes' ? 0.7 : 0.8,
   }));
 
   // Articles written on this site, then the optional Dev.to feed (written ones win on a clash).
