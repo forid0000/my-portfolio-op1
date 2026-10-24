@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { getLayoutSections, isSectionEnabled } from '@/lib/sections-registry';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 import { getTheme } from '@/lib/theme';
+import { themeSwitchFor } from '@/lib/theme-modes';
 import { resolveIconMap } from '@/lib/icons/resolve';
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,12 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
   return (
     // bg-background commented out to remove solid background color
     <div className="min-h-screen  flex flex-col font-sans selection:bg-primary/20">
-      <Header brand={toHeaderBrand(global, avatarUrl)} nav={nav} uiStyle={theme.uiStyle} />
+      <Header
+        brand={toHeaderBrand(global, avatarUrl)}
+        nav={nav}
+        uiStyle={theme.uiStyle}
+        themeSwitch={themeSwitchFor(theme)}
+      />
       <main className="flex-1 pt-20 pb-16 relative">
         {/* Cyber Grid Background for the Blog Section */}
         <div

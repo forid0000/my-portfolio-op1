@@ -1,24 +1,20 @@
-import { Newspaper, Mic, Video, FileText, ExternalLink } from 'lucide-react';
+import { Newspaper, ExternalLink } from 'lucide-react';
 import SectionHeading from '@/components/section-heading';
-import { GithubIcon } from '@/components/icon/github';
+import LinkIcon from '@/components/site/link-icon';
 import type React from 'react';
 import { toHref } from '@/lib/safe-href';
+import { publicationIconName } from '@/lib/publication-types';
+import type { IconMap } from '@/lib/icons/icon-data';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
-const TYPE_ICON: Record<string, React.ReactNode> = {
-  article: <Newspaper className="w-4 h-4" />,
-  talk: <Mic className="w-4 h-4" />,
-  video: <Video className="w-4 h-4" />,
-  opensource: <GithubIcon className="w-4 h-4" />,
-  press: <FileText className="w-4 h-4" />,
-  podcast: <Mic className="w-4 h-4" />,
-};
 
 export interface PublicationItem {
   title: string;
   type?: string;
   platform?: string;
   url?: string;
+  /** The owner's icon for this item; empty = the one of its type. */
+  icon?: string;
   date?: string;
   description?: string;
 }
@@ -27,12 +23,15 @@ interface PublicationsProps {
   content?: PublicationItem[];
   heading?: string;
   terminalPrefix?: string;
+  /** Drawings of the icons the items use (resolved on the server). */
+  icons?: IconMap;
 }
 
 export default function Publications({
   content,
   heading = 'publications',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
+  icons,
 }: PublicationsProps) {
   if (!content || content.length === 0) return null;
 
@@ -58,7 +57,11 @@ export default function Publications({
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <div className="w-9 h-9 shrink-0 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center text-primary">
-                  {TYPE_ICON[item.type || 'article'] || <Newspaper className="w-4 h-4" />}
+                  <LinkIcon
+                    name={publicationIconName(item.type, item.icon)}
+                    icons={icons}
+                    className="w-4 h-4"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">

@@ -2386,6 +2386,200 @@ group('18. Private notes: the unlock can be extended like the admin session');
 }
 
 // ---------------------------------------------------------------------------------------
+group('19. Light and dark for visitors: the owner decides');
+{
+  const save = (body) => api('/api/admin/content/theme', { method: 'POST', body });
+  const altRule = (html) => /:root\[data-mode="alt"\]\{[^}]*\}/.exec(html)?.[0] ?? '';
+  const hasButton = (html) => /aria-label="Switch to the (?:light|dark) theme"/.test(html);
+
+  // the default: a dark owner theme, visitors may switch
+  let r = await save({ visitorTheme: 'switch' });
+  check('the setting saves', r.status === 200 && r.json.theme.visitorTheme === 'switch', r.text);
+  let home = await pageWhere('/', (t) => t.includes('data-mode="alt"'));
+  check('the page carries the other look as one CSS rule', home.ok, String(home.status));
+  check(
+    'a dark main look offers a light one (browser widgets follow)',
+    /color-scheme:light/.test(altRule(home.text)) && /--background:#1d232a/.test(home.text)
+  );
+  check('the header has the light/dark button', hasButton(home.text));
+  check(
+    'the choice is applied before the first paint by a small script',
+    home.text.includes("localStorage.getItem('site-theme')") &&
+      !home.text.includes('prefers-color-scheme: dark')
+  );
+  for (const route of ['/articles', '/notes', '/kits/system']) {
+    const page = await api(route, { auth: false });
+    check(
+      `${route} has the button too`,
+      page.status === 200 && hasButton(page.text),
+      String(page.status)
+    );
+  }
+
+  // the visitor's own device decides the first visit
+  r = await save({ visitorTheme: 'device' });
+  home = await pageWhere('/', (t) => t.includes('prefers-color-scheme: dark'));
+  check('"start from the device" reads the device setting', home.ok && hasButton(home.text));
+
+  // a ready-made scheme as the other look; a scheme of the same tone is ignored
+  r = await save({ visitorTheme: 'switch', altPreset: 'clean-white' });
+  home = await pageWhere('/', (t) => /:root\[data-mode="alt"\]\{[^}]*--background:#ffffff/.test(t));
+  check('the picked scheme is the other look', home.ok, altRule(home.text).slice(0, 80));
+  r = await save({ visitorTheme: 'switch', altPreset: 'pure-black' });
+  home = await pageWhere(
+    '/',
+    (t) => !/:root\[data-mode="alt"\]\{[^}]*--background:#ffffff/.test(t)
+  );
+  check(
+    'a scheme of the same tone is not used (the look is made from the owner colours)',
+    home.ok &&
+      /color-scheme:light/.test(altRule(home.text)) &&
+      !/--background:#000000/.test(altRule(home.text))
+  );
+
+  // a light main look offers a dark one
+  r = await save({
+    background: '#ffffff',
+    foreground: '#111827',
+    card: '#f8fafc',
+    cardForeground: '#111827',
+    primary: '#2563eb',
+    secondary: '#7c3aed',
+    visitorTheme: 'switch',
+  });
+  home = await pageWhere('/', (t) => /color-scheme:dark/.test(altRule(t)));
+  check(
+    'a light main look offers a dark one, and the page itself is not marked dark',
+    home.ok && !/<html[^>]*class="[^"]*\bdark\b/.test(home.text)
+  );
+
+  // hostile scheme ids never reach the page
+  r = await save({ visitorTheme: 'switch', altPreset: '</style><script>alert(1)</script>' });
+  const saved = (await api('/api/admin/content/theme')).json;
+  home = await pageWhere('/', (t) => t.includes('data-mode="alt"'));
+  check(
+    'a hostile scheme id is dropped, not written into the page',
+    r.status === 200 && saved.altPreset === '' && !home.text.includes('<script>alert(1)')
+  );
+
+  // "same for everyone": no rule, no script, no button
+  r = await save({ visitorTheme: 'fixed' });
+  home = await pageWhere('/', (t) => !t.includes('data-mode="alt"'));
+  check('"same for everyone" removes the other look', home.ok);
+  check(
+    'and the script and the button',
+    !home.text.includes("localStorage.getItem('site-theme')") && !hasButton(home.text)
+  );
+  const articles = await pageWhere('/articles', (t) => !hasButton(t));
+  check('also on the other pages', articles.ok);
+
+  r = await api('/api/admin/content/theme', { method: 'POST', body: {} });
+  home = await pageWhere('/', (t) => hasButton(t));
+  check('back to the default: visitors can switch', home.ok);
+}
+
+// ---------------------------------------------------------------------------------------
+group('20. Links with their own icon: not everyone has a GitHub');
+{
+  // draws of the icon in front of a label in the card's markup: <svg ...>...</svg><span>Label</span>
+  const iconBefore = (html, label) => {
+    const at = html.indexOf(`<span>${label}</span>`);
+    if (at < 0) return '';
+    const start = html.lastIndexOf('<svg', at);
+    return start < 0 ? '' : html.slice(start, at);
+  };
+  let r = await saveProjects([
+    project([], {
+      title: 'Clinic study',
+      links: [
+        { label: 'Research paper', url: 'https://doi.org/10.1000/182' },
+        { label: 'Gallery', url: 'https://example.com/g', icon: 'Stethoscope' },
+        { label: 'Odd', url: 'https://example.com/o', icon: '<b>' },
+      ],
+    }),
+  ]);
+  check('a project with an own and an automatic link icon saves', r.status === 200, r.text);
+  const got = (await api('/api/admin/content/projects')).json.projects[0].links;
+  check(
+    'the choice is stored, and anything that is not an icon name is emptied',
+    got[1].icon === 'Stethoscope' && got[0].icon === '' && got[2].icon === '',
+    JSON.stringify(got)
+  );
+  let home = await pageWhere(
+    '/',
+    (t) => t.includes('Clinic study') && t.includes('<span>Gallery</span>')
+  );
+  check('the card shows the links', home.ok);
+  const paper = iconBefore(home.text, 'Research paper');
+  const gallery = iconBefore(home.text, 'Gallery');
+  check(
+    'every link has a drawn icon (no GitHub mark, no empty box)',
+    /<svg/.test(paper) && /<svg/.test(gallery),
+    `${paper.length}/${gallery.length}`
+  );
+  check('the paper and the picked icon differ', paper !== gallery);
+  check('a research paper link is not drawn with the GitHub mark', !/github/i.test(paper));
+
+  // certificates: own words and icon for the verification button
+  r = await api('/api/admin/content/certifications', {
+    method: 'POST',
+    body: [
+      {
+        name: 'Medical licence',
+        issuer: 'Medical board',
+        credentialId: 'LIC-9',
+        credentialUrl: 'https://example.com/register',
+        credentialLabel: 'Check the register',
+        credentialIcon: 'BadgeCheck',
+        order: 0,
+      },
+    ],
+  });
+  check('a certificate with its own button text saves', r.status === 200, r.text);
+  home = await pageWhere(
+    '/',
+    (t) => t.includes('Medical licence') && t.includes('Check the register')
+  );
+  check('the card uses the owner\'s words instead of "Verify"', home.ok);
+  const stored = (await api('/api/admin/content/certifications')).json;
+  const cert = (stored.items ?? stored)[0];
+  check(
+    'and the choice comes back',
+    cert?.credentialLabel === 'Check the register' && cert?.credentialIcon === 'BadgeCheck',
+    JSON.stringify(cert)
+  );
+
+  // publications: new kinds and an own icon
+  r = await api('/api/admin/content/publications', {
+    method: 'POST',
+    body: [
+      {
+        title: 'Sleep and recovery',
+        type: 'paper',
+        platform: 'A journal',
+        url: 'https://doi.org/10.1/x',
+        icon: 'Microscope',
+        order: 0,
+      },
+      { title: 'A chapter', type: 'book', order: 1 },
+    ],
+  });
+  check('research papers and books are publication types', r.status === 200, r.text);
+  r = await api('/api/admin/content/publications', {
+    method: 'POST',
+    body: [{ title: 'Nope', type: 'not-a-type' }],
+  });
+  check('an unknown publication type is still refused', r.status === 400, String(r.status));
+  home = await pageWhere('/', (t) => t.includes('Sleep and recovery'));
+  check('the publication list shows them', home.ok && home.text.includes('A chapter'));
+
+  // leave the site as the other sections expect it
+  await api('/api/admin/content/certifications', { method: 'POST', body: [] });
+  await api('/api/admin/content/publications', { method: 'POST', body: [] });
+  await saveProjects([project([])]);
+}
+
+// ---------------------------------------------------------------------------------------
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 if (failed.length) {

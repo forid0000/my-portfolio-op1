@@ -107,6 +107,7 @@ NEXT_BUILD_CPUS=2 pnpm dev                                               # fewer
 | Experience, projects, skills…                                      | Admin → the matching section                                     |
 | Section order and visibility                                       | Admin → Sections                                                 |
 | Style (clean or terminal), color schemes, admin color              | Admin → Appearance                                               |
+| Light/dark button for visitors (and which look they get)           | Admin → Appearance → Light & dark for visitors                   |
 | Page title, description, keywords, error pages                     | Admin → System                                                   |
 | Profile picture (live at once) and résumé                          | Admin → Hero Section, or Media Manager                           |
 | Pictures and videos of projects, services, certificates, education | Admin → Projects / Services / Certifications / Education         |

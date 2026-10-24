@@ -17,8 +17,11 @@ import {
   CircleCheck,
   CircleAlert,
   MessageSquare,
+  Lock,
+  MonitorSmartphone,
+  SunMoon,
 } from 'lucide-react';
-import { contrastRatio, shadesFromHex } from '@/lib/color';
+import { contrastRatio, isDarkColor, shadesFromHex } from '@/lib/color';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { extractApiErrorMessage } from '@/lib/utils';
 import {
@@ -33,8 +36,15 @@ import {
   THEME_PRESETS,
   presetPalette,
   type PresetGroup,
+  type ThemePalette,
   type ThemePreset,
 } from '@/lib/theme-presets';
+import {
+  VISITOR_THEME_OPTIONS,
+  alternatePresets,
+  alternateTheme,
+  deriveAlternate,
+} from '@/lib/theme-modes';
 
 type ThemeState = SiteTheme;
 
@@ -107,7 +117,10 @@ function ColorField({
 
 /** A tiny page mock-up in a scheme's own colours, for the scheme picker. */
 function PresetSwatch({ preset, active }: { preset: ThemePreset; active: boolean }) {
-  const c = presetPalette(preset);
+  return <PaletteSwatch palette={presetPalette(preset)} active={active} />;
+}
+
+function PaletteSwatch({ palette: c, active }: { palette: ThemePalette; active: boolean }) {
   return (
     <span
       className="flex h-[74px] flex-col justify-between rounded-md p-2 ring-1 ring-black/20"
@@ -145,6 +158,117 @@ function PresetSwatch({ preset, active }: { preset: ThemePreset; active: boolean
         <span className="h-5 w-5 rounded-full" style={{ backgroundColor: c.secondary }} />
       </span>
     </span>
+  );
+}
+
+const VISITOR_ICONS = { fixed: Lock, switch: SunMoon, device: MonitorSmartphone } as const;
+
+/** Whether visitors get a light / dark button, and which look they get when they press it. */
+function VisitorThemeCard({
+  theme,
+  onChange,
+}: {
+  theme: ThemeState;
+  onChange: <K extends keyof ThemeState>(key: K, val: ThemeState[K]) => void;
+}) {
+  const mainDark = isDarkColor(theme.background);
+  const choices = useMemo(() => alternatePresets(theme), [theme]);
+  // A scheme saved earlier that no longer suits (the main look changed tone) counts as "automatic".
+  const picked = choices.some((p) => p.id === theme.altPreset) ? theme.altPreset : '';
+  const auto = useMemo(() => deriveAlternate(theme), [theme]);
+  const on = theme.visitorTheme !== 'fixed';
+
+  return (
+    <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
+      <h3 className="text-lg font-semibold text-gray-200 mb-1 flex items-center gap-2 border-b border-gray-800 pb-2">
+        <SunMoon className="w-5 h-5 text-emerald-400" /> Light &amp; dark for visitors
+      </h3>
+      <p className="text-sm text-gray-500 mb-4">
+        The colors above are your site&apos;s <strong className="text-gray-300">main look</strong> (
+        {mainDark ? 'a dark one' : 'a light one'}). You decide whether a visitor may flip to the
+        other tone with a sun/moon button in the header, right next to the Notes icon. Some people
+        read much better on a light page, others on a dark one.
+      </p>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {VISITOR_THEME_OPTIONS.map((option) => {
+          const Icon = VISITOR_ICONS[option.value];
+          const active = theme.visitorTheme === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange('visitorTheme', option.value)}
+              aria-pressed={active}
+              className={`text-left p-4 rounded-lg border transition-all ${
+                active
+                  ? 'bg-emerald-600/15 border-emerald-500/60'
+                  : 'bg-gray-950 border-gray-800 hover:bg-gray-800/60'
+              }`}
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-gray-100">
+                <Icon className="w-4 h-4 text-emerald-400" /> {option.title}
+              </span>
+              <span className="mt-1 block text-xs text-gray-400">{option.text}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {on && (
+        <div className="mt-5 space-y-3">
+          <div>
+            <h4 className="text-sm font-bold text-gray-300">
+              The {mainDark ? 'light' : 'dark'} look a visitor gets
+            </h4>
+            <p className="text-xs text-gray-500">
+              Automatic keeps your brand colors and only changes the page tone, so it always matches
+              you. Or pick a ready-made {mainDark ? 'light' : 'dark'} scheme.
+            </p>
+          </div>
+          <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+            <button
+              type="button"
+              onClick={() => onChange('altPreset', '')}
+              aria-pressed={picked === ''}
+              className={`p-2 rounded-lg border bg-gray-950 text-left transition-colors ${
+                picked === '' ? 'border-emerald-500' : 'border-gray-800 hover:border-emerald-500/60'
+              }`}
+            >
+              <PaletteSwatch palette={auto} active={picked === ''} />
+              <span className="mt-2 block truncate text-xs font-medium text-gray-300">
+                Automatic
+              </span>
+            </button>
+            {choices.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onChange('altPreset', preset.id)}
+                aria-pressed={picked === preset.id}
+                className={`p-2 rounded-lg border bg-gray-950 text-left transition-colors ${
+                  picked === preset.id
+                    ? 'border-emerald-500'
+                    : 'border-gray-800 hover:border-emerald-500/60'
+                }`}
+              >
+                <PresetSwatch preset={preset} active={picked === preset.id} />
+                <span className="mt-2 block truncate text-xs font-medium text-gray-300">
+                  {preset.name}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] leading-relaxed text-gray-500">
+            What a visitor picks is saved only in their own browser (no account, nothing sent to
+            your server) and applied before the page is drawn, so there is no flash. The admin panel
+            is never affected. Use{' '}
+            <strong className="text-gray-400">Look at the switched version</strong> in the live
+            preview to see it before you save.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -269,6 +393,7 @@ export default function AppearancePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [group, setGroup] = useState<PresetGroup | 'all'>('all');
+  const [previewAlt, setPreviewAlt] = useState(false);
 
   const { isDirty, markClean } = useUnsavedWarning(theme, loading);
 
@@ -474,6 +599,8 @@ export default function AppearancePage() {
                 ))}
               </div>
             </div>
+
+            <VisitorThemeCard theme={theme} onChange={handleUpdate} />
 
             {/* Look & feel */}
             <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
@@ -716,7 +843,37 @@ export default function AppearancePage() {
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 border-b border-gray-800 pb-2">
                 Live preview
               </h3>
-              <ThemePreview theme={theme} />
+              {theme.visitorTheme !== 'fixed' && (
+                <div
+                  role="group"
+                  aria-label="Which look to preview"
+                  className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-gray-800 bg-gray-950 p-1 text-xs"
+                >
+                  {(
+                    [
+                      [false, 'Your main look'],
+                      [true, 'Look at the switched version'],
+                    ] as const
+                  ).map(([alt, label]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setPreviewAlt(alt)}
+                      aria-pressed={previewAlt === alt}
+                      className={`rounded-md px-2 py-1.5 transition-colors ${
+                        previewAlt === alt
+                          ? 'bg-emerald-600/20 text-emerald-300'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <ThemePreview
+                theme={previewAlt && theme.visitorTheme !== 'fixed' ? alternateTheme(theme) : theme}
+              />
               <p className="mt-3 text-[11px] text-gray-500">
                 Built from the same color tokens as your real pages.
               </p>

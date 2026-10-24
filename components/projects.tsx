@@ -3,6 +3,7 @@ import ProjectCard, { type ProjectData } from './project-card';
 import { ArrowUpRight } from 'lucide-react';
 import { DEFAULT_TERMINAL_PREFIX, PROJECTS_DEFAULTS } from '@/lib/content-defaults';
 import { toHref } from '@/lib/safe-href';
+import type { IconMap } from '@/lib/icons/icon-data';
 
 interface ProjectsProps {
   terminalPrefix?: string;
@@ -12,6 +13,8 @@ interface ProjectsProps {
   githubUrl?: string;
   ctaLabel?: string;
   ctaUrl?: string;
+  /** Drawings of the link icons used by the cards. */
+  icons?: IconMap;
 }
 
 export default function Projects({
@@ -19,6 +22,7 @@ export default function Projects({
   githubUrl,
   ctaLabel,
   ctaUrl,
+  icons,
   heading = 'Projects',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
 }: ProjectsProps) {
@@ -45,7 +49,7 @@ export default function Projects({
               style={{ animationDelay: `${index * 0.1}s` }}
               className="animate-fade-in-up h-full"
             >
-              <ProjectCard project={project} />
+              <ProjectCard project={project} icons={icons} />
             </div>
           ))}
         </div>

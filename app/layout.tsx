@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { Noto_Sans_Arabic, Noto_Sans_Bengali, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Toaster } from 'sonner';
-import { getTheme, themeToCssVars } from '@/lib/theme';
+import SiteToaster from '@/components/site-toaster';
+import { getTheme } from '@/lib/theme';
+import { siteThemeCss, visitorModeScript } from '@/lib/theme-modes';
 import { isDarkColor } from '@/lib/color';
 import { safeJsonLd } from '@/lib/json-ld';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
@@ -132,6 +133,7 @@ export default async function RootLayout({
   const geo = getGeoMeta();
   // `dark:` utilities and the toaster must agree with the palette the owner chose.
   const isDark = isDarkColor(theme.background);
+  const switchScript = visitorModeScript(theme);
 
   // === STRUCTURED DATA (JSON-LD) ===
   // Built from CMS content (hero name/title, global brand + socials), never hardcoded.
@@ -175,8 +177,11 @@ export default async function RootLayout({
       className={`${isDark ? 'dark ' : ''}${notoBengali.variable} ${notoArabic.variable} ${notoDevanagari.variable}`}
     >
       <head>
-        {/* Admin-customizable theme: overrides CSS variables defined in globals.css */}
-        <style dangerouslySetInnerHTML={{ __html: themeToCssVars(theme) }} />
+        {/* Admin-customizable theme: overrides CSS variables defined in globals.css. When visitors may
+            switch light/dark it also holds the other look (:root[data-mode="alt"]). */}
+        <style dangerouslySetInnerHTML={{ __html: siteThemeCss(theme) }} />
+        {/* Applies a returning visitor's light/dark choice before the first paint (no flash). */}
+        {switchScript && <script dangerouslySetInnerHTML={{ __html: switchScript }} />}
       </head>
       <body
         suppressHydrationWarning
@@ -195,13 +200,7 @@ export default async function RootLayout({
           <DotWeave />
         </div>
 
-        <Toaster
-          position="top-center"
-          theme={isDark ? 'dark' : 'light'}
-          richColors
-          closeButton
-          duration={3000}
-        />
+        <SiteToaster initialDark={isDark} />
         <SpeedInsights />
 
         {/* Google Analytics can go here if needed */}

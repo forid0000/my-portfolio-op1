@@ -1,15 +1,19 @@
-import { ArrowUpRight, ExternalLink } from 'lucide-react';
-import { GithubIcon } from '@/components/icon/github';
+import { ArrowUpRight } from 'lucide-react';
+import LinkIcon from '@/components/site/link-icon';
 import CardMedia from '@/components/site/card-media';
 import DetailCard from '@/components/site/detail-card';
 import { mediaSummary, toMediaItems } from '@/lib/media-display';
 import { toHref } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
 import { chipClass } from '@/lib/chip-hue';
+import { linkIconName } from '@/lib/link-icon';
+import type { IconMap } from '@/lib/icons/icon-data';
 
 export interface ProjectLink {
   label: string;
   url: string;
+  /** The owner's icon for this link; empty = chosen automatically (lib/link-icon.ts). */
+  icon?: string;
 }
 
 export interface ProjectData {
@@ -28,6 +32,8 @@ export interface ProjectData {
 
 interface ProjectCardProps {
   project: ProjectData;
+  /** Drawings of the link icons this page uses (resolved on the server). */
+  icons?: IconMap;
 }
 
 /** The links to show: the new list when present, otherwise the old github/demo pair. */
@@ -41,25 +47,17 @@ export function projectLinks(project: ProjectData): ProjectLink[] {
   return raw.filter((l) => l.label && toHref(l.url));
 }
 
-const isCodeLabel = (label: string) => /code|github|source|repo/i.test(label);
-
-function LinkIcon({ label }: { label: string }) {
-  return isCodeLabel(label) ? (
-    <GithubIcon className="h-4 w-4" />
-  ) : (
-    <ExternalLink className="h-4 w-4" />
-  );
-}
-
 /** Everything about the project, shown in the window that opens when the card is clicked. */
 function ProjectDetail({
   project,
   links,
   media,
+  icons,
 }: {
   project: ProjectData;
   links: ProjectLink[];
   media: MediaItem[];
+  icons?: IconMap;
 }) {
   const tags = project.tags ?? [];
   return (
@@ -104,7 +102,7 @@ function ProjectDetail({
                   : 'border border-border text-foreground hover:border-primary/50 hover:text-primary'
               }`}
             >
-              <LinkIcon label={link.label} />
+              <LinkIcon name={linkIconName(link)} icons={icons} className="h-4 w-4" />
               {link.label}
             </a>
           ))}
@@ -118,7 +116,7 @@ function ProjectDetail({
  * A project on the landing page: the whole card opens a window with every picture and video,
  * the full text and all links. The pictures and text of the card itself are in the server HTML.
  */
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, icons }: ProjectCardProps) {
   const links = projectLinks(project);
   const media = toMediaItems(project.media);
   const tags = project.tags ?? [];
@@ -128,7 +126,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       title={project.title}
       label={`View project: ${project.title}`}
       media={media}
-      detail={<ProjectDetail project={project} links={links} media={media} />}
+      detail={<ProjectDetail project={project} links={links} media={media} icons={icons} />}
       className="h-full rounded-xl"
     >
       <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-300 group-hover/detail:-translate-y-1 group-hover/detail:border-primary/50 group-hover/detail:shadow-glow-sm">
@@ -181,7 +179,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                       : 'text-muted-foreground hover:text-primary'
                   }`}
                 >
-                  <LinkIcon label={link.label} />
+                  <LinkIcon name={linkIconName(link)} icons={icons} className="h-4 w-4" />
                   <span>{link.label}</span>
                 </a>
               ))}

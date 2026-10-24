@@ -10,6 +10,7 @@ import { ByStyle } from '@/components/by-style';
 import { hasComplexScript } from '@/lib/text-script';
 import { AVATAR_PLACEHOLDER_URL, GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
 import { DEFAULT_NAV, type ResolvedNavItem } from '@/lib/chrome-model';
+import ThemeToggle from '@/components/theme-toggle';
 
 interface HeaderBrand {
   avatarUrl?: string;
@@ -33,12 +34,15 @@ export default function Header({
   brand,
   nav,
   uiStyle = 'clean',
+  themeSwitch = null,
 }: {
   brand?: HeaderBrand;
   /** The links to show (Admin -> Navigation). Resolved on the server so they arrive in the HTML. */
   nav?: ResolvedNavItem[];
   /** 'terminal' brings back the developer-prompt look and the system-status widget. */
   uiStyle?: 'clean' | 'terminal';
+  /** Set when visitors may switch between a light and a dark look (Admin -> Appearance). */
+  themeSwitch?: { mainDark: boolean } | null;
 }) {
   // SSR pages pass `brand`/`nav` (no flash). Client-only pages omit them, so we
   // self-fetch from the public /api/site endpoint.
@@ -257,7 +261,11 @@ export default function Header({
             );
           })}
 
-          {utilityItems.length > 0 && <div className="h-6 w-px bg-border/40 hidden sm:block" />}
+          {themeSwitch && <ThemeToggle mainDark={themeSwitch.mainDark} />}
+
+          {(utilityItems.length > 0 || themeSwitch) && (
+            <div className="h-6 w-px bg-border/40 hidden sm:block" />
+          )}
 
           {uiStyle === 'terminal' && (
             <div className="">

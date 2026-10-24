@@ -17,6 +17,7 @@ import connectToDatabase from '@/lib/db';
 import { safeJsonLd } from '@/lib/json-ld';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 import { getTheme } from '@/lib/theme';
+import { themeSwitchFor } from '@/lib/theme-modes';
 import { getPublicItems } from '@/lib/api/collection-crud';
 import galleryFallback from '@/components/data/gallery-cloudinary.json';
 import type { GalleryItem } from '@/components/achievements-gallery';
@@ -32,6 +33,10 @@ import {
 } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
 import { resolveIconMap } from '@/lib/icons/resolve';
+import { linkIconName } from '@/lib/link-icon';
+import { publicationIconName } from '@/lib/publication-types';
+import { projectLinks } from '@/components/project-card';
+import { verifyIcon } from '@/components/certifications';
 import { SITE_URL } from '@/lib/site-config';
 import { GLOBAL_DEFAULTS, mergeGlobal, toHeaderBrand, type GlobalContent } from '@/lib/site';
 import { getChrome, navFor } from '@/lib/chrome';
@@ -279,6 +284,10 @@ export default async function Home() {
     ...globalContent.socials.map((s) => s.icon),
     ...globalContent.footerSocials.map((s) => s.icon),
     ...floatingContent.items.map((i) => i.icon),
+    // the icons in front of project links, certificate buttons and publications
+    ...projectsContent.flatMap((p) => projectLinks(p).map(linkIconName)),
+    ...certificationItems.map(verifyIcon),
+    ...publicationItems.map((p) => publicationIconName(p.type, p.icon)),
   ]);
 
   // Per-id props, since these components take heterogeneous shapes (Hero
@@ -312,6 +321,7 @@ export default async function Home() {
       terminalPrefix: sectionTexts.terminalPrefix,
     },
     certifications: {
+      icons,
       content: certificationItems,
       heading: sectionTexts.certificationsHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
@@ -337,6 +347,7 @@ export default async function Home() {
       terminalPrefix: sectionTexts.terminalPrefix,
     },
     projects: {
+      icons,
       content: projectsContent,
       githubUrl: globalContent.githubProfileUrl,
       ctaLabel: projectsCta.label,
@@ -345,6 +356,7 @@ export default async function Home() {
       terminalPrefix: sectionTexts.terminalPrefix,
     },
     publications: {
+      icons,
       content: publicationItems,
       heading: sectionTexts.publicationsHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
@@ -373,7 +385,12 @@ export default async function Home() {
     // bg-background commented out to remove solid background color
     <main className="min-h-screen ">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
-      <Header brand={toHeaderBrand(globalContent)} nav={nav} uiStyle={theme.uiStyle} />
+      <Header
+        brand={toHeaderBrand(globalContent)}
+        nav={nav}
+        uiStyle={theme.uiStyle}
+        themeSwitch={themeSwitchFor(theme)}
+      />
       {renderableSections.map((section) => {
         const Component = SECTION_COMPONENT_MAP[section.id];
         if (!Component) return null;

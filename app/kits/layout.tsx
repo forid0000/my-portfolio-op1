@@ -9,6 +9,7 @@ import { getGlobalContent, toHeaderBrand } from '@/lib/site';
 import { getChrome, navFor } from '@/lib/chrome';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 import { getTheme } from '@/lib/theme';
+import { themeSwitchFor } from '@/lib/theme-modes';
 import { resolveIconMap } from '@/lib/icons/resolve';
 import { KitsNavClient } from './kits-nav-client';
 import './style.css';
@@ -47,7 +48,12 @@ export default async function KitsLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="min-h-screen text-foreground flex flex-col relative font-sans">
-      <Header brand={toHeaderBrand(global, avatarUrl)} nav={nav} uiStyle={theme.uiStyle} />
+      <Header
+        brand={toHeaderBrand(global, avatarUrl)}
+        nav={nav}
+        uiStyle={theme.uiStyle}
+        themeSwitch={themeSwitchFor(theme)}
+      />
       <KitsNavClient content={content} icons={icons}>
         {children}
       </KitsNavClient>

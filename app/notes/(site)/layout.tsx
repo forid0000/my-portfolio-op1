@@ -5,6 +5,7 @@ import { getChrome, navFor } from '@/lib/chrome';
 import { getLayoutSections } from '@/lib/sections-registry';
 import { getActiveAvatarUrl } from '@/lib/avatar-cache';
 import { getTheme } from '@/lib/theme';
+import { themeSwitchFor } from '@/lib/theme-modes';
 import { resolveIconMap } from '@/lib/icons/resolve';
 
 /** The public notes (the list and each published note), inside the site's own header and footer. */
@@ -20,7 +21,12 @@ export default async function PublicNotesLayout({ children }: { children: React.
   const icons = await resolveIconMap(global.footerSocials.map((s) => s.icon));
   return (
     <div className="flex min-h-screen flex-col font-sans selection:bg-primary/20">
-      <Header brand={toHeaderBrand(global, avatarUrl)} nav={nav} uiStyle={theme.uiStyle} />
+      <Header
+        brand={toHeaderBrand(global, avatarUrl)}
+        nav={nav}
+        uiStyle={theme.uiStyle}
+        themeSwitch={themeSwitchFor(theme)}
+      />
       <main className="relative flex-1 pt-20 pb-16">{children}</main>
       <Footer content={global} icons={icons} nav={nav} show={chrome.footer} />
     </div>

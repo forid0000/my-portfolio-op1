@@ -6,6 +6,8 @@
  */
 import { z } from 'zod';
 import { isSafeHref, normalizeLink } from '@/lib/safe-href';
+import { cleanIconName } from '@/lib/link-icon';
+import { PUBLICATION_TYPE_OPTIONS } from '@/lib/publication-types';
 import { mediaListSchema, singleMediaSchema } from '@/lib/validation/media-schemas';
 
 /** A link the owner types: empty, or a web address (`https://` is added to a bare domain; never `javascript:`). */
@@ -16,6 +18,9 @@ const optionalLink = z
   .transform(normalizeLink)
   .refine((v) => !v || isSafeHref(v), 'Use a full link such as https://example.com')
   .default('');
+
+/** An icon chosen in the admin picker: a plain icon name, or empty for "automatic". */
+const optionalIcon = z.string().trim().max(48).transform(cleanIconName).default('');
 
 /** education collection - app/api/admin/content/education/route.ts */
 export const educationItemSchema = z.object({
@@ -41,6 +46,9 @@ export const certificationItemSchema = z.object({
   expiryDate: z.string().default(''),
   credentialId: z.string().default(''),
   credentialUrl: optionalLink,
+  /** Text and icon of the verification button; empty = "Verify this certificate" and an automatic icon. */
+  credentialLabel: z.string().trim().max(40).default(''),
+  credentialIcon: optionalIcon,
   badge: singleMediaSchema('certifications').optional(),
   /** Certificate scans, photos or videos; index 0 is the cover. */
   media: mediaListSchema('certifications').optional(),
@@ -81,14 +89,7 @@ export const serviceItemSchema = z.object({
 });
 export type ServiceItem = z.infer<typeof serviceItemSchema>;
 
-export const PUBLICATION_TYPE_OPTIONS = [
-  'article',
-  'talk',
-  'video',
-  'opensource',
-  'press',
-  'podcast',
-] as const;
+export { PUBLICATION_TYPE_OPTIONS };
 
 /** publications collection - app/api/admin/content/publications/route.ts */
 export const publicationItemSchema = z.object({
@@ -96,6 +97,8 @@ export const publicationItemSchema = z.object({
   type: z.enum(PUBLICATION_TYPE_OPTIONS).default('article'),
   platform: z.string().default(''),
   url: optionalLink,
+  /** Icon in front of the item; empty = the one of its type. */
+  icon: optionalIcon,
   date: z.string().default(''),
   description: z.string().default(''),
   order: z.number().default(0),

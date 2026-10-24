@@ -68,4 +68,6 @@ Passwords are stored as scrypt hashes, and authenticator seeds and integration k
 
 Notes, and the files you attach to them (pictures, documents, whole folders), are stored in your own MongoDB database and are visible to anyone with database access. See [SECURITY.md](SECURITY.md). A note and its files become visible to visitors only when you publish it; making it private again hides them at once. The public notes page reads only published notes and sets no cookie.
 
+A visitor who presses the sun/moon button (when the owner allows it) has the choice remembered in **their own browser only** (`localStorage`, key `site-theme`: `light` or `dark`). It is never sent to the server and sets no cookie.
+
 The private notes remember a few display choices in **this browser only** (`localStorage`): how wide each side of the editor is (`notes.split`) and the editor's font, text size and scroll setting (`notes.editor`). They are never sent to the server.

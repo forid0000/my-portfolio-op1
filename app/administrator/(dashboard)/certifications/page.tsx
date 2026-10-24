@@ -5,6 +5,8 @@ import { CollectionEditor, type CollectionItem } from '@/components/admin/collec
 import { SectionImageUploader, type SectionMedia } from '@/components/admin/section-image-uploader';
 import { MediaUploader } from '@/components/admin/media-uploader';
 import type { MediaItem } from '@/lib/media-types';
+import { LinkIconField } from '@/components/admin/link-icon-field';
+import { autoLinkIcon } from '@/lib/link-icon';
 
 interface CertificationItem extends CollectionItem {
   name: string;
@@ -13,6 +15,8 @@ interface CertificationItem extends CollectionItem {
   expiryDate: string;
   credentialId: string;
   credentialUrl: string;
+  credentialLabel?: string;
+  credentialIcon?: string;
   badge?: SectionMedia;
   media?: MediaItem[];
 }
@@ -31,6 +35,8 @@ export default function CertificationsCMS() {
         expiryDate: '',
         credentialId: '',
         credentialUrl: '',
+        credentialLabel: '',
+        credentialIcon: '',
         media: [],
       })}
       getItemLabel={(item) => [item.name, item.issuer].filter(Boolean).join(' - ')}
@@ -117,6 +123,35 @@ export default function CertificationsCMS() {
                 placeholder="https://..."
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-300 font-mono text-sm focus:outline-none focus:border-emerald-500"
               />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Verification button (optional)
+              </label>
+              <div className="flex items-center gap-2">
+                <LinkIconField
+                  value={item.credentialIcon || ''}
+                  auto={autoLinkIcon(
+                    item.credentialLabel?.trim() || 'Verify this certificate',
+                    item.credentialUrl
+                  )}
+                  onChange={(icon) => onChange('credentialIcon', icon)}
+                  label="Button icon"
+                />
+                <input
+                  type="text"
+                  value={item.credentialLabel || ''}
+                  onChange={(e) => onChange('credentialLabel', e.target.value)}
+                  maxLength={40}
+                  placeholder="Verify this certificate"
+                  aria-label="Verification button text"
+                  className="min-w-0 flex-1 bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 text-sm"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-gray-500">
+                The words and icon of the button that opens the link above, for example &quot;View
+                my licence&quot; or &quot;Check the register&quot;. Leave empty for the default.
+              </p>
             </div>
           </div>
         </div>

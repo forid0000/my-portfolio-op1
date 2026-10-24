@@ -1,12 +1,15 @@
-import { Award, ExternalLink, FileBadge } from 'lucide-react';
+import { Award, FileBadge } from 'lucide-react';
 import Image from 'next/image';
 import CardMedia from '@/components/site/card-media';
+import LinkIcon from '@/components/site/link-icon';
 import DetailCard from '@/components/site/detail-card';
 import SectionHeading from '@/components/section-heading';
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
 import { mediaSummary, toMediaItems } from '@/lib/media-display';
 import { toHref } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
+import type { IconMap } from '@/lib/icons/icon-data';
+import { linkIconName } from '@/lib/link-icon';
 
 export interface CertificationItem {
   name: string;
@@ -15,6 +18,9 @@ export interface CertificationItem {
   expiryDate?: string;
   credentialId?: string;
   credentialUrl?: string;
+  /** Text and icon of the verification button; empty = "Verify this certificate" and an automatic icon. */
+  credentialLabel?: string;
+  credentialIcon?: string;
   badge?: { src: string; public_id: string };
   /** Certificate scans, photos or videos; the first is the cover. */
   media?: MediaItem[];
@@ -24,14 +30,36 @@ interface CertificationsProps {
   content?: CertificationItem[];
   heading?: string;
   terminalPrefix?: string;
+  /** Drawings of the verification icons (resolved on the server). */
+  icons?: IconMap;
 }
+
+/** The words of the verification button. */
+export const verifyLabel = (item: CertificationItem) =>
+  item.credentialLabel?.trim() || 'Verify this certificate';
+
+/** The icon of the verification button: the owner's pick, else guessed from the words and address. */
+export const verifyIcon = (item: CertificationItem) =>
+  linkIconName({
+    label: verifyLabel(item),
+    url: item.credentialUrl,
+    icon: item.credentialIcon,
+  });
 
 function dates(item: CertificationItem): string {
   return `${item.issueDate ?? ''}${item.expiryDate ? ` → ${item.expiryDate}` : ''}`.trim();
 }
 
 /** Everything about the certificate, shown in the window that opens when the card is clicked. */
-function CertificateDetail({ item, media }: { item: CertificationItem; media: MediaItem[] }) {
+function CertificateDetail({
+  item,
+  media,
+  icons,
+}: {
+  item: CertificationItem;
+  media: MediaItem[];
+  icons?: IconMap;
+}) {
   const verify = toHref(item.credentialUrl);
   return (
     <div className="space-y-5">
@@ -76,7 +104,8 @@ function CertificateDetail({ item, media }: { item: CertificationItem; media: Me
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Verify this certificate <ExternalLink className="h-4 w-4" />
+            {verifyLabel(item)}{' '}
+            <LinkIcon name={verifyIcon(item)} icons={icons} className="h-4 w-4" />
           </a>
         </div>
       )}
@@ -88,6 +117,7 @@ export default function Certifications({
   content,
   heading = 'certifications',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
+  icons,
 }: CertificationsProps) {
   if (!content || content.length === 0) return null;
 
@@ -117,7 +147,11 @@ export default function Certifications({
                   title={item.name}
                   label={`View certificate: ${item.name}`}
                   media={shown}
-                  detail={interactive ? <CertificateDetail item={item} media={shown} /> : null}
+                  detail={
+                    interactive ? (
+                      <CertificateDetail item={item} media={shown} icons={icons} />
+                    ) : null
+                  }
                   interactive={interactive}
                   className="rounded-xl"
                 >
@@ -171,7 +205,8 @@ export default function Certifications({
                               rel="noopener noreferrer"
                               className="relative z-10 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
                             >
-                              Verify <ExternalLink className="h-3 w-3" />
+                              {item.credentialLabel?.trim() || 'Verify'}{' '}
+                              <LinkIcon name={verifyIcon(item)} icons={icons} className="h-3 w-3" />
                             </a>
                           ) : (
                             <span />

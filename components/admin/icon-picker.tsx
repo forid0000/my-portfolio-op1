@@ -20,8 +20,34 @@ function remember(items: IconItem[]) {
   for (const item of items) dataCache.set(item.name, item.data);
 }
 
+/**
+ * Loads the drawings of `names` (once per session, shared by every picker on the page) and returns
+ * a lookup. Pass a stable array (useMemo or a module constant); `enabled` delays the request.
+ */
+export function useIconGlyphs(names: readonly string[], enabled = true) {
+  const [, setVersion] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const missing = names.filter((n) => n && !resolveBrandIcon(n) && !dataCache.has(n));
+    if (!missing.length) return;
+    const ctrl = new AbortController();
+    fetch(`/api/admin/icons?names=${encodeURIComponent(missing.join(','))}`, {
+      signal: ctrl.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        remember(d.items);
+        setVersion((v) => v + 1);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [names, enabled]);
+  return (name: string): IconData | null | undefined => dataCache.get(name);
+}
+
 /** One glyph: a bundled brand mark, server-resolved SVG data, or a generic fallback. */
-function Glyph({
+export function Glyph({
   name,
   data,
   className,

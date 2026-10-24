@@ -167,7 +167,7 @@ Icons are stored as names; render data, not names, in client code.
 
 1. Add the field and a default to `SiteTheme` / `THEME_DEFAULTS`, `THEME_COLOR_KEYS` and `sanitizeTheme` in `lib/theme-model.ts`; emit it (and anything derived from it) in `themeCssVariables`.
 2. Define a fallback variable in `:root` and `.dark` in `app/globals.css`, and expose it in `@theme inline` (`--color-name: var(--name)`).
-3. The theme route validates through `sanitizeTheme` (hex colors and a safe radius only; there is no Zod schema), so step 1 is the validation. Add a control to the Appearance page and give `derivePalette` (`lib/theme-presets.ts`) a value for it so every scheme stays complete; `tests/unit/theme-presets.test.ts` then checks them all.
+3. The theme route validates through `sanitizeTheme` (it also keeps `visitorTheme` and `altPreset`; a new colour field must exist in the _switched_ look too, which `deriveAlternate` and the presets already give because both go through `derivePalette`) (hex colors and a safe radius only; there is no Zod schema), so step 1 is the validation. Add a control to the Appearance page and give `derivePalette` (`lib/theme-presets.ts`) a value for it so every scheme stays complete; `tests/unit/theme-presets.test.ts` then checks them all.
 4. Use it through its Tailwind utility; never hardcode its value.
 
 ## Add a color scheme

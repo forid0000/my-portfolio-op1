@@ -2,13 +2,15 @@
 
 import React from 'react';
 import { CollectionEditor, type CollectionItem } from '@/components/admin/collection-editor';
-import { PUBLICATION_TYPE_OPTIONS } from '@/lib/validation/section-schemas';
+import { LinkIconField } from '@/components/admin/link-icon-field';
+import { PUBLICATION_TYPE_META, PUBLICATION_TYPE_OPTIONS } from '@/lib/publication-types';
 
 interface PublicationItem extends CollectionItem {
   title: string;
   type: string;
   platform: string;
   url: string;
+  icon?: string;
   date: string;
   description: string;
 }
@@ -18,13 +20,14 @@ export default function PublicationsCMS() {
     <CollectionEditor<PublicationItem>
       endpoint="/api/admin/content/publications"
       title="Publications"
-      description="Articles, tech talks, open-source features, and video content."
+      description="Articles, research papers, books, talks, videos, podcasts, courses and press: anything you have published or been featured in."
       itemNoun="Publication"
       emptyItem={() => ({
         title: '',
         type: PUBLICATION_TYPE_OPTIONS[0],
         platform: '',
         url: '',
+        icon: '',
         date: '',
         description: '',
       })}
@@ -39,7 +42,7 @@ export default function PublicationsCMS() {
                 type="text"
                 value={item.title || ''}
                 onChange={(e) => onChange('title', e.target.value)}
-                placeholder="Building a Zero-Trust Admin Panel"
+                placeholder="The title as it was published"
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
               />
             </div>
@@ -52,7 +55,7 @@ export default function PublicationsCMS() {
               >
                 {PUBLICATION_TYPE_OPTIONS.map((t) => (
                   <option key={t} value={t}>
-                    {t}
+                    {PUBLICATION_TYPE_META[t].label}
                   </option>
                 ))}
               </select>
@@ -63,7 +66,7 @@ export default function PublicationsCMS() {
                 type="text"
                 value={item.platform || ''}
                 onChange={(e) => onChange('platform', e.target.value)}
-                placeholder="Dev.to, YouTube, TechCrunch..."
+                placeholder="A journal, YouTube, a magazine, a publisher..."
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 font-mono text-sm"
               />
             </div>
@@ -76,6 +79,24 @@ export default function PublicationsCMS() {
                 placeholder="https://..."
                 className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-300 font-mono text-sm focus:outline-none focus:border-emerald-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Icon</label>
+              <div className="flex items-center gap-3">
+                <LinkIconField
+                  value={item.icon || ''}
+                  auto={
+                    PUBLICATION_TYPE_META[
+                      (item.type || 'article') as keyof typeof PUBLICATION_TYPE_META
+                    ]?.icon ?? 'Newspaper'
+                  }
+                  onChange={(icon) => onChange('icon', icon)}
+                  label="Publication icon"
+                />
+                <span className="text-xs text-gray-500">
+                  Automatic follows the type; pick your own if you like.
+                </span>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">Date</label>

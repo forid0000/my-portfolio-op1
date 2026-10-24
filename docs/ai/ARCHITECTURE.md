@@ -49,7 +49,7 @@ Two rules shape everything:
 
 ```
 app/
-  layout.tsx            root: theme CSS variables, SEO metadata, JSON-LD, <DotWeave/>, toaster
+  layout.tsx            root: theme CSS variables (+ the visitor's other look), SEO metadata, JSON-LD, <DotWeave/>, toaster
   page.tsx              homepage assembly (reads CMS, builds per-section props, renders the section list)
   loading.tsx           thin CSS-only top progress bar (never a blocking overlay)
   globals.css           design tokens + custom utility classes + all keyframes
@@ -181,6 +181,8 @@ Full threat model and known limits: [SECURITY.md](../../SECURITY.md).
 
 - **Media pipeline** (`lib/media-*.ts`, `components/admin/media-uploader.tsx`): the browser compresses an image (95% quality for slightly oversized files down to an 80% floor, then smaller dimensions; files that already fit are untouched), asks `/api/admin/media/sign` for a folder-locked signature and uploads **straight to Cloudinary** (images and videos up to 100 MB; no platform body limit). The server only stores `{ kind, src, public_id, … }`, validates that every reference is a Cloudinary URL inside the scope's folder, and deletes removed files (image or video resource type) after a successful save. Profile pictures are registered with `registerAvatar()`, which reads the real details back from Cloudinary. Deletes and renames in the Cloudinary explorer propagate (`lib/media-sync.ts`); `Re-sync` repairs drift. Videos are delivered as H.264 MP4 with a poster frame (`lib/cloudinary-url.ts`) and never autoplay unless the owner enables it per video. The CSP allows `api.cloudinary.com` (connect) and `res.cloudinary.com` (img, media).
 - **UI style**: `theme_content.uiStyle` (`clean` default, or `terminal`) sets `data-ui` on `<html>`; Tailwind's `terminal:` variant and `<ByStyle>` show the developer look only there. `adminAccentMode` re-tints the admin's emerald palette through `.admin-accent` CSS variables.
+- **Visitor light/dark**: `theme_content.visitorTheme` (`fixed` | `switch` | `device`) and `altPreset` (a scheme id of the opposite tone, or `''` = made from the owner's colors). `lib/theme-modes.ts` (pure) builds the `:root[data-mode="alt"]` CSS, the inline `<head>` script and what the header needs (`themeSwitchFor`); every page that renders `<Header>` passes `themeSwitch={themeSwitchFor(theme)}`. The choice lives only in the visitor's `localStorage` (`site-theme`). Static pages stay static: nothing is decided per request.
+- **Link icons**: a link's icon is its own `icon` name or `autoLinkIcon(label, url)` (`lib/link-icon.ts`, address first, then label words). Pages resolve the names they use with `resolveIconMap` (see `app/page.tsx`) and draw them with `components/site/link-icon.tsx`; the admin edits them with `components/admin/link-icon-field.tsx`. Projects (`links[].icon`), certificates (`credentialLabel`, `credentialIcon`) and publications (`icon`, kinds in `lib/publication-types.ts`).
 - **Any language**: brand text accepts any script. `next/font/google` provides Noto fonts for Bangla, Arabic and Devanagari (downloaded only when such letters appear), `dir="auto"` on brand text, no letter-spacing on joined scripts, and effects split text by grapheme.
 
 ## 12. Caching layers (from outermost to innermost)

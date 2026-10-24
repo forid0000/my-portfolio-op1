@@ -2,7 +2,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { buildLook, parseRgb, rgba, type Look, type Rgb } from '@/lib/dot-look';
+import {
+  REST_ALPHA,
+  REST_COLOR_CSS,
+  buildLook,
+  parseRgb,
+  rgba,
+  type Look,
+  type Rgb,
+} from '@/lib/dot-look';
 import {
   TIERS,
   cheaper,
@@ -13,19 +21,18 @@ import {
 } from '@/lib/dot-quality';
 
 /**
- * Ambient dot-grid background that reacts to the mouse, to touch and to scrolling.
+ * Ambient dot-grid background that reacts to the mouse and to taps. It is a quiet texture, not a
+ * light show: one muted tint, low strength, no glow, and nothing at all happens while scrolling.
  *
  * - Everyone gets a static CSS dot grid (no JavaScript, no per-frame work).
  * - Once the page has loaded and the browser is idle, it is upgraded to a canvas with a small
- *   physics model: every dot sits on a spring and the page's "energy" moves it.
+ *   physics model: every dot sits on a spring and the pointer's "energy" moves it.
  *     mouse    the pointer pushes dots away like a fingertip in water, leaves a trail that rings back,
- *              lights the dots near it and joins them with fine lines, with a soft glow underneath;
- *     touch    a finger does the same while it is down (also while it scrolls the page), a tap sends
- *              a shockwave across the page;
- *     scroll   scrolling sends a travelling wave through the dots: faster scrolling, stronger wave;
- *     click    a shockwave ring.
- * - It reads the page's tone from the live theme: on a dark page the glow adds light, on a light
- *   page the same effect is drawn in deeper, inkier versions of the theme colours (lib/dot-look.ts).
+ *              lightly tints the dots near it and joins them with fine lines;
+ *     click    a shockwave ring (a tap does the same on a touch screen; swiping or scrolling with a
+ *              finger does nothing).
+ * - The colours come from the live theme (lib/dot-look.ts), so they follow every palette, and they
+ *   are read again when the visitor switches between the light and the dark look.
  * - It is built to be harmless:
  *     idle      the canvas animates ONLY while something moves; a moment after the input stops the
  *               dots ease back onto the regular grid and the loop stops completely, so an idle page
@@ -42,8 +49,6 @@ import {
 const SPACING = 48;
 /** The pointer keeps its effect this long after it last moved, then the dots settle. */
 const SETTLE_MS = 2200;
-/** Strength of a resting dot; the CSS grid draws the same (40% colour at 40% opacity). */
-const BASE_ALPHA = 0.16;
 /** How far the pointer reaches, in pixels. */
 const REACH = 190;
 const REACH_SQ = REACH * REACH;
@@ -58,22 +63,20 @@ const MAX_SHIFT = SPACING * 0.62;
 const SHOCK_SPEED = 10;
 const SHOCK_BAND = 70;
 const SHOCK_RANGE = 800;
-/** Scrolling: how hard it drags the dots, how much they sway sideways, and when it counts as fast. */
-const SCROLL_DRAG = 0.05;
-const SCROLL_SWAY = 0.014;
-const SCROLL_FAST = 28;
 /** The trail behind a moving pointer: how many points are kept, and how far each reaches. */
 const TRAIL = 12;
 const TRAIL_REACH = REACH * 0.55;
 /** Quantised strengths: dots with a similar glow are drawn together in one path. */
 const LEVELS = 4;
 const LINE_MAX = SPACING * 1.9;
+/** Line strength used only to sort segments into the few strength levels. */
+const LINE_BASE = 0.5;
 /** How many expensive frames in a row (roughly) make the effect step down a tier. */
 const STRIKES_TO_EASE_OFF = 24;
 
+/** The same picture as the canvas at rest: the muted tint at REST_ALPHA (30% colour at 30% opacity). */
 const STATIC_GRID_STYLE: React.CSSProperties = {
-  backgroundImage:
-    'radial-gradient(circle, color-mix(in srgb, var(--primary) 40%, transparent) 1.25px, transparent 1.75px)',
+  backgroundImage: `radial-gradient(circle, color-mix(in srgb, ${REST_COLOR_CSS} ${Math.round((REST_ALPHA / 0.3) * 100)}%, transparent) 1.25px, transparent 1.75px)`,
   backgroundSize: `${SPACING}px ${SPACING}px`,
   backgroundPosition: `${SPACING / 2}px ${SPACING / 2}px`,
 };
@@ -166,33 +169,27 @@ export default function DotWeave() {
     if (!canvas || !ctx) return;
 
     // A canvas cannot read CSS variables or colour-mix(), so the theme colours are resolved through
-    // throwaway elements (any CSS colour format works) and read again whenever input wakes the
-    // animation, so a changed theme is picked up without a reload.
-    const probes = (['--primary', '--secondary', '--foreground', '--background'] as const).map(
-      (variable) => {
-        const el = document.createElement('span');
-        el.setAttribute('aria-hidden', 'true');
-        el.style.cssText = `position:fixed;width:0;height:0;overflow:hidden;color:var(${variable})`;
-        document.body.appendChild(el);
-        return el;
-      }
-    );
-    let primary: Rgb = [52, 211, 153];
+    // throwaway elements (any CSS colour format works). They are read again whenever input wakes the
+    // animation and whenever the page switches between its light and dark look.
+    const probes = (['--primary', '--foreground', '--background'] as const).map((variable) => {
+      const el = document.createElement('span');
+      el.setAttribute('aria-hidden', 'true');
+      el.style.cssText = `position:fixed;width:0;height:0;overflow:hidden;color:var(${variable})`;
+      document.body.appendChild(el);
+      return el;
+    });
     let look: Look = buildLook({
-      primary,
-      secondary: [96, 165, 250],
+      primary: [52, 211, 153],
       foreground: [229, 231, 235],
       background: [29, 35, 42],
     });
     const readColors = () => {
       const read = (i: number, fallback: Rgb) =>
         parseRgb(getComputedStyle(probes[i]).color, fallback);
-      primary = read(0, primary);
       look = buildLook({
-        primary,
-        secondary: read(1, [96, 165, 250]),
-        foreground: read(2, [229, 231, 235]),
-        background: read(3, [29, 35, 42]),
+        primary: read(0, [52, 211, 153]),
+        foreground: read(1, [229, 231, 235]),
+        background: read(2, [29, 35, 42]),
       });
     };
     readColors();
@@ -211,17 +208,12 @@ export default function DotWeave() {
     let pointerY = 0;
     /** The mouse is over the page, or a finger is down. */
     let inside = false;
-    let touching = false;
     let touchStart = { x: 0, y: 0, at: 0, moved: false };
     let lastTouchAt = 0;
     /** 0 = the dots rest on the regular grid, 1 = the pointer is fully at work. */
     let power = 0;
     let lastActivity = 0;
     let lastFrame = 0;
-    let time = 0;
-    let scrollPending = 0;
-    let lastScrollY = window.scrollY;
-    let scrollSpeed = 0;
     let raf = 0;
     /** Tiles painted this frame and last frame (1 = changed); only these are repainted. */
     let tilesX = 0;
@@ -290,7 +282,7 @@ export default function DotWeave() {
       dirtyPrev.fill(0);
       ctx.globalCompositeOperation = 'source-over';
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = rgba(primary, BASE_ALPHA);
+      ctx.fillStyle = rgba(look.rest, look.restAlpha);
       ctx.beginPath();
       for (const d of dots) {
         ctx.moveTo(d.hx + d.size, d.hy);
@@ -312,7 +304,7 @@ export default function DotWeave() {
     };
 
     /** Repaints only the tiles that changed since the last frame, not the whole page. */
-    const draw = (scrollEnergy: number) => {
+    const draw = () => {
       const settings = TIERS[tier];
       ctx.save();
       ctx.beginPath();
@@ -324,15 +316,13 @@ export default function DotWeave() {
       ctx.clip();
       ctx.globalCompositeOperation = 'source-over';
       ctx.clearRect(0, 0, width, height);
-      ctx.globalCompositeOperation = look.blend;
-
       // A soft light under the pointer.
       if (settings.spotlight && power > 0.02) {
         const reach = REACH * 1.25;
         const light = ctx.createRadialGradient(pointerX, pointerY, 0, pointerX, pointerY, reach);
         light.addColorStop(0, rgba(look.halo, look.spotAlpha * power));
-        light.addColorStop(0.55, rgba(look.core, look.spotAlpha * 0.35 * power));
-        light.addColorStop(1, rgba(look.core, 0));
+        light.addColorStop(0.55, rgba(look.halo, look.spotAlpha * 0.35 * power));
+        light.addColorStop(1, rgba(look.halo, 0));
         ctx.fillStyle = light;
         ctx.fillRect(pointerX - reach, pointerY - reach, reach * 2, reach * 2);
       }
@@ -341,7 +331,7 @@ export default function DotWeave() {
       for (const s of shocks) {
         const fade = (1 - s.r / SHOCK_RANGE) * s.power;
         if (fade <= 0) continue;
-        ctx.strokeStyle = rgba(look.halo, (look.light ? 0.5 : 0.4) * fade);
+        ctx.strokeStyle = rgba(look.line, look.lineAlpha * 1.1 * fade);
         ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -368,7 +358,7 @@ export default function DotWeave() {
             const ey = by - ay;
             const dist = Math.sqrt(ex * ex + ey * ey);
             if (dist > LINE_MAX) continue;
-            const alpha = Math.min(a.glow, b.glow) * look.lineAlpha * (1 - dist / LINE_MAX) * 1.25;
+            const alpha = Math.min(a.glow, b.glow) * LINE_BASE * (1 - dist / LINE_MAX) * 1.25;
             if (alpha < 0.04) continue;
             const level = Math.min(LEVELS - 1, Math.floor(alpha * LEVELS * 1.4));
             lineBuckets[level].push(ax, ay, bx, by);
@@ -378,7 +368,7 @@ export default function DotWeave() {
         for (let level = 0; level < LEVELS; level++) {
           const segments = lineBuckets[level];
           if (!segments.length) continue;
-          ctx.strokeStyle = rgba(look.line, Math.min(0.7, ((level + 1) / LEVELS) * 0.6));
+          ctx.strokeStyle = rgba(look.line, ((level + 1) / LEVELS) * look.lineAlpha);
           ctx.beginPath();
           for (let i = 0; i < segments.length; i += 4) {
             ctx.moveTo(segments[i], segments[i + 1]);
@@ -389,8 +379,7 @@ export default function DotWeave() {
       }
 
       // Every dot in the resting strength (excited dots swell a little): one path.
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = rgba(primary, BASE_ALPHA);
+      ctx.fillStyle = rgba(look.rest, look.restAlpha);
       ctx.beginPath();
       for (const d of dots) {
         const x = d.hx + d.ox;
@@ -403,8 +392,7 @@ export default function DotWeave() {
       }
       ctx.fill();
 
-      // Excited dots: a halo in the secondary colour and a stronger core, in a few batches by level.
-      ctx.globalCompositeOperation = look.blend;
+      // Excited dots: a soft halo and a slightly stronger core, in a few batches by level.
       for (const bucket of haloBuckets) bucket.length = 0;
       for (const d of awake) {
         if (d.glow < 0.08) continue;
@@ -418,14 +406,14 @@ export default function DotWeave() {
           ctx.fillStyle = rgba(look.halo, strength * look.haloAlpha);
           ctx.beginPath();
           for (const d of group) {
-            const r = d.size * (1.7 + d.glow * (2.4 + scrollEnergy));
+            const r = d.size * (1.6 + d.glow * 2);
             const x = d.hx + d.ox;
             ctx.moveTo(x + r, d.hy + d.oy);
             ctx.arc(x, d.hy + d.oy, r, 0, Math.PI * 2);
           }
           ctx.fill();
         }
-        ctx.fillStyle = rgba(look.core, Math.min(0.8, 0.3 + strength * (look.light ? 0.7 : 0.65)));
+        ctx.fillStyle = rgba(look.core, 0.12 + strength * (look.coreAlpha - 0.12));
         ctx.beginPath();
         for (const d of group) {
           const r = d.size * (1 + d.glow * 1.1);
@@ -467,11 +455,9 @@ export default function DotWeave() {
       const interval = now - lastFrame;
       const dt = Math.min(interval / 16.667 || 1, 2.5);
       lastFrame = now;
-      time += 0.03 * dt;
 
-      // Input: is the pointer or a finger at work? (A finger that stays down without moving
-      // settles like a pointer that stopped.)
-      const active = (touching || inside) && now - lastActivity < SETTLE_MS;
+      // Input: is the mouse at work? (It settles a moment after it stops.)
+      const active = inside && now - lastActivity < SETTLE_MS;
       power += ((active ? 1 : 0) - power) * Math.min(1, (active ? 0.2 : 0.06) * dt);
       if (!active && power < 0.01) power = 0;
 
@@ -506,14 +492,6 @@ export default function DotWeave() {
       tx1 += TRAIL_REACH;
       ty1 += TRAIL_REACH;
 
-      // Scrolling: how fast the page moved since the last frame, smoothed.
-      const sv = scrollPending / dt;
-      scrollPending = 0;
-      scrollSpeed += (sv - scrollSpeed) * Math.min(1, 0.3 * dt);
-      if (Math.abs(scrollSpeed) < 0.05) scrollSpeed = 0;
-      const scrolling = scrollSpeed !== 0;
-      const scrollEnergy = Math.min(1, Math.abs(scrollSpeed) / SCROLL_FAST);
-
       for (let i = shocks.length - 1; i >= 0; i--) {
         shocks[i].r += SHOCK_SPEED * dt;
         if (shocks[i].r > SHOCK_RANGE) shocks.splice(i, 1);
@@ -545,7 +523,7 @@ export default function DotWeave() {
             break;
           }
         }
-        if (d.asleep && !nearPointer && !nearTrail && !nearShock && !scrolling) continue;
+        if (d.asleep && !nearPointer && !nearTrail && !nearShock) continue;
 
         let fx = -d.ox * SPRING;
         let fy = -d.oy * SPRING;
@@ -590,14 +568,6 @@ export default function DotWeave() {
             }
           }
         }
-        if (scrolling) {
-          // A wave that travels across the grid while the page scrolls, stronger the faster it goes.
-          const phase = d.col * 0.5 + d.row * 0.22 + time * 2.4;
-          const wave = 0.55 + 0.45 * Math.sin(phase);
-          fy += -scrollSpeed * SCROLL_DRAG * wave;
-          fx += Math.cos(phase) * Math.abs(scrollSpeed) * SCROLL_SWAY;
-          excite = Math.max(excite, scrollEnergy * (0.3 + 0.7 * Math.max(0, Math.sin(phase))));
-        }
 
         d.vx = (d.vx + fx * dt) * damping;
         d.vy = (d.vy + fy * dt) * damping;
@@ -626,8 +596,7 @@ export default function DotWeave() {
         }
       }
 
-      const resting =
-        !active && power === 0 && shocks.length === 0 && !scrolling && awake.length === 0;
+      const resting = !active && power === 0 && shocks.length === 0 && awake.length === 0;
       if (resting) {
         // Back on the grid exactly, like the CSS version: draw it once and stop the loop.
         drawRest();
@@ -677,7 +646,7 @@ export default function DotWeave() {
         dirtyAll[i] = dirtyNow[i] | dirtyPrev[i];
         if (dirtyAll[i]) anyDirty = true;
       }
-      if (anyDirty) draw(scrollEnergy);
+      if (anyDirty) draw();
       dirtyPrev.set(dirtyNow);
 
       // Time the frame; a tier that costs too much is stepped down (never back up).
@@ -743,51 +712,55 @@ export default function DotWeave() {
       wake();
     };
 
-    // Touch: a finger works like the pointer while it is down, also while it scrolls the page.
+    // Touch: only a quick tap does something (a shockwave). Swiping or scrolling with a finger is
+    // left alone: moving it past a few pixels makes the touch "a scroll", and nothing is drawn.
     const onTouchStart = (e: TouchEvent) => {
       const t = e.touches[0];
       if (!t) return;
       lastTouchAt = performance.now();
-      touching = true;
-      inside = false;
-      pointerX = targetX = t.clientX;
-      pointerY = targetY = t.clientY;
-      touchStart = { x: t.clientX, y: t.clientY, at: performance.now(), moved: false };
-      wake();
+      touchStart = {
+        x: t.clientX,
+        y: t.clientY,
+        at: performance.now(),
+        moved: e.touches.length > 1,
+      };
     };
     const onTouchMove = (e: TouchEvent) => {
       const t = e.touches[0];
       if (!t) return;
       lastTouchAt = performance.now();
-      targetX = t.clientX;
-      targetY = t.clientY;
       if (Math.hypot(t.clientX - touchStart.x, t.clientY - touchStart.y) > 10) {
         touchStart.moved = true;
       }
-      wake();
     };
     const onTouchEnd = () => {
       lastTouchAt = performance.now();
-      touching = false;
-      // A quick tap without moving sends a shockwave.
       if (!touchStart.moved && performance.now() - touchStart.at < 280) {
         addShock(touchStart.x, touchStart.y, 0.85);
+        wake();
       }
-      wake();
+      touchStart.moved = true; // one tap, one shockwave
     };
-
-    // Scrolling (wheel, keys, touch fling): the page's speed becomes a wave through the dots.
-    const onScroll = () => {
-      const y = window.scrollY;
-      scrollPending += y - lastScrollY;
-      lastScrollY = y;
-      wake();
+    const onTouchCancel = () => {
+      lastTouchAt = performance.now();
+      touchStart.moved = true; // the browser took the touch over (a scroll)
     };
 
     const onResize = () => {
       build();
       drawRest();
     };
+    // The visitor switched between the light and the dark look: take the new colours at once, and
+    // redraw the resting dots if the animation is not running (otherwise it would show the old ones).
+    const onThemeChange = () => {
+      readColors();
+      if (!raf) drawRest();
+    };
+    const themeObserver = new MutationObserver(onThemeChange);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-mode', 'data-ui', 'style'],
+    });
     // Back on the tab: one frame either carries on or settles the dots onto the grid.
     const onVisibility = () => {
       if (document.hidden || raf) return;
@@ -814,8 +787,7 @@ export default function DotWeave() {
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('touchcancel', onTouchCancel, { passive: true });
     window.addEventListener('resize', onResize);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -825,8 +797,8 @@ export default function DotWeave() {
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('touchcancel', onTouchCancel);
+      themeObserver.disconnect();
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
       if (raf) cancelAnimationFrame(raf);
@@ -845,7 +817,7 @@ export default function DotWeave() {
   ) : (
     <div
       aria-hidden
-      className="fixed inset-0 z-[-1] opacity-40 pointer-events-none"
+      className="fixed inset-0 z-[-1] opacity-30 pointer-events-none"
       style={STATIC_GRID_STYLE}
     />
   );

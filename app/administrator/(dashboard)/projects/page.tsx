@@ -7,6 +7,8 @@ import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableItem } from '@/components/sortable-item';
 import { MediaUploader } from '@/components/admin/media-uploader';
+import { LinkIconField } from '@/components/admin/link-icon-field';
+import { autoLinkIcon } from '@/lib/link-icon';
 import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
 import { isSafeHref, normalizeLink } from '@/lib/safe-href';
@@ -17,6 +19,8 @@ import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 interface ProjectLink {
   label: string;
   url: string;
+  /** The owner's icon; empty = automatic. */
+  icon?: string;
 }
 
 interface Project {
@@ -38,7 +42,18 @@ interface ProjectsState {
   ctaUrl: string;
 }
 
-const LINK_SUGGESTIONS = ['Live site', 'Case study', 'Source code', 'Behance', 'Dribbble', 'Video'];
+// Ideas for any kind of work; the icon follows the words (or pick your own icon for each link).
+const LINK_SUGGESTIONS = [
+  'Live site',
+  'Case study',
+  'Research paper',
+  'Video',
+  'Gallery',
+  'Download',
+  'Book now',
+  'Source code',
+  'Behance',
+];
 const MAX_LINKS = 6;
 
 function newId(): string {
@@ -166,7 +181,7 @@ export default function ProjectsCMS() {
     setProjects((items) =>
       items.map((p, i) =>
         i === projIndex && p.links.length < MAX_LINKS
-          ? { ...p, links: [...p.links, { label, url: '' }] }
+          ? { ...p, links: [...p.links, { label, url: '', icon: '' }] }
           : p
       )
     );
@@ -184,7 +199,11 @@ export default function ProjectsCMS() {
     // A bare domain such as "behance.net/you" is completed to a full address before it is checked.
     const cleaned = projects.map((proj) => ({
       ...proj,
-      links: proj.links.map((l) => ({ label: l.label.trim(), url: normalizeLink(l.url) })),
+      links: proj.links.map((l) => ({
+        label: l.label.trim(),
+        url: normalizeLink(l.url),
+        icon: l.icon ?? '',
+      })),
     }));
     const ctaUrl = normalizeLink(state.ctaUrl);
 
@@ -427,9 +446,20 @@ export default function ProjectsCMS() {
                         <label className="block text-sm font-medium text-gray-400 mb-2">
                           Links (optional)
                         </label>
+                        <p className="mb-2 text-xs text-gray-500">
+                          Anything worth opening: a website, a research paper, a video, a booking
+                          page, a gallery, a download. The icon in front of each link is chosen for
+                          you from its words and address; click it to pick another.
+                        </p>
                         <div className="space-y-2">
                           {proj.links.map((link, lIdx) => (
                             <div key={lIdx} className="flex flex-wrap items-center gap-2">
+                              <LinkIconField
+                                value={link.icon ?? ''}
+                                auto={autoLinkIcon(link.label, link.url)}
+                                onChange={(icon) => patchLink(idx, lIdx, { icon })}
+                                label="Link icon"
+                              />
                               <input
                                 type="text"
                                 value={link.label}

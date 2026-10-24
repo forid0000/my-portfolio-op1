@@ -23,6 +23,12 @@ import {
 export type UiStyle = 'clean' | 'terminal';
 /** Where the admin panel takes its accent colour from. */
 export type AdminAccentMode = 'default' | 'site' | 'custom';
+/**
+ * What a visitor may do about the light / dark look (lib/theme-modes.ts):
+ * 'fixed' = everyone sees the theme set here; 'switch' = a sun/moon button in the header, first visit
+ * shows this theme; 'device' = same button, but the first visit follows the visitor's device setting.
+ */
+export type VisitorTheme = 'fixed' | 'switch' | 'device';
 
 export interface SiteTheme {
   background: string;
@@ -52,6 +58,9 @@ export interface SiteTheme {
   adminAccentMode: AdminAccentMode;
   /** Used when adminAccentMode is 'custom'. */
   adminAccent: string;
+  visitorTheme: VisitorTheme;
+  /** Id of the ready-made scheme shown when a visitor switches; '' = made from the colours above. */
+  altPreset: string;
 }
 
 export const THEME_DEFAULTS: SiteTheme = {
@@ -77,6 +86,8 @@ export const THEME_DEFAULTS: SiteTheme = {
   uiStyle: 'clean',
   adminAccentMode: 'default',
   adminAccent: '#34d399',
+  visitorTheme: 'switch',
+  altPreset: '',
 };
 
 /** The colour fields (everything except radius, style and the admin accent). */
@@ -117,6 +128,7 @@ const STATUS_DARK = {
 };
 
 const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+const PRESET_ID_RE = /^[a-z0-9-]{1,40}$/;
 const RADIUS_RE = /^(?:0|[0-9]+(?:\.[0-9]+)?(?:px|rem|em))$/;
 
 function safeHex(val: string | undefined, fallback: string): string {
@@ -157,6 +169,14 @@ export function sanitizeTheme(input: Partial<SiteTheme> | null | undefined): Sit
         ? input.adminAccentMode
         : 'default',
     adminAccent: safeHex(input?.adminAccent, THEME_DEFAULTS.adminAccent),
+    visitorTheme:
+      input?.visitorTheme === 'fixed' || input?.visitorTheme === 'device'
+        ? input.visitorTheme
+        : 'switch',
+    altPreset:
+      typeof input?.altPreset === 'string' && PRESET_ID_RE.test(input.altPreset)
+        ? input.altPreset
+        : '',
   };
 }
 

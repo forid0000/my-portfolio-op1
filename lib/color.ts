@@ -16,7 +16,7 @@ export function hexToRgb(hex: string): Rgb | null {
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
 
-function rgbToHsl([r, g, b]: Rgb): [number, number, number] {
+export function rgbToHsl([r, g, b]: Rgb): [number, number, number] {
   const rn = r / 255;
   const gn = g / 255;
   const bn = b / 255;
@@ -33,7 +33,7 @@ function rgbToHsl([r, g, b]: Rgb): [number, number, number] {
   return [h * 60, s, l];
 }
 
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
@@ -186,4 +186,30 @@ export function balancedGray(a: string, b: string): string {
   }
   const level = Math.round((lo + hi) / 2);
   return '#' + level.toString(16).padStart(2, '0').repeat(3);
+}
+
+/** Hue (0-360), saturation and lightness (0-1) of a hex colour. */
+export function hslOf(hex: string): [number, number, number] {
+  return rgbToHsl(hexToRgb(hex) ?? [0, 0, 0]);
+}
+
+/**
+ * `hex` moved along its own lightness (same hue and saturation) until it reaches `minContrast`
+ * against every colour in `against`: darker on a light surface, lighter on a dark one. Returns
+ * the colour unchanged when it already reads, and the best the lightness range allows otherwise.
+ */
+export function ensureContrast(hex: string, against: string[], minContrast: number): string {
+  const ok = (c: string) => against.every((bg) => contrastRatio(c, bg) >= minContrast);
+  if (ok(hex)) return hex;
+  const [h, s, l] = hslOf(hex);
+  // On a light surface go darker, on a dark one lighter.
+  const lighter = against.every((bg) => !isDarkColor(bg)) ? -1 : 1;
+  let best = hex;
+  for (let step = 1; step <= 100; step++) {
+    const next = Math.min(1, Math.max(0, l + (lighter * step) / 100));
+    best = hslToHex(h, s, next);
+    if (ok(best)) return best;
+    if (next === 0 || next === 1) break;
+  }
+  return best;
 }

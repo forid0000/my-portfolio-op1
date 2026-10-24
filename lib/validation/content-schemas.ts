@@ -11,6 +11,7 @@
  */
 import { z } from 'zod';
 import { isSafeHref, normalizeLink } from '@/lib/safe-href';
+import { cleanIconName } from '@/lib/link-icon';
 import { whatsappHref } from '@/lib/contact-links';
 import { mediaListSchema } from '@/lib/validation/media-schemas';
 import { KITS_COLOR_MAP } from '@/lib/kits-registry';
@@ -89,6 +90,8 @@ export const projectLinkSchema = z.object({
     .max(500)
     .transform(normalizeLink)
     .refine(isSafeHref, 'Use a full link such as https://example.com'),
+  /** The icon in front of the label; empty = chosen automatically from the label and address. */
+  icon: z.string().trim().max(48).transform(cleanIconName).default(''),
 });
 
 /** projects_content - app/api/admin/content/projects/route.ts */
