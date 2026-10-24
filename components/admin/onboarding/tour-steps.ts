@@ -30,7 +30,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'session',
     title: 'Your session',
-    body: 'For safety you stay signed in for 15 minutes at a time. This timer turns red near the end, and a button appears to add more time. If it runs out, just sign in again with your authenticator.',
+    body: 'For safety you stay signed in for 45 minutes. This timer turns red near the end, and the +15 Min button adds more time, up to 3 hours in total. If it runs out, just sign in again with your authenticator.',
     target: 'session',
     placement: 'right',
   },

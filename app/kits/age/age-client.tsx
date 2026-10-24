@@ -124,7 +124,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
             type="date"
             value={dob}
             onChange={(e) => setDob(e.target.value)}
-            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+            className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+            className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg text-foreground appearance-none focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function AgeClient({ iconData, accentColor }: AgeClientProps) {
                 </span>
               </div>
               <div className="text-center">
-                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground/60">
+                <span className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground/70">
                   {stats.full.days}
                 </span>
                 <span className="text-xs md:text-sm text-muted-foreground uppercase font-bold ml-1 block">

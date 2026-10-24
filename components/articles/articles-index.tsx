@@ -56,7 +56,7 @@ export default function ArticlesIndex({
               placeholder="Search articles"
               aria-label="Search articles"
               dir="auto"
-              className="w-full rounded-xl border border-border bg-input py-2.5 ps-10 pe-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-xl border border-border bg-input py-2.5 ps-10 pe-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
           </div>
           {tags.length > 0 && (

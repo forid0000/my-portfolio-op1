@@ -48,14 +48,14 @@ export default function NoteDocument({
                 type="button"
                 onClick={() => onTagClick(tag)}
                 title={`Show notes tagged #${tag}`}
-                className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                className="chip chip-primary rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors hover:brightness-95"
               >
                 #{tag}
               </button>
             ) : (
               <span
                 key={tag}
-                className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                className="chip chip-primary rounded-full border px-2.5 py-0.5 text-xs font-medium"
               >
                 #{tag}
               </span>

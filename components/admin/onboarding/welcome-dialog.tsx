@@ -6,7 +6,7 @@
  * server, so it never comes back; the tour stays available from the sidebar.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Compass, ListChecks, ShieldCheck, Sparkles } from 'lucide-react';
+import { Compass, LayoutDashboard, ListChecks, ShieldCheck } from 'lucide-react';
 import { useOnboarding } from './provider';
 
 export function WelcomeDialog() {
@@ -64,7 +64,7 @@ export function WelcomeDialog() {
         className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-7 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-950/60">
-          <Sparkles className="h-6 w-6 text-emerald-400" />
+          <LayoutDashboard className="h-6 w-6 text-emerald-400" />
         </div>
         <h2 id="welcome-title" className="text-xl font-bold tracking-tight text-gray-100">
           Welcome to your admin panel

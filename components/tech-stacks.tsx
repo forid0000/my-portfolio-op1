@@ -1,3 +1,4 @@
+import type React from 'react';
 import { Container } from '@/components/site/primitives';
 import SectionHeading from '@/components/section-heading';
 import {} from 'lucide-react';
@@ -96,11 +97,20 @@ function fillRow(items: string[]): string[] {
   return Array.from({ length: copies }, () => items).flat();
 }
 
+/** Logos drawn in plain white or light grey: invisible on a light page, so they take the text colour. */
+const MONOCHROME_ICONS = new Set(['nextjs', 'flask']);
+
 function TechChip({ name }: { name: string }) {
   const icon = TECH_ICONS[name];
   return (
     <div className="tech-chip">
-      {icon ? (
+      {icon && MONOCHROME_ICONS.has(icon) ? (
+        <i
+          aria-hidden="true"
+          className="tech-icon-mono"
+          style={{ '--tech-icon': `url(/tech-icons/${icon}.svg)` } as React.CSSProperties}
+        />
+      ) : icon ? (
         // Plain <img>: these are small local SVGs, so the image optimizer adds nothing.
         // eslint-disable-next-line @next/next/no-img-element
         <img

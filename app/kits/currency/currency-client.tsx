@@ -157,7 +157,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
               <select
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
+                className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
               >
                 {currencyList.map((c) => (
                   <option key={c} value={c} className="bg-background text-foreground">
@@ -188,7 +188,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
               <select
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
+                className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg font-mono focus:border-primary outline-none appearance-none cursor-pointer"
               >
                 {currencyList.map((c) => (
                   <option key={c} value={c} className="bg-background text-foreground">
@@ -210,7 +210,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
             type="number"
             value={amountStr}
             onChange={(e) => setAmountStr(e.target.value)}
-            className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-4 text-3xl font-bold text-center focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-foreground/10"
+            className="w-full bg-input border border-foreground/20 rounded-xl p-4 text-3xl font-bold text-center focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground"
             placeholder="0.00"
           />
         </div>
@@ -231,7 +231,7 @@ export default function CurrencyClient({ iconData, accentColor }: CurrencyClient
             <div className="text-4xl md:text-5xl font-bold text-primary font-mono tracking-tight break-all">
               {convertedAmount}
             </div>
-            <div className="text-lg font-bold text-foreground/50">{to}</div>
+            <div className="text-lg font-bold text-foreground/70">{to}</div>
           </div>
 
           <div className="text-xs text-muted-foreground mt-6 pt-4 border-t border-foreground/5 flex flex-col md:flex-row justify-between items-center gap-2">

@@ -45,6 +45,7 @@ import FieldErrorBridge from '@/components/admin/field-error-bridge';
 import ChangesBadge from '@/components/admin/changes-badge';
 import { useSidebarLayout } from '@/hooks/use-sidebar-layout';
 import { SIDEBAR, effectiveWidth } from '@/lib/sidebar-layout';
+import { ADMIN_SESSION_EXTEND_SECONDS } from '@/lib/session-timing';
 import { OnboardingProvider, TourLauncher } from '@/components/admin/onboarding/provider';
 
 type NavItem = {
@@ -166,6 +167,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  // Seconds until the 3-hour limit from sign-in; the session can never be extended past it.
+  const [limitLeft, setLimitLeft] = useState<number | null>(null);
   const [sessionStatus, setSessionStatus] = useState<'loading' | 'active' | 'expired'>('loading');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const asideRef = useRef<HTMLElement>(null);
@@ -181,6 +184,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           const data = await res.json();
           if (data.active && data.remainingSeconds > 0) {
             setTimeLeft(data.remainingSeconds);
+            if (typeof data.limitSeconds === 'number') setLimitLeft(data.limitSeconds);
             setSessionStatus('active');
           } else {
             setSessionStatus('expired');
@@ -203,6 +207,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+      setLimitLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
@@ -216,12 +221,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
   }, [sessionStatus, router]);
 
+  // 44:59 under an hour, 2:59:59 above it (a session can last up to 3 hours).
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60)
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60)
       .toString()
       .padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
   };
 
   const isWarning = timeLeft !== null && timeLeft <= 180;
@@ -235,8 +242,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const atLimit = timeLeft !== null && limitLeft !== null && timeLeft >= limitLeft;
   const handleRefreshSession = async () => {
-    if (timeLeft === null || timeLeft > 300 || isRefreshing) return;
+    if (timeLeft === null || atLimit || isRefreshing) return;
     setIsRefreshing(true);
     try {
       const res = await fetch('/api/admin/session/refresh', { method: 'POST' });
@@ -244,9 +252,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const data = await res.json();
         if (data.success) {
           setTimeLeft(data.remainingSeconds);
+          if (typeof data.limitSeconds === 'number') setLimitLeft(data.limitSeconds);
         }
+      } else if (res.status === 409) {
+        // Already at the 3-hour limit: keep working, the button now says so.
+        const data = await res.json().catch(() => ({}));
+        if (typeof data.limitSeconds === 'number') setLimitLeft(data.limitSeconds);
       } else if (res.status === 401) {
-        // Absolute limit reached or session actually expired
+        // The session actually expired
         setSessionStatus('expired');
       }
     } catch (err) {
@@ -393,19 +406,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
 
               {/* Refresh Session Button */}
-              {sessionStatus === 'active' && timeLeft !== null && timeLeft <= 300 && (
+              {sessionStatus === 'active' && timeLeft !== null && (
                 <button
                   onClick={handleRefreshSession}
-                  disabled={isRefreshing}
-                  title="Add five minutes to the session"
-                  className="mt-3 px-3 py-1.5 w-full rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5"
+                  disabled={isRefreshing || atLimit}
+                  title={
+                    atLimit
+                      ? 'This session is at its 3-hour limit. Sign in again for a new one.'
+                      : `Add ${ADMIN_SESSION_EXTEND_SECONDS / 60} minutes (a session lasts at most 3 hours)`
+                  }
+                  className="mt-3 px-3 py-1.5 w-full rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/50 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-600/20"
                 >
                   {isRefreshing ? (
                     <span className="animate-spin w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full" />
                   ) : (
                     <Clock className="w-3.5 h-3.5" />
                   )}
-                  <span className={collapsed ? 'md:sr-only' : ''}>+5 Min</span>
+                  <span className={collapsed ? 'md:sr-only' : ''}>
+                    {atLimit ? 'Max 3 h' : `+${ADMIN_SESSION_EXTEND_SECONDS / 60} Min`}
+                  </span>
                 </button>
               )}
             </div>

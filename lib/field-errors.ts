@@ -48,7 +48,13 @@ export function parseIssues(body: unknown): FieldIssue[] {
   return issues;
 }
 
-const ACRONYMS: Record<string, string> = { url: 'URL', id: 'ID', seo: 'SEO', cta: 'CTA' };
+const ACRONYMS: Record<string, string> = {
+  url: 'URL',
+  id: 'ID',
+  seo: 'SEO',
+  cta: 'CTA',
+  href: 'address',
+};
 
 /** `headerName` / `header_name` -> "Header name". */
 export function humanizeKey(key: string): string {

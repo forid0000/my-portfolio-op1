@@ -128,7 +128,7 @@ export default async function PublicNotePage({ params }: { params: Promise<{ slu
           {note.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+              className="chip chip-primary rounded-full border px-3 py-1 text-xs font-medium"
             >
               #{tag}
             </span>

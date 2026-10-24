@@ -186,7 +186,7 @@ export const ROADMAP_DEFAULTS = [
     title: 'Where This Leads',
     description: 'A longer-term vision for your work and the people it will reach.',
     tech: ['Vision'],
-    icon: 'Sparkles',
+    icon: 'Compass',
   },
 ];
 

@@ -249,7 +249,7 @@ function GeneratorView() {
               <textarea
                 value={state.value}
                 onChange={(e) => updateState('value', e.target.value)}
-                className={`w-full bg-scrim/40 border rounded-lg p-3 text-foreground focus:ring-1 outline-none min-h-[100px] ${
+                className={`w-full bg-input border rounded-lg p-3 text-foreground focus:ring-1 outline-none min-h-[100px] ${
                   isPayloadTooLong
                     ? 'border-destructive/50 focus:border-destructive focus:ring-destructive/50'
                     : 'border-foreground/10 focus:border-primary focus:ring-primary/50'
@@ -276,7 +276,7 @@ function GeneratorView() {
                   type="text"
                   value={state.ssid}
                   onChange={(e) => updateState('ssid', e.target.value)}
-                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
+                  className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -288,7 +288,7 @@ function GeneratorView() {
                     type="text"
                     value={state.password}
                     onChange={(e) => updateState('password', e.target.value)}
-                    className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
+                    className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                   />
                 </div>
                 <div className="space-y-2">
@@ -298,7 +298,7 @@ function GeneratorView() {
                   <select
                     value={state.encryption}
                     onChange={(e) => updateState('encryption', e.target.value)}
-                    className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none"
+                    className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground focus:border-primary outline-none"
                   >
                     <option value="WPA">WPA/WPA2</option>
                     <option value="WEP">WEP</option>
@@ -319,7 +319,7 @@ function GeneratorView() {
                   type="email"
                   value={state.email}
                   onChange={(e) => updateState('email', e.target.value)}
-                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary"
+                  className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -328,7 +328,7 @@ function GeneratorView() {
                   type="text"
                   value={state.subject}
                   onChange={(e) => updateState('subject', e.target.value)}
-                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary"
+                  className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground outline-none focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -336,7 +336,7 @@ function GeneratorView() {
                 <textarea
                   value={state.body}
                   onChange={(e) => updateState('body', e.target.value)}
-                  className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground outline-none focus:border-primary min-h-[80px]"
+                  className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground outline-none focus:border-primary min-h-[80px]"
                 />
                 {isPayloadTooLong && (
                   <div className="text-xs text-destructive text-right">
@@ -530,7 +530,7 @@ function ScannerView() {
             <div className="flex items-center gap-2 mb-2 text-success font-bold uppercase tracking-wider text-sm">
               <CheckCircle2 className="w-4 h-4" /> Decoded Payload
             </div>
-            <div className="p-4 bg-scrim/30 rounded-lg border border-foreground/5 break-all font-mono text-foreground text-lg flex justify-between items-start gap-4">
+            <div className="p-4 bg-input rounded-lg border border-foreground/10 break-all font-mono text-foreground text-lg flex justify-between items-start gap-4">
               <span>{scannedResult}</span>
               <button
                 onClick={() => copyToClipboard(scannedResult)}
@@ -554,7 +554,7 @@ function ScannerView() {
         )}
 
         {/* Scanner Interface */}
-        <div className="bg-scrim/20 border border-foreground/10 rounded-2xl overflow-hidden relative min-h-[400px] flex flex-col">
+        <div className="bg-input border border-foreground/20 rounded-2xl overflow-hidden relative min-h-[400px] flex flex-col">
           <div
             id="reader"
             className={`w-full flex-1 bg-scrim ${scanMode === 'camera' ? 'block' : 'hidden'}`}
@@ -627,14 +627,14 @@ function ScannerView() {
 
           <div className="space-y-3 flex-1 overflow-y-auto max-h-[500px]">
             {history.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground/50 text-xs italic">
+              <div className="text-center py-10 text-muted-foreground/70 text-xs italic">
                 No scans yet.
               </div>
             ) : (
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-lg bg-scrim/20 border border-foreground/5 hover:border-foreground/10 transition-all group"
+                  className="p-3 rounded-lg bg-input border border-foreground/10 hover:border-foreground/20 transition-all group"
                 >
                   <div className="text-xs text-foreground/90 break-all font-mono mb-2 line-clamp-3">
                     {item.text}

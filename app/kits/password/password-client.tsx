@@ -291,7 +291,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
         </h2>
 
         {/* Mode Switcher */}
-        <div className="flex bg-scrim/40 p-1 rounded-lg border border-foreground/10 w-full lg:w-auto overflow-x-auto">
+        <div className="flex bg-input p-1 rounded-lg border border-foreground/20 w-full lg:w-auto overflow-x-auto">
           <Tab
             active={mode === 'random'}
             onClick={() => setMode('random')}
@@ -326,11 +326,11 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
               value={output}
               onChange={handleManualInput}
               placeholder="Type to analyze..."
-              className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-6 text-center font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none placeholder:text-foreground/10"
+              className="w-full bg-input border border-foreground/20 rounded-xl p-6 text-center font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none placeholder:text-muted-foreground"
               autoFocus
             />
           ) : (
-            <div className="bg-scrim/40 border border-foreground/10 rounded-xl p-6 text-center break-all font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] flex items-center justify-center">
+            <div className="bg-input border border-foreground/20 rounded-xl p-6 text-center break-all font-mono text-xl md:text-3xl tracking-tight text-primary shadow-inner min-h-[6rem] flex items-center justify-center">
               {output}
             </div>
           )}
@@ -389,7 +389,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                     onChange={(e) =>
                       setLength(Math.min(128, Math.max(4, parseInt(e.target.value) || 0)))
                     }
-                    className="w-16 bg-scrim/20 border border-foreground/10 rounded px-2 py-1 text-right font-mono text-primary focus:border-primary outline-none"
+                    className="w-16 bg-input border border-foreground/20 rounded px-2 py-1 text-right font-mono text-primary focus:border-primary outline-none"
                   />
                 </div>
                 <input
@@ -455,7 +455,7 @@ export default function PasswordClient({ iconData, accentColor }: PasswordClient
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">
                     Separator
                   </label>
-                  <div className="flex bg-scrim/20 rounded-lg p-1 border border-foreground/5">
+                  <div className="flex bg-input rounded-lg p-1 border border-foreground/10">
                     {['-', '_', '.', ' '].map((sep) => (
                       <button
                         key={sep === ' ' ? 'space' : sep}

@@ -26,7 +26,7 @@ import { clientIp, rateLimit, resetRateLimit } from '@/lib/rate-limit';
 // Everything credential-related that the admin can change from the dashboard.
 // Every change (except generating a fresh authenticator seed, which stores
 // nothing) needs a current authenticator code on top of the session, so a stolen
-// 15-minute session cookie cannot be turned into a permanent takeover.
+// session cookie cannot be turned into a permanent takeover.
 
 const totp = z.string().max(20);
 const seed = z.string().max(200);

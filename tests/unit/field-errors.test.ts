@@ -44,7 +44,7 @@ describe('field error helpers', () => {
     expect(humanizeKey('headerName')).toBe('Header name');
     expect(humanizeKey('githubProfileUrl')).toBe('Github profile URL');
     expect(humanizeKey('cta_label')).toBe('CTA label');
-    expect(describePath(['socials', 2, 'href'])).toBe('Socials #3 > Href');
+    expect(describePath(['socials', 2, 'href'])).toBe('Socials #3 > Address');
     expect(describePath([0, 'name'])).toBe('Item 1 > Name');
     expect(describePath([])).toBe('This field');
   });

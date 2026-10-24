@@ -237,7 +237,7 @@ function NumberView() {
               type="number"
               value={min}
               onChange={(e) => setMin(Number(e.target.value))}
-              className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
+              className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
             />
           </div>
           <div className="space-y-2">
@@ -246,7 +246,7 @@ function NumberView() {
               type="number"
               value={max}
               onChange={(e) => setMax(Number(e.target.value))}
-              className="w-full bg-scrim/40 border border-foreground/10 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
+              className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-foreground focus:border-primary outline-none font-mono"
             />
           </div>
           <button
@@ -276,7 +276,7 @@ function NumberView() {
       </div>
 
       {/* Display */}
-      <div className="flex items-center justify-center bg-scrim/20 border border-foreground/10 rounded-xl min-h-[300px] relative overflow-hidden">
+      <div className="flex items-center justify-center bg-input border border-foreground/20 rounded-xl min-h-[300px] relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         {result !== null ? (
           <div className="text-center animate-in zoom-in duration-300">
@@ -354,7 +354,7 @@ function ListView() {
           value={items}
           onChange={(e) => setItems(e.target.value)}
           placeholder={'Imran\nHassan\nFaisal\nNoman\nSaad'}
-          className="flex-1 min-h-[250px] w-full bg-scrim/40 border border-foreground/10 rounded-lg p-4 text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none font-mono resize-none leading-relaxed whitespace-pre-wrap"
+          className="flex-1 min-h-[250px] w-full bg-input border border-foreground/20 rounded-lg p-4 text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none font-mono resize-none leading-relaxed whitespace-pre-wrap"
         />
         <button
           onClick={pickWinner}
@@ -380,7 +380,7 @@ function ListView() {
             </div>
             {!isRolling && (
               <div className="mt-8 flex justify-center">
-                <div className="bg-warning/20 text-warning p-3 rounded-full border border-warning/50 shadow-[0_0_30px_rgba(234,179,8,0.3)] animate-bounce">
+                <div className="bg-warning/20 text-warning p-3 rounded-full border border-warning/50 shadow-[0_0_30px_color-mix(in_srgb,var(--warning)_30%,transparent)] animate-bounce">
                   <Trophy className="w-8 h-8" />
                 </div>
               </div>

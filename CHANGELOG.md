@@ -8,6 +8,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- **Longer admin sessions you can extend.** A sign-in now lasts **45 minutes** (was 15). The dashboard's **+15 Min** button is always available and adds 15 minutes to what is left on every click, up to **3 hours** in total from sign-in (then it reads "Max 3 h" and is disabled); the timer shows hours once above 59 minutes. The rules live in `lib/session-timing.ts`; `POST /api/admin/session/refresh` answers 409 at the limit and `GET /api/admin/session` reports `limitSeconds`.
 - **Profile picture that works.** Upload from Admin → Hero Section or Media Manager: drag, click or paste (Ctrl+V); large photos are compressed in the browser; it goes live immediately (untick the box to only add it to the library); the same picture uploaded twice is detected. Two-way sync with Cloudinary: deleting or renaming a file in the Cloudinary explorer updates the library and every saved reference, missing files are flagged, and **Re-sync** repairs drift.
 - **Pictures and videos for projects and certifications**: several per item, the first is the main cover, reorder, make cover, remove, drag-and-drop and paste. Videos stream from Cloudinary as web-safe MP4 with a poster frame and **never autoplay unless you turn it on** (per video: autoplay, loop, muted, controls). Visitors can click any picture or video to see it larger (arrow keys, swipe, Esc).
 - **Direct uploads to Cloudinary** with smart, size-aware compression (95% quality for slightly oversized images, down to an 80% floor, then smaller dimensions; images that already fit are not touched), so there is no 4.5 MB / 10 MiB request limit and videos up to 100 MB work.
@@ -37,6 +38,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- **One tag style for every theme.** Small labels (dates, service categories, roadmap topics, project and skill tags, article and note tags) use the new `.chip` style: a tint of a theme colour with text that is that colour mixed into the normal text colour, so it stays readable (4.5:1 and up) on all 44 presets and on custom colours. Tag lists take their colour from the label (`lib/chip-hue.ts`: primary, secondary, info, success or warning), so the same word always has the same colour. The earlier pale lavender pills with grey text are gone. Unit tests check every preset.
+- **Form fields follow the theme.** Contact form and the Tools kits use the theme's input colour, a visible edge and full-strength placeholder text (checked on every preset), instead of a dark overlay colour that turned into grey boxes with invisible placeholders on light themes.
+- **No sparkle icons.** The AI-sparkle family (Sparkles, Stars, magic wand, Material "auto awesome" and lookalikes in every icon pack) was removed from the admin and the defaults; a saved sparkle icon is drawn as a plain star and the icon picker no longer offers them (`lib/icons/no-sparkle.ts`).
+- **The 404 page follows the style setting.** The clean style shows a plain card ("Page not found", "Back to home"); the command-prompt window and decoding text stay in the terminal style. The server fallback now uses `SYSTEM_DEFAULTS` instead of its own terminal wording.
+- **Longer text is readable text.** Hero introduction, skill percentages, footer line, expertise subtitle, experience details and a few kit labels were drawn at 50-60% strength (under 3:1 on light themes); they now use the normal muted text colour.
+- **Link addresses are forgiving.** `behance.net/you` or `www.site.com` is completed to `https://...` when you leave the box and on save (project links, "See more" button, certificate, publication and service links, custom menu links); `https://` alone is no longer accepted. Error summaries say "address" instead of "href".
+
 - **The default look is now the clean style.** Terminal prompts (`dev@portfolio:~/about$`), monospace text, uppercase nav labels, the system-status widget and decorative effects moved behind the opt-in Terminal style. Existing sites change look on upgrade; switch back in Admin → Appearance → Style → Terminal.
 - Placeholder content is neutral instead of developer-specific. Saved content is unaffected.
 - The favicon is a round PNG cut from the avatar by Cloudinary (set in the page metadata) and the share image is a JPEG variant; both follow the avatar automatically. The generated `/icon` route is gone.
@@ -53,6 +61,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- **Project links could not be filled in.** In Admin -> Projects the link label box took the whole row (`w-full` beat `w-40` in the stylesheet) and squeezed the address box to a sliver, so addresses were typed into the label and saving said "Enter a full web address" for an empty field. The row now shows both boxes (label on its own line on phones), empty and wrong addresses get different messages, and error messages are written under a row of fields instead of becoming one more column inside it (`lib/field-errors.ts`).
+- **Light themes**: the contact form and kits were unreadable (grey boxes, near-invisible placeholders); the Next.js and Flask logos in the technology strip were white on white (they now take the text colour); decorative glows were a fixed mint green on every theme (they follow the primary colour); certificate and service cards were stretched to the tallest card in the row, leaving big empty areas.
+- **Sparkle and terminal leftovers** in the clean style: experience tags no longer show `[brackets]`, the 404 page no longer talks about a "matrix".
 - **CI failed at "Install dependencies"** (`ERR_PNPM_IGNORED_BUILDS`): `pnpm-workspace.yaml` held unfilled placeholders. The install scripts are now decided explicitly.
 - **Remove did nothing** in the Services banner, Testimonial photo and Certification badge editors: the emptied field was left out of the save and the old file stayed. It is now removed from the database and from Cloudinary.
 - **Static pages kept stale content after an admin save in production** (module-level caches are per bundle). Caches now live on `globalThis`, and a failed database read is no longer cached as defaults.

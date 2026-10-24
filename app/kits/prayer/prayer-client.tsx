@@ -586,7 +586,7 @@ export default function PrayerClient() {
             return (
               <div
                 key={`${event.id}-${i}`}
-                className={`flex items-center justify-between px-4 md:px-6 rounded-xl border border-transparent transition-all duration-500 ${isCenter ? 'bg-primary/10 border-primary/20 py-3 md:py-5 scale-100 opacity-100 shadow-md' : 'py-1.5 md:py-3 scale-95 opacity-50 grayscale'} ${event.type === 'forbidden' && isCenter ? 'bg-destructive/10 border-destructive/20' : ''}`}
+                className={`flex items-center justify-between px-4 md:px-6 rounded-xl border border-transparent transition-all duration-500 ${isCenter ? 'bg-primary/10 border-primary/20 py-3 md:py-5 scale-100 opacity-100 shadow-md' : 'py-1.5 md:py-3 scale-95 opacity-70 grayscale'} ${event.type === 'forbidden' && isCenter ? 'bg-destructive/10 border-destructive/20' : ''}`}
               >
                 <div className="flex items-center gap-3 md:gap-5">
                   <div

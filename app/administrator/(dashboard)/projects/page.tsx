@@ -437,7 +437,7 @@ export default function ProjectsCMS() {
                                 onChange={(e) => patchLink(idx, lIdx, { label: e.target.value })}
                                 placeholder="Label, e.g. Live site"
                                 aria-label="Link label"
-                                className={cn(inputClass, 'w-40 shrink-0')}
+                                className={cn(inputClass, 'lg:w-40 lg:shrink-0')}
                               />
                               <input
                                 type="text"
@@ -449,7 +449,7 @@ export default function ProjectsCMS() {
                                 }
                                 placeholder="Address, e.g. https://example.com"
                                 aria-label="Link address"
-                                className={cn(inputClass, 'min-w-[12rem] flex-1')}
+                                className={cn(inputClass, 'min-w-0 grow basis-40')}
                               />
                               <button
                                 onClick={() => removeLink(idx, lIdx)}

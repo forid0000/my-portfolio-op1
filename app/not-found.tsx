@@ -3,14 +3,14 @@
 // Active CPU cost. The 404 text refreshes on redeploy (it changes very rarely).
 import NotFoundClient from './not-found-client';
 import connectToDatabase from '@/lib/db';
+import { SYSTEM_DEFAULTS } from '@/lib/content-defaults';
 
 export default async function NotFound() {
-  let config = {
-    notFoundTitle: '404',
-    notFoundHeading: '>_ RESOURCE_NOT_FOUND _<',
-    notFoundSubtext:
-      "The entity you're tracking has vanished.\nThe matrix has been altered, or the path is corrupted.",
-    notFoundButton: 'RETURN TO BASE',
+  let config: Record<string, string> = {
+    notFoundTitle: SYSTEM_DEFAULTS.notFoundTitle,
+    notFoundHeading: SYSTEM_DEFAULTS.notFoundHeading,
+    notFoundSubtext: SYSTEM_DEFAULTS.notFoundSubtext,
+    notFoundButton: SYSTEM_DEFAULTS.notFoundButton,
   };
 
   try {

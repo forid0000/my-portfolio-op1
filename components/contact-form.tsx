@@ -348,7 +348,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                         value={values.fullName}
                         onChange={(e) => setField('fullName')(e.target.value)}
                         placeholder="Jane Doe"
-                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-input border border-foreground/20 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground"
                         disabled={status === 'SENDING'}
                       />
                     </div>
@@ -370,7 +370,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                         value={values.email}
                         onChange={(e) => setField('email')(e.target.value)}
                         placeholder="jane.doe@example.com"
-                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-input border border-foreground/20 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground"
                         disabled={status === 'SENDING'}
                       />
                     </div>
@@ -392,7 +392,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                         value={values.phone}
                         onChange={(e) => setField('phone')(e.target.value)}
                         placeholder="+1 555 010 0100"
-                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-input border border-foreground/20 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground"
                         disabled={status === 'SENDING'}
                       />
                     </div>
@@ -412,7 +412,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                         value={values.location}
                         onChange={(e) => setField('location')(e.target.value)}
                         placeholder="City, Country"
-                        className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
+                        className="w-full bg-input border border-foreground/20 rounded-xl p-3.5 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground"
                         disabled={status === 'SENDING'}
                       />
                     </div>
@@ -433,7 +433,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                               ${
                                 selectedPurpose === option
                                   ? 'bg-primary text-primary-foreground border-primary shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_30%,transparent)]'
-                                  : 'bg-scrim/40 border-foreground/10 text-foreground/70 hover:bg-foreground/10 hover:text-foreground'
+                                  : 'bg-input border-foreground/20 text-foreground/80 hover:bg-foreground/10 hover:text-foreground'
                               }
                             `}
                           >
@@ -474,7 +474,7 @@ export default function ContactForm({ content }: ContactFormProps) {
                       onChange={(e) => setField('message')(e.target.value)}
                       rows={5}
                       placeholder="Tell me a little about what you need and when you need it..."
-                      className="w-full bg-scrim/40 border border-foreground/10 rounded-xl p-4 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground/30 resize-y min-h-[140px]"
+                      className="w-full bg-input border border-foreground/20 rounded-xl p-4 text-base text-foreground focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all placeholder:text-muted-foreground resize-y min-h-[140px]"
                       disabled={status === 'SENDING'}
                     />
                   </div>

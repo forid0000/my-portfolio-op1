@@ -1187,6 +1187,37 @@ section[id] {
 /* Tech-stack marquee chips. One class instead of ~230 characters of utilities
    repeated on each of ~120 chips, and no backdrop-filter / drop-shadow filter per
    chip (each one forces its own GPU layer inside an animating strip). */
+/*
+ * Small labels (dates, categories, topics, tags). The tint comes from a theme colour
+ * (--chip-hue, the secondary colour unless a variant says otherwise); the text is that colour
+ * mixed into the normal text colour, so it stays readable on any theme, light or dark, whatever
+ * the owner picks in Appearance. The mix is checked for every theme preset in the unit tests.
+ */
+.chip {
+  --chip-hue: var(--secondary);
+  border-color: color-mix(in srgb, var(--chip-hue) 32%, transparent);
+  background-color: color-mix(in srgb, var(--chip-hue) 12%, var(--background));
+  color: color-mix(in srgb, var(--chip-hue) 36%, var(--foreground));
+}
+.chip-primary {
+  --chip-hue: var(--primary);
+}
+.chip-secondary {
+  --chip-hue: var(--secondary);
+}
+.chip-info {
+  --chip-hue: var(--info);
+}
+.chip-success {
+  --chip-hue: var(--success);
+}
+.chip-warning {
+  --chip-hue: var(--warning);
+}
+.chip-neutral {
+  --chip-hue: var(--foreground);
+}
+
 .tech-chip {
   @apply flex items-center gap-2.5 rounded-full border border-border/50 bg-card/30 px-5 py-2.5;
   transition:
@@ -1202,8 +1233,17 @@ section[id] {
   @apply h-5 w-5 shrink-0 object-contain;
   transition: transform 0.3s;
 }
-.tech-chip:hover img {
+.tech-chip:hover img,
+.tech-chip:hover .tech-icon-mono {
   transform: scale(1.1);
+}
+/* A logo drawn in white or light grey would vanish on a light page: paint its shape in the text colour. */
+.tech-icon-mono {
+  @apply h-5 w-5 shrink-0;
+  background-color: var(--foreground);
+  -webkit-mask: var(--tech-icon) center / contain no-repeat;
+  mask: var(--tech-icon) center / contain no-repeat;
+  transition: transform 0.3s;
 }
 .tech-chip span {
   @apply text-sm font-semibold tracking-tight text-foreground/80;

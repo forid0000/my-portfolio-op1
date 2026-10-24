@@ -160,7 +160,7 @@ export default function Hero({
             )}
           </div>
 
-          <p className="section-subtitle text-sm sm:text-lg max-w-lg leading-relaxed text-muted-foreground/60 mx-auto md:mx-0">
+          <p className="section-subtitle text-sm sm:text-lg max-w-lg leading-relaxed text-muted-foreground mx-auto md:mx-0">
             {content?.description || HERO_DEFAULTS.description}
           </p>
 

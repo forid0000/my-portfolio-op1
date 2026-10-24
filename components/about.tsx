@@ -44,7 +44,7 @@ export default function About({
             <div className="relative pl-8">
               {/* ANIMATED LINE LEFT */}
               <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-primary/10 overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_10px_#00ffc8] animate-scan-y" />
+                <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_10px_color-mix(in_srgb,var(--primary)_80%,transparent)] animate-scan-y" />
               </div>
 
               {/* Decorative Square top-left */}
@@ -57,8 +57,9 @@ export default function About({
 
             {/* "What I Do" Log */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm terminal:font-mono text-primary/80 uppercase tracking-widest border-b border-border/40 pb-2">
-                <Activity className="w-4 h-4 animate-pulse" />[ ACTIVE_PROCESSES ]
+              <div className="flex items-center gap-2 border-b border-border/40 pb-2 text-sm font-semibold text-primary terminal:font-mono terminal:font-normal terminal:uppercase terminal:tracking-widest">
+                <Activity className="w-4 h-4 terminal:animate-pulse" />
+                <ByStyle clean="What I do" terminal="[ ACTIVE_PROCESSES ]" />
               </div>
 
               <ul className="space-y-4">
@@ -74,7 +75,7 @@ export default function About({
                       <span className="terminal:font-mono text-primary text-sm whitespace-nowrap flex items-center gap-2">
                         <span className="font-bold">{title}</span>
                       </span>
-                      <span className="hidden sm:inline text-muted-foreground/30">--</span>
+                      <span className="hidden sm:terminal:inline text-muted-foreground/30">--</span>
                       <span className="text-sm text-muted-foreground/70 group-hover:text-foreground transition-colors duration-500">
                         {desc}
                       </span>

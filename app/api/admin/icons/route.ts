@@ -3,6 +3,7 @@ import { verifyAdminSession } from '@/lib/auth';
 import { ALL_REACT_ICON_NAMES } from '@/lib/icons/names';
 import { resolveIconData } from '@/lib/icons/resolve';
 import { ALL_LUCIDE_ICON_NAMES } from '@/lib/lucide-icon';
+import { isSparkleIcon } from '@/lib/icons/no-sparkle';
 
 // Backs the admin icon picker. The ~50,000-name catalog and the icon libraries
 // stay on the server: the browser sends a search term and receives at most a
@@ -19,7 +20,9 @@ function getCatalogs() {
   if (!catalogs) {
     // lucide first (small, general purpose), then react-icons. "social" pickers
     // favour brand logos.
-    const all = Array.from(new Set([...ALL_LUCIDE_ICON_NAMES, ...ALL_REACT_ICON_NAMES]));
+    const all = Array.from(new Set([...ALL_LUCIDE_ICON_NAMES, ...ALL_REACT_ICON_NAMES])).filter(
+      (n) => !isSparkleIcon(n)
+    );
     const social = [
       ...ALL_LUCIDE_ICON_NAMES,
       // Brand logos: Simple Icons, Font Awesome brands, Ionicons logos. (Simple Icons has
@@ -27,7 +30,7 @@ function getCatalogs() {
       ...ALL_REACT_ICON_NAMES.filter(
         (n) => n.startsWith('Si') || n.startsWith('Fa') || n.startsWith('IoLogo')
       ),
-    ];
+    ].filter((n) => !isSparkleIcon(n));
     catalogs = { all, social };
   }
   return catalogs;

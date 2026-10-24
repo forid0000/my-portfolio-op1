@@ -5,8 +5,9 @@
 import { SignJWT } from 'jose';
 import type { NextResponse } from 'next/server';
 import { getJwtSecret } from '@/lib/auth';
+import { ADMIN_SESSION_SECONDS } from '@/lib/session-timing';
 
-export const ADMIN_SESSION_SECONDS = 15 * 60;
+export { ADMIN_SESSION_SECONDS };
 
 export async function attachAdminSession<T>(response: NextResponse<T>): Promise<NextResponse<T>> {
   const iat = Math.floor(Date.now() / 1000);

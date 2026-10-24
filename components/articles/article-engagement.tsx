@@ -176,7 +176,7 @@ export default function ArticleEngagement({
   if (!reactionsEnabled && !commentsEnabled) return null;
 
   const field =
-    'w-full rounded-xl border border-border bg-input px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/30';
+    'w-full rounded-xl border border-border bg-input px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30';
 
   return (
     <section aria-label="Reactions and comments" className="mt-12 space-y-10">
@@ -366,7 +366,7 @@ function CommentView({ comment }: { comment: PublicComment }) {
           {comment.name}
         </span>
         {comment.byAuthor && (
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+          <span className="chip chip-primary rounded-full border px-2 py-0.5 text-[11px] font-semibold">
             Author
           </span>
         )}

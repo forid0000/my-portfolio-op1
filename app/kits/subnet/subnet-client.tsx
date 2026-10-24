@@ -128,7 +128,7 @@ export default function SubnetClient({ iconData, accentColor }: SubnetClientProp
             value={ip}
             onChange={(e) => setIp(e.target.value)}
             placeholder="e.g. 192.168.1.1"
-            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground font-mono focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+            className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg text-foreground font-mono focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all"
           />
         </div>
 
@@ -140,7 +140,7 @@ export default function SubnetClient({ iconData, accentColor }: SubnetClientProp
           <select
             value={cidr}
             onChange={(e) => setCidr(Number(e.target.value))}
-            className="w-full bg-scrim/20 border border-foreground/10 rounded-lg p-3 text-lg text-foreground font-mono focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all appearance-none"
+            className="w-full bg-input border border-foreground/20 rounded-lg p-3 text-lg text-foreground font-mono focus:border-primary focus:ring-1 focus:ring-primary/50 outline-none transition-all appearance-none"
           >
             {Array.from({ length: 33 }).map((_, i) => (
               <option key={i} value={i} className="bg-card">
@@ -187,8 +187,8 @@ export default function SubnetClient({ iconData, accentColor }: SubnetClientProp
           </div>
 
           {/* Binary Visualization (Hacker aesthetic) */}
-          <div className="p-4 rounded-lg bg-scrim/40 border border-foreground/5 font-mono text-xs md:text-sm text-muted-foreground overflow-x-auto">
-            <div className="flex items-center gap-2 mb-2 text-primary/70">
+          <div className="p-4 rounded-lg bg-input border border-foreground/10 font-mono text-xs md:text-sm text-muted-foreground overflow-x-auto">
+            <div className="flex items-center gap-2 mb-2 text-primary">
               <Binary className="w-4 h-4" /> Binary Representation
             </div>
             <div>{results.binaryIp}</div>

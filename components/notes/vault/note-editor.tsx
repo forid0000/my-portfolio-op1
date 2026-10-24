@@ -431,7 +431,7 @@ export default function NoteEditor({
           'Start writing…\n\nUse the bar above for bold, headings, lists and tables, or type Markdown.\nPaste or drop pictures and files right here.'
         }
         style={textStyle}
-        className="block h-full w-full resize-none whitespace-pre-wrap bg-background px-4 py-3 text-foreground [overflow-wrap:anywhere] placeholder:text-muted-foreground/70 focus:outline-none md:px-6 md:py-4"
+        className="block h-full w-full resize-none whitespace-pre-wrap bg-background px-4 py-3 text-foreground [overflow-wrap:anywhere] placeholder:text-muted-foreground focus:outline-none md:px-6 md:py-4"
       />
     </div>
   );
@@ -622,7 +622,7 @@ export default function NoteEditor({
           placeholder="Title"
           aria-label="Note title"
           dir="auto"
-          className="w-full bg-transparent text-2xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/60 focus:outline-none md:text-3xl"
+          className="w-full bg-transparent text-2xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground focus:outline-none md:text-3xl"
         />
         <TagEditor
           tags={draft.tags}

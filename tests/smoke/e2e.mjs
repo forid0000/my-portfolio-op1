@@ -2190,6 +2190,111 @@ group('16. Projects, services, certificates and education: pictures, details, li
 }
 
 // ---------------------------------------------------------------------------------------
+group('17. Admin session: 45 minutes, +15 minutes per click, 3 hours at most');
+{
+  const MIN = 60;
+  const sign = (signedIn, expires) =>
+    new SignJWT({ role: 'admin' })
+      .setProtectedHeader({ alg: 'HS512', typ: 'JWT' })
+      .setExpirationTime(expires)
+      .setIssuedAt(signedIn)
+      .setNotBefore(signedIn)
+      .sign(new TextEncoder().encode(secret));
+  const call = async (path, cookieValue, method = 'GET') => {
+    const res = await fetch(BASE + path, {
+      method,
+      redirect: 'manual',
+      headers: {
+        ...(cookieValue ? { cookie: `admin_session=${cookieValue}` } : {}),
+        'x-forwarded-for': `10.17.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`,
+      },
+    });
+    let json = null;
+    try {
+      json = await res.json();
+    } catch {}
+    const setCookie = res.headers.get('set-cookie') ?? '';
+    const next = /admin_session=([^;]+)/.exec(setCookie)?.[1] ?? null;
+    const maxAge = Number(/Max-Age=(\d+)/i.exec(setCookie)?.[1] ?? NaN);
+    return { status: res.status, json, next, maxAge };
+  };
+  const near = (value, target, slack = 10) => Math.abs(value - target) <= slack;
+  const now = () => Math.floor(Date.now() / 1000);
+
+  // a fresh sign-in, 45 minutes
+  const t0 = now();
+  let cookieValue = await sign(t0, t0 + 45 * MIN);
+  let r = await call('/api/admin/session', cookieValue);
+  check(
+    'a new session reports 45 minutes left and a 3-hour limit',
+    r.status === 200 &&
+      near(r.json.remainingSeconds, 45 * MIN) &&
+      near(r.json.limitSeconds, 180 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  // each click adds 15 minutes, whenever it is pressed
+  r = await call('/api/admin/session/refresh', cookieValue, 'POST');
+  check(
+    'one click adds 15 minutes (not only near the end)',
+    r.status === 200 && r.json.added === 15 * MIN && near(r.json.remainingSeconds, 60 * MIN),
+    JSON.stringify(r.json)
+  );
+  check(
+    'the new cookie lasts as long as the new session',
+    near(r.maxAge, 60 * MIN) && !!r.next,
+    String(r.maxAge)
+  );
+  cookieValue = r.next;
+  r = await call('/api/admin/session', cookieValue);
+  check(
+    'the extended session still counts the 3 hours from the first sign-in',
+    near(r.json.remainingSeconds, 60 * MIN) && near(r.json.limitSeconds, 180 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  // keep clicking: nine clicks in all reach exactly 3 hours, then it stops
+  let clicks = 1;
+  let last = null;
+  for (let i = 0; i < 12; i += 1) {
+    last = await call('/api/admin/session/refresh', cookieValue, 'POST');
+    if (last.status !== 200) break;
+    clicks += 1;
+    cookieValue = last.next;
+  }
+  check('nine clicks reach the 3-hour limit', clicks === 9, String(clicks));
+  check(
+    'one more click is refused and says why',
+    last.status === 409 && last.json.atLimit === true && /3-hour/.test(last.json.error ?? ''),
+    JSON.stringify(last.json)
+  );
+  r = await call('/api/admin/session', cookieValue);
+  check(
+    'a session at its limit is still valid, with about 3 hours left',
+    r.status === 200 && r.json.active === true && near(r.json.remainingSeconds, 180 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  // only what fits under the limit is added
+  const t1 = now();
+  const old = await sign(t1 - 170 * MIN, t1 + 5 * MIN);
+  r = await call('/api/admin/session/refresh', old, 'POST');
+  check(
+    'near the limit only the remaining minutes are added',
+    r.status === 200 && r.json.atLimit === true && near(r.json.remainingSeconds, 10 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  // refusing what must be refused
+  r = await call('/api/admin/session/refresh', await sign(t1 - 3600, t1 - 5), 'POST');
+  check('an expired session cannot be extended', r.status === 401, String(r.status));
+  r = await call('/api/admin/session/refresh', '', 'POST');
+  check('without a session there is nothing to extend', r.status === 401, String(r.status));
+  r = await call('/api/admin/session/refresh', 'not-a-token', 'POST');
+  check('a forged cookie cannot be extended', r.status === 401, String(r.status));
+}
+
+// ---------------------------------------------------------------------------------------
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 if (failed.length) {

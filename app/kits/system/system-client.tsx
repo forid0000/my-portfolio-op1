@@ -392,7 +392,7 @@ const SecurityRow = ({ label, isDetected, loading, failed }: any) => (
     ) : isDetected ? (
       <span className="text-destructive text-xs font-bold">DETECTED</span>
     ) : (
-      <span className="text-success/70 text-xs font-bold">SAFE</span>
+      <span className="text-success text-xs font-bold">SAFE</span>
     )}
   </div>
 );

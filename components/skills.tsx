@@ -52,7 +52,7 @@ export default function Skills({
                         <span className="text-foreground/80 group-hover:text-foreground transition-colors duration-300">
                           {skill.name}
                         </span>
-                        <span className="text-muted-foreground/60 text-xs font-bold">
+                        <span className="text-muted-foreground text-xs font-bold">
                           {skill.progress}%
                         </span>
                       </div>

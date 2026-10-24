@@ -11,7 +11,6 @@ import {
   LayoutTemplate,
   Info,
   Terminal,
-  Sparkles,
   ShieldCheck,
   Check,
   AlertTriangle,
@@ -479,7 +478,7 @@ export default function AppearancePage() {
             {/* Look & feel */}
             <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl shadow-xl">
               <h3 className="text-lg font-semibold text-gray-200 mb-1 flex items-center gap-2 border-b border-gray-800 pb-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" /> Style
+                <Palette className="w-5 h-5 text-emerald-400" /> Style
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 How section titles, the header and the footer are worded and drawn.
@@ -491,7 +490,7 @@ export default function AppearancePage() {
                       'clean',
                       'Clean',
                       'Plain headings and everyday words. Works for any profession.',
-                      Sparkles,
+                      LayoutTemplate,
                     ],
                     [
                       'terminal',

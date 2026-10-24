@@ -124,7 +124,7 @@ Next the page shows a square **QR code**.
 
 > ⚠️ **There are no backup codes by design.** If you lose your phone and did not save the written key, getting back in needs someone technical who has access to your database (see [Troubleshooting](#i-lost-my-authenticator)). Save the key now, or add the same account on a second device right away.
 
-From now on you sign in at `/administrator` with a code from your phone (and your password, if you set one). For safety a session lasts 15 minutes. The dashboard shows a countdown, turns it red in the last 3 minutes, and has a button to extend it.
+From now on you sign in at `/administrator` with a code from your phone (and your password, if you set one). For safety a session lasts 45 minutes. The dashboard shows a countdown, turns it red in the last 3 minutes, and has a **+15 Min** button: each click adds 15 minutes, up to 3 hours in total from when you signed in (then the button says "Max 3 h" and you sign in again).
 
 ## Step 7: Make it yours
 

@@ -222,7 +222,7 @@ export default function Footer({
 
           {/* Bottom Status Bar */}
           {showBottom && (
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs terminal:font-mono text-muted-foreground/60">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs terminal:font-mono text-muted-foreground">
               {/* Left: Copyright */}
               <div className="flex items-center gap-4">
                 {show.copyright && (

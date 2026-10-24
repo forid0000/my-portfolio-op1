@@ -1,5 +1,6 @@
 import { DynamicLucideIcon } from '@/components/dynamic-lucide-icon';
 import { ROADMAP_DEFAULTS } from '@/lib/content-defaults';
+import { chipClass } from '@/lib/chip-hue';
 
 interface RoadmapItem {
   year: string;
@@ -38,7 +39,7 @@ export default function Roadmap({
           {/* Mobile: Left aligned / Desktop: Centered */}
           <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-border md:-translate-x-1/2">
             {/* Moving signal light */}
-            <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-24 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_15px_#00ffc8] animate-scan-y" />
+            <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-24 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_80%,transparent)] animate-scan-y" />
           </div>
 
           {/* Reduced gap from space-y-24 to space-y-12 */}
@@ -59,7 +60,7 @@ export default function Roadmap({
                   <div className="hidden md:block w-[45%]" />
 
                   {/* CONNECTION NODE (The Dot on the Wire) */}
-                  <div className="absolute left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full border border-primary/50 bg-background z-20 shadow-[0_0_10px_rgba(0,255,200,0.3)]">
+                  <div className="absolute left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full border border-primary/50 bg-background z-20 shadow-[0_0_10px_color-mix(in_srgb,var(--primary)_30%,transparent)]">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                   </div>
 
@@ -77,7 +78,7 @@ export default function Roadmap({
                       <div className="relative z-10">
                         {/* Date & Icon Header */}
                         <div className="flex items-center justify-between mb-3">
-                          <span className="terminal:font-mono text-xs text-primary/80 border border-primary/20 px-2 py-0.5 rounded bg-primary/5">
+                          <span className="chip chip-primary terminal:font-mono rounded border px-2 py-0.5 text-xs font-medium">
                             {item.year}
                           </span>
                           <span className="text-muted-foreground group-hover:text-primary transition-colors">
@@ -98,7 +99,7 @@ export default function Roadmap({
                           {item.tech.map((t) => (
                             <span
                               key={t}
-                              className="text-[10px] terminal:font-mono uppercase tracking-wider text-muted-foreground/70 bg-secondary/30 px-2 py-1 rounded"
+                              className={`${chipClass(t)} rounded border px-2 py-1 text-[10px] font-medium uppercase tracking-wider terminal:font-mono`}
                             >
                               {t}
                             </span>

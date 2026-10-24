@@ -94,7 +94,7 @@ export default function IndustryExpertise({
             id="industries-heading"
           />
           {heading && (
-            <p className="pl-9 terminal:font-mono text-sm text-muted-foreground/60">
+            <p className="pl-9 terminal:font-mono text-sm text-muted-foreground">
               <span className="select-none">{'// '}</span>
               {heading}
             </p>
@@ -120,7 +120,7 @@ export default function IndustryExpertise({
                 <span className="ie-glyph text-[color-mix(in_srgb,var(--ie-c)_75%,transparent)] transition-colors duration-300 group-hover:text-(--ie-c) [&_svg]:size-5">
                   <DynamicLucideIcon name={item.icon} />
                 </span>
-                <span className="terminal:font-mono text-[10px] tracking-widest text-muted-foreground/50 transition-colors duration-300 group-hover:text-[color-mix(in_srgb,var(--ie-c)_70%,transparent)]">
+                <span className="terminal:font-mono text-[10px] tracking-widest text-muted-foreground/70 transition-colors duration-300 group-hover:text-[color-mix(in_srgb,var(--ie-c)_70%,transparent)]">
                   {String(index + 1).padStart(2, '0')}
                 </span>
               </div>

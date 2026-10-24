@@ -186,7 +186,7 @@ export default async function ArticlesPage() {
       <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="space-y-4">
           {texts.articlesBadge && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium terminal:font-mono">
+            <div className="chip chip-primary inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium terminal:font-mono">
               {texts.articlesBadge}
             </div>
           )}

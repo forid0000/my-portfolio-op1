@@ -7,6 +7,7 @@ import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
 import { mediaSummary, toMediaItems } from '@/lib/media-display';
 import { toHref } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
+import { chipClass } from '@/lib/chip-hue';
 
 export interface ServiceItem {
   title: string;
@@ -61,7 +62,9 @@ function ServiceDetail({ item, media }: { item: ServiceItem; media: MediaItem[] 
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm">
           {item.category && (
-            <span className="rounded bg-secondary/30 px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">
+            <span
+              className={`${chipClass(item.category)} rounded border px-2 py-1 text-xs font-medium uppercase tracking-wide`}
+            >
               {item.category}
             </span>
           )}
@@ -111,7 +114,7 @@ export default function Services({
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
         <SectionHeading title={heading} prefix={terminalPrefix} path={heading} icon={<Rocket />} />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
           {content.map((item, idx) => {
             const media = toMediaItems(item.media, item.banner);
             const features = item.features ?? [];
@@ -120,7 +123,7 @@ export default function Services({
             return (
               <div
                 key={`${item.title}-${idx}`}
-                className="animate-fade-in-up h-full"
+                className="animate-fade-in-up"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <DetailCard
@@ -128,9 +131,9 @@ export default function Services({
                   label={`View service: ${item.title}`}
                   media={media}
                   detail={<ServiceDetail item={item} media={media} />}
-                  className="h-full rounded-xl"
+                  className="rounded-xl"
                 >
-                  <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/30 bg-card/20 transition-all duration-500 group-hover/detail:border-primary/40 group-hover/detail:bg-card/30">
+                  <article className="flex flex-col overflow-hidden rounded-xl border border-border/30 bg-card/20 transition-all duration-500 group-hover/detail:border-primary/40 group-hover/detail:bg-card/30">
                     <CardMedia
                       items={media}
                       title={item.title}
@@ -146,7 +149,9 @@ export default function Services({
                           </h3>
                         </div>
                         {item.category && (
-                          <span className="shrink-0 rounded bg-secondary/30 px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground/70 terminal:font-mono">
+                          <span
+                            className={`${chipClass(item.category)} shrink-0 rounded border px-2 py-1 text-[10px] font-medium uppercase tracking-wide terminal:font-mono`}
+                          >
                             {item.category}
                           </span>
                         )}
@@ -176,7 +181,7 @@ export default function Services({
                             </li>
                           ))}
                           {features.length > MAX_FEATURES_ON_CARD && (
-                            <li className="pl-5 text-xs text-muted-foreground/60">
+                            <li className="pl-5 text-xs text-muted-foreground">
                               +{features.length - MAX_FEATURES_ON_CARD} more
                             </li>
                           )}

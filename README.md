@@ -194,7 +194,7 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 
 1. **First-run setup** (`/administrator/setup`) exists only until the admin is created. It needs the setup code printed in the server log, is rate limited, and closes permanently once it succeeds.
 2. **Sign-in:** the authenticator code is **always required**. A password is optional and is enforced once you set one. Both factors are checked together and a failure gives one generic message. Each authenticator code works once (replay protection).
-3. **Sessions:** an `HS512` JWT valid for 15 minutes in an `HttpOnly`, `SameSite=Strict`, `Secure` (production) cookie. `middleware.ts` verifies it for `/administrator` and `/api/admin/*`, and every mutating endpoint re-verifies it.
+3. **Sessions:** an `HS512` JWT valid for 45 minutes (the dashboard's **+15 min** button adds 15 minutes per click, never beyond 3 hours from sign-in) in an `HttpOnly`, `SameSite=Strict`, `Secure` (production) cookie. `middleware.ts` verifies it for `/administrator` and `/api/admin/*`, and every mutating endpoint re-verifies it.
 4. **Sensitive changes need a fresh authenticator code** on top of the session (passwords, authenticator, integration keys), so a stolen session cookie cannot become a permanent takeover.
 5. Mutating admin requests are checked with `Sec-Fetch-Site` / `Origin`; auth endpoints allow 10 attempts per 15 minutes per IP and content writes 60 per 5 minutes.
 6. Responses carry a strict Content-Security-Policy, HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.

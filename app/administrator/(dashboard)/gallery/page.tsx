@@ -13,7 +13,6 @@ import {
   Clock,
   X,
   Save,
-  Sparkles,
   FolderInput,
   Pencil,
   Tag,
@@ -386,7 +385,7 @@ export default function GalleryManager() {
         <div className="flex items-center gap-2 text-sm font-medium text-gray-200">
           <UploadCloud className="w-4 h-4 text-emerald-500" /> Add images
           <span className="flex items-center gap-1 text-[11px] text-emerald-400/80 font-normal">
-            <Sparkles className="w-3 h-3" /> auto-tagged on upload
+            <Tag className="w-3 h-3" /> auto-tagged on upload
           </span>
         </div>
         {/* Drag & drop zone */}

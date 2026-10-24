@@ -15,6 +15,7 @@
  */
 import 'server-only';
 import type { IconData, IconMap, IconNode } from '@/lib/icons/icon-data';
+import { plainIconName } from '@/lib/icons/no-sparkle';
 
 type Pack = Record<string, unknown>;
 
@@ -217,8 +218,10 @@ export async function resolveIconData(name: string | undefined | null): Promise<
   if (cache.has(name)) return cache.get(name) ?? null;
   let data: IconData | null = null;
   try {
-    const found = await findExport(name);
-    data = found ? extract(found) : await lucideData(name);
+    // A sparkle icon (saved earlier, or typed by hand) is drawn as a plain star.
+    const wanted = plainIconName(name);
+    const found = await findExport(wanted);
+    data = found ? extract(found) : await lucideData(wanted);
   } catch {
     data = null;
   }

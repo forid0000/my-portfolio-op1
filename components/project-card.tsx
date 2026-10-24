@@ -5,6 +5,7 @@ import DetailCard from '@/components/site/detail-card';
 import { mediaSummary, toMediaItems } from '@/lib/media-display';
 import { toHref } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
+import { chipClass } from '@/lib/chip-hue';
 
 export interface ProjectLink {
   label: string;
@@ -81,7 +82,7 @@ function ProjectDetail({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-md border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+              className={`${chipClass(tag)} rounded-md border px-2.5 py-1 text-xs font-medium`}
             >
               {tag}
             </span>
@@ -155,7 +156,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               {tags.slice(0, 5).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs text-primary/80"
+                  className={`${chipClass(tag)} rounded border px-2.5 py-1 text-xs font-medium`}
                 >
                   {tag}
                 </span>

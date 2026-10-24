@@ -32,7 +32,7 @@ export default function Projects({
     <section id="projects" className="section-spacing relative overflow-hidden">
       {/* Left animated line (terminal style only) */}
       <div className="absolute top-0 bottom-0 left-4 md:left-10 w-[1px] bg-primary/10 hidden terminal:md:block">
-        <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-transparent via-primary/50 to-transparent shadow-[0_0_15px_#00ffc8] animate-scan-y" />
+        <div className="absolute top-0 left-0 w-[2px] h-32 bg-gradient-to-b from-transparent via-primary/50 to-transparent shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_80%,transparent)] animate-scan-y" />
       </div>
 
       <div className="max-w-6xl mx-auto space-y-16 relative z-10">

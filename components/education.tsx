@@ -132,7 +132,7 @@ export default function Education({
                           </p>
                         </div>
                         {period(item) && (
-                          <span className="whitespace-nowrap rounded border border-border/30 bg-secondary/20 px-2 py-0.5 text-xs text-muted-foreground/70 terminal:font-mono">
+                          <span className="chip whitespace-nowrap rounded border px-2 py-0.5 text-xs font-medium terminal:font-mono">
                             {period(item)}
                           </span>
                         )}

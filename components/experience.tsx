@@ -3,6 +3,8 @@
 import SectionHeading from '@/components/section-heading';
 import { Briefcase, Calendar, MapPin } from 'lucide-react';
 import { DEFAULT_TERMINAL_PREFIX, EXPERIENCE_DEFAULTS } from '@/lib/content-defaults';
+import { chipClass } from '@/lib/chip-hue';
+import { ByStyle } from '@/components/by-style';
 
 interface ExperienceProps {
   terminalPrefix?: string;
@@ -37,7 +39,7 @@ export default function Experience({
         <div className="relative ml-3 md:ml-6 space-y-12 py-4">
           {/* THE ANIMATED LINE (Replaces the border-l-2) */}
           <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-border/40 overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(0,255,200,0.6)] animate-scan-y" />
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_60%,transparent)] animate-scan-y" />
           </div>
 
           {experiencesData.map((exp, idx) => (
@@ -55,7 +57,7 @@ export default function Experience({
                 {/* Header Row */}
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs terminal:font-mono text-muted-foreground/60 mb-1">
+                    <div className="flex items-center gap-2 text-xs terminal:font-mono text-muted-foreground mb-1">
                       <span className="text-primary tracking-wider">// {exp.type}</span>
                     </div>
                     <h3 className="text-xl font-bold terminal:font-mono text-foreground group-hover:text-primary transition-colors">
@@ -91,9 +93,9 @@ export default function Experience({
                   {exp.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="px-2 py-1 text-xs terminal:font-mono text-primary/80 bg-primary/5 border border-primary/10 rounded group-hover:border-primary/30 transition-colors select-none"
+                      className={`${chipClass(skill)} select-none rounded border px-2 py-1 text-xs font-medium terminal:font-mono`}
                     >
-                      [{skill}]
+                      <ByStyle clean={skill} terminal={`[${skill}]`} />
                     </span>
                   ))}
                 </div>

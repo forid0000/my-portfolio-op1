@@ -310,7 +310,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-primary bg-primary/5 border border-primary/20 rounded terminal:font-mono"
+                className="chip chip-primary rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wider terminal:font-mono"
               >
                 #{tag}
               </span>

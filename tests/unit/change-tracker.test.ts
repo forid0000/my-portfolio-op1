@@ -55,7 +55,7 @@ describe('change tracker', () => {
     const summary = getChangeSummary();
     expect(summary.count).toBe(3);
     expect(summary.items).toContain('Title');
-    expect(summary.items).toContain('Socials #3 > Href');
+    expect(summary.items).toContain('Socials #3 > Address');
   });
 
   it('forgets an editor that has nothing left, and confirms a save for a moment', () => {

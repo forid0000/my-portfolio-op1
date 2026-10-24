@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio } from '@/lib/color';
+import { contrastRatio, mixHex } from '@/lib/color';
 import { THEME_PRESETS, presetPalette } from '@/lib/theme-presets';
 import {
   THEME_COLOR_KEYS,
@@ -55,6 +55,15 @@ describe('theme presets', () => {
         expect(contrastRatio(palette.primary, surface)).toBeGreaterThanOrEqual(3);
       }
       expect(contrastRatio(palette.secondary, palette.background)).toBeGreaterThanOrEqual(3);
+    });
+
+    it('keeps form fields readable: typed text, placeholders and the field edge', () => {
+      // Fields are `bg-input text-foreground placeholder:text-muted-foreground border-foreground/20`
+      expect(contrastRatio(palette.foreground, palette.input)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(palette.mutedForeground, palette.input)).toBeGreaterThanOrEqual(3);
+      // the 20% foreground edge must not vanish into the page
+      const edge = mixHex(palette.background, palette.foreground, 0.2);
+      expect(contrastRatio(edge, palette.background)).toBeGreaterThanOrEqual(1.3);
     });
 
     it('keeps status colours visible on the page', () => {

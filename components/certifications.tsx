@@ -110,7 +110,7 @@ export default function Certifications({
             return (
               <div
                 key={`${item.name}-${idx}`}
-                className="animate-fade-in-up h-full"
+                className="animate-fade-in-up"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <DetailCard
@@ -119,9 +119,9 @@ export default function Certifications({
                   media={shown}
                   detail={interactive ? <CertificateDetail item={item} media={shown} /> : null}
                   interactive={interactive}
-                  className="h-full rounded-xl"
+                  className="rounded-xl"
                 >
-                  <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/30 bg-card/20 transition-all duration-500 group-hover/detail:border-primary/40 group-hover/detail:bg-card/30">
+                  <article className="flex flex-col overflow-hidden rounded-xl border border-border/30 bg-card/20 transition-all duration-500 group-hover/detail:border-primary/40 group-hover/detail:bg-card/30">
                     <CardMedia
                       items={media}
                       title={item.name}

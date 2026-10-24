@@ -80,6 +80,11 @@ On a low-memory machine run these steps **one at a time**, cap memory (`systemd-
 
 ## Pitfalls already paid for
 
+- **Colours of the public site are theme tokens, and surfaces are not overlays.** A form field is `bg-input` + `border-foreground/20` + `text-foreground` + `placeholder:text-muted-foreground`; `scrim`/`on-scrim` are only for overlays and text on pictures (`bg-scrim/40` on an input turns into a grey box on a light theme). Small labels use `.chip` (+ `chip-primary|secondary|info|success|warning|neutral`, or `chipClass(label)` from `lib/chip-hue.ts`) instead of `text-primary` on `bg-primary/10` or text at 50-60% opacity. No fixed hex/rgba glows. `tests/unit/theme-presets.test.ts` and `tests/unit/chips.test.ts` check the combinations against all presets; add a pair there when you invent a new one.
+- **Never put a width utility next to the shared `w-full` input class** (`${inputClass} w-40`): which one wins is decided by stylesheet order, not class order (`w-full` won and squeezed the next box). Merge with `cn()` (tailwind-merge) or give the variant its own base class.
+- **Icons**: no sparkle/"AI" icons (`lib/icons/no-sparkle.ts`); `tests/unit/no-sparkle.test.ts` fails if one is drawn in `app/` or `components/`.
+- **`next dev` adds a block to `AGENTS.md`** (and rewrites `tsconfig.json`); restore both from git after a dev session, or the generated text lands in a commit.
+
 - **Never keep a cache in a module variable.** In a production build every route and page has its own copy of each module, so an admin save cleared only its own copy and the static page that regenerated read a stale one, freezing old content into the HTML (found by the smoke test). Use `sharedState()` from `lib/shared-state.ts`, and do not cache a failed read.
 - **pnpm 12 stops on undecided install scripts** (`ERR_PNPM_IGNORED_BUILDS`). The decisions live in `pnpm-workspace.yaml` (`allowBuilds`); a new dependency with an install script needs an entry there, or CI fails.
 - **Developer styling is opt-in.** The default look is the clean style. Use `terminal:` Tailwind classes (`terminal:font-mono`, `terminal:uppercase`) or `<ByStyle clean=… terminal=… />` for anything prompt-like; never hard-code monospace, `~/` paths or `SYS_` wording into the default look.
