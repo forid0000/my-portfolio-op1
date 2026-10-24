@@ -214,6 +214,11 @@ export const SECTION_TEXT_DEFAULTS = {
   aboutHeading: 'About Me',
   expertisesHeading: 'Expertise',
   techStacksHeading: 'Tools & Technologies',
+  educationHeading: 'Education',
+  certificationsHeading: 'Certifications',
+  servicesHeading: 'Services',
+  publicationsHeading: 'Publications',
+  testimonialsHeading: 'Testimonials',
   terminalPrefix: DEFAULT_TERMINAL_PREFIX,
 };
 

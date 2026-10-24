@@ -39,13 +39,14 @@ export default function CertificationsCMS() {
         <div className="space-y-4">
           <SectionImageUploader
             folder="certifications"
-            label="Badge / logo (optional)"
+            label="Badge / logo (optional, small picture beside the name)"
             value={item.badge}
             onChange={(v) => onChange('badge', v)}
           />
           <MediaUploader
             scope="certifications"
             label="Certificate pictures and videos (optional)"
+            hint="Shown on the card; the first one is the cover. Visitors can open the certificate to see all of them, each shown whole."
             value={item.media ?? []}
             onChange={(v) => onChange('media', v)}
           />

@@ -1,5 +1,3 @@
-'use client';
-
 import SectionHeading from '@/components/section-heading';
 import ProjectCard, { type ProjectData } from './project-card';
 import { ArrowUpRight } from 'lucide-react';
@@ -24,7 +22,9 @@ export default function Projects({
   heading = 'Projects',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
 }: ProjectsProps) {
-  const projects = content || PROJECTS_DEFAULTS;
+  // The placeholders only stand in until something is saved; a saved empty list hides the section.
+  const projects = content ?? PROJECTS_DEFAULTS;
+  if (projects.length === 0) return null;
   // Optional: shown only when there is somewhere to go (the owner's address, else the profile link).
   const moreUrl = toHref(ctaUrl) || toHref(githubUrl);
 
@@ -43,7 +43,7 @@ export default function Projects({
             <div
               key={`${project.title}-${index}`}
               style={{ animationDelay: `${index * 0.1}s` }}
-              className="animate-fade-in-up"
+              className="animate-fade-in-up h-full"
             >
               <ProjectCard project={project} />
             </div>

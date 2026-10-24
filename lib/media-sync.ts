@@ -37,6 +37,12 @@ export async function propagateCloudinaryDelete(publicIds: string[]): Promise<vo
       db
         .collection('services')
         .updateMany({ 'banner.public_id': { $in: ids } }, { $unset: { banner: '' } }),
+      db.collection('services').updateMany({ 'media.public_id': { $in: ids } }, {
+        $pull: { media: { public_id: { $in: ids } } },
+      } as any),
+      db.collection('education').updateMany({ 'media.public_id': { $in: ids } }, {
+        $pull: { media: { public_id: { $in: ids } } },
+      } as any),
       db
         .collection('articles')
         .updateMany({ 'cover.public_id': { $in: ids } }, { $unset: { cover: '' } }),
@@ -83,6 +89,16 @@ export async function propagateCloudinaryRename(
       db
         .collection('services')
         .updateMany({ 'banner.public_id': from }, { $set: set('banner') } as any),
+      db
+        .collection('services')
+        .updateMany({ 'media.public_id': from }, { $set: set('media.$[m]') } as any, {
+          arrayFilters: [{ 'm.public_id': from }],
+        }),
+      db
+        .collection('education')
+        .updateMany({ 'media.public_id': from }, { $set: set('media.$[m]') } as any, {
+          arrayFilters: [{ 'm.public_id': from }],
+        }),
       db
         .collection('articles')
         .updateMany({ 'cover.public_id': from }, { $set: set('cover') } as any),

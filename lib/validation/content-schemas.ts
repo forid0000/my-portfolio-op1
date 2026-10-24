@@ -11,6 +11,7 @@
  */
 import { z } from 'zod';
 import { isSafeHref } from '@/lib/safe-href';
+import { whatsappHref } from '@/lib/contact-links';
 import { mediaListSchema } from '@/lib/validation/media-schemas';
 import { KITS_COLOR_MAP } from '@/lib/kits-registry';
 
@@ -130,9 +131,18 @@ export const adminContactContentSchema = z.object({
   highlight: z.string(),
   subtext: z.string(),
   phoneLabel: z.string(),
-  whatsappLink: z.string(),
+  // A number (with country code) or a link; clicking the card opens WhatsApp. Optional.
+  whatsappLink: z
+    .string()
+    .trim()
+    .max(300)
+    .refine(
+      (v) => !v || whatsappHref(v) !== null,
+      'Enter your number with the country code (for example +1 555 123 4567) or a wa.me link.'
+    ),
   email: z.string().email(),
-  phone: z.string(),
+  // Shown on the card and used for "call". Optional.
+  phone: z.string().trim().max(40),
 });
 
 /**
@@ -151,6 +161,13 @@ export const headingsContentSchema = z
     skillsHeading: z.string(),
     experienceHeading: z.string(),
     aboutHeading: z.string(),
+    expertisesHeading: z.string(),
+    techStacksHeading: z.string(),
+    educationHeading: z.string(),
+    certificationsHeading: z.string(),
+    servicesHeading: z.string(),
+    publicationsHeading: z.string(),
+    testimonialsHeading: z.string(),
     contactHeading: z.string(),
     contactHighlight: z.string(),
     contactSubtext: z.string(),

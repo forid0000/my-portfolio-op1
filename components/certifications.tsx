@@ -1,8 +1,13 @@
+import { Award, ExternalLink, FileBadge } from 'lucide-react';
 import Image from 'next/image';
+import CardMedia from '@/components/site/card-media';
+import DetailCard from '@/components/site/detail-card';
 import SectionHeading from '@/components/section-heading';
-import { Award, ExternalLink } from 'lucide-react';
-
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
+import { mediaSummary, toMediaItems } from '@/lib/media-display';
+import { toHref } from '@/lib/safe-href';
+import type { MediaItem } from '@/lib/media-types';
+
 export interface CertificationItem {
   name: string;
   issuer: string;
@@ -11,12 +16,72 @@ export interface CertificationItem {
   credentialId?: string;
   credentialUrl?: string;
   badge?: { src: string; public_id: string };
+  /** Certificate scans, photos or videos; the first is the cover. */
+  media?: MediaItem[];
 }
 
 interface CertificationsProps {
   content?: CertificationItem[];
   heading?: string;
   terminalPrefix?: string;
+}
+
+function dates(item: CertificationItem): string {
+  return `${item.issueDate ?? ''}${item.expiryDate ? ` → ${item.expiryDate}` : ''}`.trim();
+}
+
+/** Everything about the certificate, shown in the window that opens when the card is clicked. */
+function CertificateDetail({ item, media }: { item: CertificationItem; media: MediaItem[] }) {
+  const verify = toHref(item.credentialUrl);
+  return (
+    <div className="space-y-5">
+      <header className="space-y-1.5 pr-10 lg:pr-0">
+        <h3 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl" dir="auto">
+          {item.name}
+        </h3>
+        <p className="text-base font-medium text-primary" dir="auto">
+          {item.issuer}
+        </p>
+        {media.length > 0 && <p className="text-sm text-muted-foreground">{mediaSummary(media)}</p>}
+      </header>
+
+      <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        {item.issueDate && (
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Issued</dt>
+            <dd className="mt-0.5 text-foreground">{item.issueDate}</dd>
+          </div>
+        )}
+        {item.expiryDate && (
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Expires</dt>
+            <dd className="mt-0.5 text-foreground">{item.expiryDate}</dd>
+          </div>
+        )}
+        {item.credentialId && (
+          <div className="sm:col-span-2">
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Credential ID</dt>
+            <dd className="mt-0.5 break-all text-foreground terminal:font-mono">
+              {item.credentialId}
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      {verify && (
+        <div className="border-t border-border pt-5">
+          <a
+            href={verify}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Verify this certificate <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Certifications({
@@ -31,48 +96,102 @@ export default function Certifications({
       <div className="max-w-6xl mx-auto relative z-10 space-y-12">
         <SectionHeading title={heading} prefix={terminalPrefix} path={heading} icon={<Award />} />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {content.map((item, idx) => (
-            <div
-              key={`${item.name}-${idx}`}
-              className="animate-fade-in-up group bg-card/20 border border-border/30 hover:border-primary/40 hover:bg-card/30 transition-all duration-500 rounded-xl p-5 flex gap-4"
-              style={{ animationDelay: `${idx * 100}ms` }}
-            >
-              {item.badge?.src ? (
-                <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-border/30 bg-background/50">
-                  <Image
-                    src={item.badge.src}
-                    alt={item.name}
-                    fill
-                    sizes="56px"
-                    className="object-contain p-1"
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-14 shrink-0 rounded-lg border border-border/30 bg-primary/5 flex items-center justify-center">
-                  <Award className="w-6 h-6 text-primary/70" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <h3 className="text-sm font-bold text-foreground truncate">{item.name}</h3>
-                <p className="text-xs text-primary terminal:font-mono truncate">{item.issuer}</p>
-                <p className="text-[11px] text-muted-foreground/70 mt-1 terminal:font-mono">
-                  {item.issueDate}
-                  {item.expiryDate ? ` → ${item.expiryDate}` : ''}
-                </p>
-                {item.credentialUrl && (
-                  <a
-                    href={item.credentialUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-                  >
-                    Verify <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
+        {/* Cards with a certificate picture are much taller than plain ones: let each keep its own height. */}
+        <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {content.map((item, idx) => {
+            const media = toMediaItems(item.media);
+            const badge = toMediaItems(undefined, item.badge);
+            // The window shows the certificate pictures; with none, the badge picture stands in.
+            const shown = media.length ? media : badge;
+            const verify = toHref(item.credentialUrl);
+            const when = dates(item);
+            const interactive = shown.length > 0 || !!item.credentialId;
+
+            return (
+              <div
+                key={`${item.name}-${idx}`}
+                className="animate-fade-in-up h-full"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <DetailCard
+                  title={item.name}
+                  label={`View certificate: ${item.name}`}
+                  media={shown}
+                  detail={interactive ? <CertificateDetail item={item} media={shown} /> : null}
+                  interactive={interactive}
+                  className="h-full rounded-xl"
+                >
+                  <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/30 bg-card/20 transition-all duration-500 group-hover/detail:border-primary/40 group-hover/detail:bg-card/30">
+                    <CardMedia
+                      items={media}
+                      title={item.name}
+                      aspect="aspect-[4/3]"
+                      thumbs={false}
+                    />
+                    <div className="flex flex-1 gap-4 p-5">
+                      {badge[0] ? (
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border/30 bg-background/50">
+                          <Image
+                            src={badge[0].src}
+                            alt=""
+                            fill
+                            sizes="56px"
+                            className="object-contain p-1"
+                          />
+                        </div>
+                      ) : (
+                        media.length === 0 && (
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/30 bg-primary/5">
+                            <Award className="h-6 w-6 text-primary/70" />
+                          </div>
+                        )
+                      )}
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <h3 className="text-sm font-bold text-foreground" dir="auto">
+                          {item.name}
+                        </h3>
+                        <p className="truncate text-xs text-primary terminal:font-mono">
+                          {item.issuer}
+                        </p>
+                        {when && (
+                          <p className="mt-1 text-[11px] text-muted-foreground/70 terminal:font-mono">
+                            {when}
+                          </p>
+                        )}
+                        {item.credentialId && (
+                          <p className="mt-1 truncate text-[11px] text-muted-foreground/70 terminal:font-mono">
+                            ID: {item.credentialId}
+                          </p>
+                        )}
+                        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+                          {verify ? (
+                            <a
+                              href={verify}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="relative z-10 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                            >
+                              Verify <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            <span />
+                          )}
+                          {interactive && (
+                            <span
+                              aria-hidden="true"
+                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors group-hover/detail:text-primary"
+                            >
+                              <FileBadge className="h-3 w-3" /> View
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </DetailCard>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

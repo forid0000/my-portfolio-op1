@@ -3,7 +3,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { CollectionEditor, type CollectionItem } from '@/components/admin/collection-editor';
-import { SectionImageUploader, type SectionMedia } from '@/components/admin/section-image-uploader';
+import { MediaUploader } from '@/components/admin/media-uploader';
+import type { MediaItem } from '@/lib/media-types';
 import { IconPicker } from '@/components/admin/icon-picker';
 
 interface ServiceItem extends CollectionItem {
@@ -12,7 +13,9 @@ interface ServiceItem extends CollectionItem {
   category: string;
   pricing: string;
   icon: string;
-  banner?: SectionMedia;
+  /** Older documents have one `banner`; it is moved into `media` when loaded. */
+  banner?: { src: string; public_id: string };
+  media?: MediaItem[];
   features: string[];
   ctaLabel: string;
   ctaLink: string;
@@ -34,16 +37,26 @@ export default function ServicesCMS() {
         features: [],
         ctaLabel: '',
         ctaLink: '',
+        media: [],
       })}
+      normalizeItem={(item) => {
+        if (item.media?.length || !item.banner) return item;
+        const { banner, ...rest } = item;
+        return {
+          ...rest,
+          media: [{ kind: 'image', src: banner.src, public_id: banner.public_id }],
+        };
+      }}
       getItemLabel={(item) => item.title}
       requiredFields={['title']}
       renderFields={(item, onChange) => (
         <div className="space-y-4">
-          <SectionImageUploader
-            folder="services"
-            label="Banner Image (optional)"
-            value={item.banner}
-            onChange={(v) => onChange('banner', v)}
+          <MediaUploader
+            scope="services"
+            label="Pictures and videos (optional)"
+            hint="The first one is the cover on the card. Visitors can open the service to see all of them, each shown whole."
+            value={item.media ?? []}
+            onChange={(v) => onChange('media', v)}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

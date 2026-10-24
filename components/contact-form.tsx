@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Briefcase,
   Copy,
+  ArrowUpRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClientDeviceInfo } from '@/lib/device-info';
@@ -19,6 +20,7 @@ import { getVisitInfo } from '@/lib/visit-tracker';
 import { CONTACT_DEFAULTS } from '@/lib/content-defaults';
 import { ByStyle } from '@/components/by-style';
 import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
+import { displayNumber, mailtoHref, telHref, whatsappHref } from '@/lib/contact-links';
 
 // Plain validation (no form/schema library: this form ships to every visitor, so
 // the page stays light). The server re-validates everything in /api/contact.
@@ -93,10 +95,22 @@ export default function ContactForm({ content }: ContactFormProps) {
     return () => window.removeEventListener('scroll', computeScrollDepth);
   }, []);
 
-  const handleCopy = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${type} copied to clipboard!`);
+  const handleCopy = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${type} copied to clipboard!`);
+    } catch {
+      toast.error(`Could not copy the ${type.toLowerCase()}. Please select and copy it by hand.`);
+    }
   };
+
+  // Clicking a card opens the visitor's own app (mail, WhatsApp, dialer); the small icon copies.
+  const mailHref = mailtoHref(contactData.email);
+  const waHref = whatsappHref(contactData.whatsappLink);
+  const callHref = telHref(contactData.phone);
+  const phoneText = displayNumber(contactData.phone, contactData.whatsappLink);
+  const phoneHref = waHref ?? callHref;
+  const phoneAction = waHref ? 'Open WhatsApp' : callHref ? 'Call now' : '';
 
   const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
@@ -208,43 +222,80 @@ export default function ContactForm({ content }: ContactFormProps) {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4 pt-6 border-t border-border/30">
-              <div
-                onClick={() => handleCopy(contactData.email, 'Email')}
-                className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-foreground/5 transition-colors"
-                role="button"
-                tabIndex={0}
-              >
+              <div className="group relative space-y-2 px-2 py-4 -mx-2 -my-4 rounded-xl transition-colors hover:bg-foreground/5">
+                {mailHref && (
+                  <a
+                    href={mailHref}
+                    aria-label={`Send an email to ${contactData.email}`}
+                    className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  />
+                )}
                 <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
                   <Mail className="w-5 h-5 text-primary" />
                 </div>
                 <h4 className="font-semibold text-foreground flex items-center justify-between">
                   Direct Email
-                  <Copy className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <button
+                    type="button"
+                    onClick={() => void handleCopy(contactData.email, 'Email')}
+                    aria-label="Copy the email address"
+                    title="Copy"
+                    className="relative z-10 -m-1.5 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
                 </h4>
-                <p className="text-sm text-muted-foreground terminal:font-mono">
+                <p className="text-sm text-muted-foreground terminal:font-mono break-all">
                   {contactData.email}
                 </p>
+                {mailHref && (
+                  <p className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                    Send an email <ArrowUpRight className="w-3.5 h-3.5" />
+                  </p>
+                )}
               </div>
 
               {hasPhoneCard && (
-                <div
-                  onClick={() =>
-                    handleCopy(contactData.phone || contactData.whatsappLink, 'Phone Number')
-                  }
-                  className="space-y-2 group cursor-pointer px-2 py-4 -mx-2 -my-4 rounded-xl hover:bg-foreground/5 transition-colors"
-                  role="button"
-                  tabIndex={0}
-                >
+                <div className="group relative space-y-2 px-2 py-4 -mx-2 -my-4 rounded-xl transition-colors hover:bg-foreground/5">
+                  {phoneHref && (
+                    <a
+                      href={phoneHref}
+                      {...(waHref ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      aria-label={`${phoneAction}: ${phoneText}`}
+                      className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info"
+                    />
+                  )}
                   <div className="w-10 h-10 rounded-xl bg-info/10 border border-info/20 flex items-center justify-center mb-3">
                     <Phone className="w-5 h-5 text-info" />
                   </div>
                   <h4 className="font-semibold text-foreground flex items-center justify-between">
                     {contactData.phoneLabel}
-                    <Copy className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <button
+                      type="button"
+                      onClick={() => void handleCopy(phoneText, 'Phone number')}
+                      aria-label="Copy the phone number"
+                      title="Copy"
+                      className="relative z-10 -m-1.5 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
                   </h4>
-                  <p className="text-sm text-muted-foreground terminal:font-mono group-hover:text-info transition-colors">
-                    {contactData.whatsappLink || contactData.phone}
+                  <p className="text-sm text-muted-foreground terminal:font-mono transition-colors group-hover:text-info">
+                    {phoneText}
                   </p>
+                  {phoneAction && (
+                    <p className="inline-flex items-center gap-1 text-xs font-medium text-info">
+                      {phoneAction} <ArrowUpRight className="w-3.5 h-3.5" />
+                    </p>
+                  )}
+                  {waHref && callHref && (
+                    <a
+                      href={callHref}
+                      className="relative z-10 ml-3 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-info"
+                    >
+                      Call instead
+                    </a>
+                  )}
                 </div>
               )}
             </div>

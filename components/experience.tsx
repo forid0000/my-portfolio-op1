@@ -24,7 +24,8 @@ export default function Experience({
   heading = 'Experience',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
 }: ExperienceProps) {
-  const experiencesData = content || EXPERIENCE_DEFAULTS;
+  const experiencesData = content ?? EXPERIENCE_DEFAULTS;
+  if (experiencesData.length === 0) return null;
 
   return (
     <section id="experience" className="section-spacing relative overflow-hidden">

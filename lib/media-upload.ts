@@ -38,6 +38,7 @@ const DEFAULT_USAGE: Record<MediaScope, ImageUsage> = {
   certifications: 'cover',
   testimonials: 'badge',
   services: 'cover',
+  education: 'cover',
   articles: 'cover',
 };
 

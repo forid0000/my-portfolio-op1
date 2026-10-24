@@ -24,6 +24,13 @@ const DEFAULTS = {
   skillsHeading: SECTION_TEXT_DEFAULTS.skillsHeading,
   experienceHeading: SECTION_TEXT_DEFAULTS.experienceHeading,
   aboutHeading: SECTION_TEXT_DEFAULTS.aboutHeading,
+  expertisesHeading: SECTION_TEXT_DEFAULTS.expertisesHeading,
+  techStacksHeading: SECTION_TEXT_DEFAULTS.techStacksHeading,
+  educationHeading: SECTION_TEXT_DEFAULTS.educationHeading,
+  certificationsHeading: SECTION_TEXT_DEFAULTS.certificationsHeading,
+  servicesHeading: SECTION_TEXT_DEFAULTS.servicesHeading,
+  publicationsHeading: SECTION_TEXT_DEFAULTS.publicationsHeading,
+  testimonialsHeading: SECTION_TEXT_DEFAULTS.testimonialsHeading,
   contactHeading: CONTACT_DEFAULTS.heading,
   contactHighlight: CONTACT_DEFAULTS.highlight,
   contactSubtext: CONTACT_DEFAULTS.subtext,
@@ -247,50 +254,34 @@ export default function HeadingsPage() {
             <h3 className="text-lg font-semibold text-gray-200 border-b border-gray-800 pb-2">
               Other Sections (Headings Only)
             </h3>
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                Projects Section
-              </label>
-              <input
-                type="text"
-                value={data.projectsHeading}
-                onChange={(e) => handleChange('projectsHeading', e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                Skills Section
-              </label>
-              <input
-                type="text"
-                value={data.skillsHeading}
-                onChange={(e) => handleChange('skillsHeading', e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                Experience Section
-              </label>
-              <input
-                type="text"
-                value={data.experienceHeading}
-                onChange={(e) => handleChange('experienceHeading', e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                About Section
-              </label>
-              <input
-                type="text"
-                value={data.aboutHeading}
-                onChange={(e) => handleChange('aboutHeading', e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 outline-none"
-              />
-            </div>
+            {(
+              [
+                ['projectsHeading', 'Projects Section'],
+                ['skillsHeading', 'Skills Section'],
+                ['experienceHeading', 'Experience Section'],
+                ['aboutHeading', 'About Section'],
+                ['educationHeading', 'Education Section'],
+                ['certificationsHeading', 'Certifications Section'],
+                ['servicesHeading', 'Services Section'],
+                ['publicationsHeading', 'Publications Section'],
+                ['testimonialsHeading', 'Testimonials Section'],
+                ['expertisesHeading', 'Industry Expertise Section'],
+                ['techStacksHeading', 'Tech Stacks Section'],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key}>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  {label}
+                </label>
+                <input
+                  type="text"
+                  data-field={key}
+                  value={data[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  className="w-full bg-gray-950 border border-gray-800 rounded px-3 py-2 text-sm text-gray-200 focus:border-emerald-500 outline-none"
+                />
+              </div>
+            ))}
           </div>
 
           <div className="p-5 bg-gray-900 border border-gray-800 rounded-xl space-y-4 shadow-lg md:col-span-2">

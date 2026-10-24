@@ -3,6 +3,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { CollectionEditor, type CollectionItem } from '@/components/admin/collection-editor';
+import { MediaUploader } from '@/components/admin/media-uploader';
+import type { MediaItem } from '@/lib/media-types';
 
 interface EducationItem extends CollectionItem {
   institution: string;
@@ -13,6 +15,7 @@ interface EducationItem extends CollectionItem {
   current: boolean;
   description: string;
   achievements: string[];
+  media?: MediaItem[];
 }
 
 export default function EducationCMS() {
@@ -31,11 +34,21 @@ export default function EducationCMS() {
         current: false,
         description: '',
         achievements: [],
+        media: [],
       })}
       getItemLabel={(item) => [item.degree, item.institution].filter(Boolean).join(' - ')}
       requiredFields={['institution', 'degree']}
       renderFields={(item, onChange) => (
         <>
+          <div className="mb-4">
+            <MediaUploader
+              scope="education"
+              label="Diploma, certificate or other pictures and videos (optional)"
+              hint="The first one is the cover. Visitors can open the entry to see all of them, each shown whole."
+              value={item.media ?? []}
+              onChange={(v) => onChange('media', v)}
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">Institution</label>

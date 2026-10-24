@@ -2,6 +2,7 @@ import { Newspaper, Mic, Video, FileText, ExternalLink } from 'lucide-react';
 import SectionHeading from '@/components/section-heading';
 import { GithubIcon } from '@/components/icon/github';
 import type React from 'react';
+import { toHref } from '@/lib/safe-href';
 
 import { DEFAULT_TERMINAL_PREFIX } from '@/lib/content-defaults';
 const TYPE_ICON: Record<string, React.ReactNode> = {
@@ -47,11 +48,12 @@ export default function Publications({
 
         <div className="space-y-3">
           {content.map((item, idx) => {
-            const Wrapper = (item.url ? 'a' : 'div') as React.ElementType;
+            const href = toHref(item.url);
+            const Wrapper = (href ? 'a' : 'div') as React.ElementType;
             return (
               <Wrapper
                 key={`${item.title}-${idx}`}
-                {...(item.url ? { href: item.url, target: '_blank', rel: 'noreferrer' } : {})}
+                {...(href ? { href, target: '_blank', rel: 'noopener noreferrer' } : {})}
                 className="animate-fade-in-up group flex items-center gap-4 bg-card/20 border border-border/30 hover:border-primary/40 hover:bg-card/30 transition-all duration-500 rounded-xl p-4"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
@@ -66,7 +68,7 @@ export default function Publications({
                     {[item.platform, item.date].filter(Boolean).join(' · ')}
                   </p>
                 </div>
-                {item.url && (
+                {href && (
                   <ExternalLink className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
                 )}
               </Wrapper>

@@ -9,6 +9,7 @@ import { utcOffsetLabel } from '@/lib/utils';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
 import { ByStyle } from '@/components/by-style';
 import { hasComplexScript } from '@/lib/text-script';
+import { toHref } from '@/lib/safe-href';
 import {
   CHROME_DEFAULTS,
   DEFAULT_NAV,
@@ -158,7 +159,8 @@ export default function Footer({
 
                   {/* Grid Logic: 3 columns; any remainder row is pulled out and centered */}
                   {(() => {
-                    const socials = footerData.footerSocials;
+                    // Only links that are safe to follow are shown (see lib/safe-href.ts).
+                    const socials = footerData.footerSocials.filter((l) => toHref(l.href));
                     const remainder = socials.length % 3;
                     const gridItems =
                       remainder === 0 ? socials : socials.slice(0, socials.length - remainder);
@@ -177,7 +179,7 @@ export default function Footer({
                       return (
                         <a
                           key={link.label}
-                          href={link.href}
+                          href={toHref(link.href) ?? '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={link.label}

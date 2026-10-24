@@ -26,8 +26,10 @@ It also ships a private, password-protected **notes vault**, a set of client-sid
 
 - Config-driven homepage: Hero, About, Education, Experience, Certifications, Skills, Industry Expertise, Tech Stacks, Services, Projects, Publications, Testimonials, Roadmap, Gallery, Contact. Visibility and order are controlled from the admin.
 - SEO out of the box: metadata and `ProfilePage` / `Person` / `WebSite` JSON-LD built from your CMS content, canonical URLs, dynamic `sitemap.xml`, `robots.txt`, and `/llms.txt`.
+- **Projects, services, certificates and education show their pictures and videos properly.** Every picture is shown whole (never cropped, whatever its shape), several pictures or videos per entry are supported, and the whole card is clickable: it opens a window with a large viewer (arrows, swipe, keyboard, thumbnails, video controls) next to the full text, tags, dates, credential ID and links. Cards that have nothing more to show stay plain.
 - Masonry gallery backed by Cloudinary, contact form with email delivery and field-level error highlighting, floating "connect" popup. It suits any profession: the default look is a clean, formal one, and the developer/terminal look is an opt-in style.
 - **One place for every colour**: 44 ready-made colour schemes (light, dark, mixed) plus a full palette editor with a live preview; every component follows the same theme tokens.
+- The contact cards open the visitor's own apps: email opens the mail program, the phone card opens WhatsApp (a number or a wa.me link) or the dialer; a small icon copies the text instead.
 - Hide what you do not need: sections, menu links (rename, reorder, add your own), the corner contact button, the CV button and parts of the footer.
 
 **Admin dashboard (`/administrator`)**
@@ -97,20 +99,20 @@ NEXT_BUILD_CPUS=2 pnpm dev                                               # fewer
 
 ### Make it yours
 
-| What                                                  | Where                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------- |
-| Name, tagline, intro                                  | Admin → Homepage (hero)                                          |
-| Brand, header, footer, socials, location, time zone   | Admin → Global Settings                                          |
-| Bio, stats, status                                    | Admin → About                                                    |
-| Experience, projects, skills…                         | Admin → the matching section                                     |
-| Section order and visibility                          | Admin → Sections                                                 |
-| Style (clean or terminal), color schemes, admin color | Admin → Appearance                                               |
-| Page title, description, keywords, error pages        | Admin → System                                                   |
-| Profile picture (live at once) and résumé             | Admin → Hero Section, or Media Manager                           |
-| Project and certificate pictures and videos           | Admin → Projects / Certifications                                |
-| Passwords, authenticators, email / Cloudinary keys    | Admin → Security & Keys                                          |
-| Dev.to username                                       | Admin → Section Texts (leave empty to disable the articles feed) |
-| Public URL, geo tags, short links                     | Environment variables (see below)                                |
+| What                                                               | Where                                                            |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Name, tagline, intro                                               | Admin → Homepage (hero)                                          |
+| Brand, header, footer, socials, location, time zone                | Admin → Global Settings                                          |
+| Bio, stats, status                                                 | Admin → About                                                    |
+| Experience, projects, skills…                                      | Admin → the matching section                                     |
+| Section order and visibility                                       | Admin → Sections                                                 |
+| Style (clean or terminal), color schemes, admin color              | Admin → Appearance                                               |
+| Page title, description, keywords, error pages                     | Admin → System                                                   |
+| Profile picture (live at once) and résumé                          | Admin → Hero Section, or Media Manager                           |
+| Pictures and videos of projects, services, certificates, education | Admin → Projects / Services / Certifications / Education         |
+| Passwords, authenticators, email / Cloudinary keys                 | Admin → Security & Keys                                          |
+| Dev.to username                                                    | Admin → Section Texts (leave empty to disable the articles feed) |
+| Public URL, geo tags, short links                                  | Environment variables (see below)                                |
 
 ## Configuration
 

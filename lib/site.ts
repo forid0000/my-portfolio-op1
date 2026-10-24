@@ -12,6 +12,7 @@ import connectToDatabase from '@/lib/db';
 import { isSectionEnabled, type PortfolioSectionConfig } from '@/lib/sections-registry';
 import { CACHE_TTL_MS } from '@/lib/cache-ttl';
 import { GLOBAL_CONTENT_DEFAULTS } from '@/lib/content-defaults';
+import { toHref } from '@/lib/safe-href';
 
 export interface SocialLink {
   href: string;
@@ -140,7 +141,11 @@ export function toNavToggles(sections: PortfolioSectionConfig[]): NavToggles {
  * schema change.
  */
 const socialLinkSchema = z.object({
-  href: z.string(),
+  // A web address, mailto: or tel: link; a bare domain such as behance.net/you gets https://.
+  href: z
+    .string()
+    .trim()
+    .refine((v) => toHref(v) !== null, 'Use a full link such as https://example.com'),
   label: z.string(),
   icon: z.string(),
 });

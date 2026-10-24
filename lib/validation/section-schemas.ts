@@ -5,7 +5,16 @@
  * collection of many small documents - one per item - mirroring `gallery`.
  */
 import { z } from 'zod';
+import { isSafeHref } from '@/lib/safe-href';
 import { mediaListSchema, singleMediaSchema } from '@/lib/validation/media-schemas';
+
+/** A link the owner types: empty, or a full web address (never `javascript:`). */
+const optionalLink = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((v) => !v || isSafeHref(v), 'Use a full link such as https://example.com')
+  .default('');
 
 /** education collection - app/api/admin/content/education/route.ts */
 export const educationItemSchema = z.object({
@@ -17,6 +26,8 @@ export const educationItemSchema = z.object({
   current: z.boolean().default(false),
   description: z.string().default(''),
   achievements: z.array(z.string()).default([]),
+  /** Diploma scans, campus photos or videos; index 0 is the cover. */
+  media: mediaListSchema('education').optional(),
   order: z.number().default(0),
 });
 export type EducationItem = z.infer<typeof educationItemSchema>;
@@ -28,7 +39,7 @@ export const certificationItemSchema = z.object({
   issueDate: z.string().default(''),
   expiryDate: z.string().default(''),
   credentialId: z.string().default(''),
-  credentialUrl: z.string().default(''),
+  credentialUrl: optionalLink,
   badge: singleMediaSchema('certifications').optional(),
   /** Certificate scans, photos or videos; index 0 is the cover. */
   media: mediaListSchema('certifications').optional(),
@@ -58,10 +69,13 @@ export const serviceItemSchema = z.object({
   category: z.string().default(''),
   pricing: z.string().default(''),
   icon: z.string().default('Code2'),
+  /** The older single picture; the editor now saves everything in `media`. */
   banner: singleMediaSchema('services').optional(),
+  /** Pictures and videos of the service; index 0 is the cover. */
+  media: mediaListSchema('services').optional(),
   features: z.array(z.string()).default([]),
   ctaLabel: z.string().default(''),
-  ctaLink: z.string().default(''),
+  ctaLink: optionalLink,
   order: z.number().default(0),
 });
 export type ServiceItem = z.infer<typeof serviceItemSchema>;
@@ -80,7 +94,7 @@ export const publicationItemSchema = z.object({
   title: z.string().min(1),
   type: z.enum(PUBLICATION_TYPE_OPTIONS).default('article'),
   platform: z.string().default(''),
-  url: z.string().default(''),
+  url: optionalLink,
   date: z.string().default(''),
   description: z.string().default(''),
   order: z.number().default(0),

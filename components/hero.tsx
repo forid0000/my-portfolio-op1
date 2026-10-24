@@ -12,6 +12,7 @@ const AiTypingText = dynamic(() => import('./ai-typing-text'));
 import { X, Download } from 'lucide-react';
 import SafeAvatar from '@/components/safe-avatar';
 import { SocialIcon } from '@/lib/social-icon';
+import { toHref } from '@/lib/safe-href';
 import type { IconMap } from '@/lib/icons/icon-data';
 import {
   AVATAR_PLACEHOLDER_URL,
@@ -200,7 +201,9 @@ export default function Hero({
           {showSocials && (
             <div className="socialLinks bg-transparent mt-2 md:mt-4">
               <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-                {(global?.socials || GLOBAL_CONTENT_DEFAULTS.socials).map((link) => {
+                {(global?.socials || GLOBAL_CONTENT_DEFAULTS.socials).flatMap((link) => {
+                  const href = toHref(link.href);
+                  if (!href) return [];
                   const IconComponent = (
                     <SocialIcon
                       name={link.icon}
@@ -212,7 +215,7 @@ export default function Hero({
                   return (
                     <a
                       key={link.label}
-                      href={link.href}
+                      href={href}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={link.label}

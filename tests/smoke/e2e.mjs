@@ -674,8 +674,8 @@ group('8. Public site: style, avatar, favicon, gallery');
     home.text.includes('sections%2Fprojects%2Fg1') && home.text.includes('sections%2Fprojects%2Fg2')
   );
   check(
-    'click-to-enlarge buttons exist',
-    /aria-label="View Brand identity larger"/.test(home.text)
+    'the whole project card opens its details',
+    /aria-label="View project: Brand identity"/.test(home.text)
   );
   check(
     'the "see everything" button uses the owner\'s text and link',
@@ -708,7 +708,8 @@ group('8. Public site: style, avatar, favicon, gallery');
     (t) => t.includes('data-ui="clean"') && !t.includes('.admin-accent{')
   );
   check('back to clean, no admin accent override', home.ok);
-  await saveProjects([]);
+  // one text-only project keeps the Projects section (and its menu link) on for what follows
+  await saveProjects([project([])]);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -1862,6 +1863,330 @@ group('15. Notes: a public page, a private vault, files from the computer');
     `${before} -> ${await conn.collection('note_files.files').countDocuments({})}`
   );
   await vault('/api/notes', { method: 'DELETE', body: { id: second.json.note._id } });
+}
+
+// ---------------------------------------------------------------------------------------
+group('16. Projects, services, certificates and education: pictures, details, links, sync');
+{
+  const conn = (await mongoose.connect(process.env.MONGODB_URI)).connection.client.db(
+    'portfolio_cms'
+  );
+  for (const id of [
+    'sections/services/m1',
+    'sections/services/m2',
+    'sections/services/old',
+    'sections/education/e1',
+    'sections/education/e2',
+    'sections/certifications/c1',
+    'sections/certifications/c2',
+    'sections/projects/p1',
+    'sections/projects/p2',
+  ])
+    await seed(id);
+  await seed('sections/certifications/cv', 'video');
+  const asset = (id, kind = 'image') => ({ ...item(id, kind) });
+
+  // ---- projects: every card opens its details, the text on the card is bounded
+  let r = await saveProjects([
+    project([asset('sections/projects/p1'), asset('sections/projects/p2')], {
+      description: 'A rebrand.\n\n' + 'More words. '.repeat(60),
+      tags: ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'],
+    }),
+    project([], { title: 'Text only', description: 'No pictures.' }),
+  ]);
+  check('two projects save', r.status === 200, r.text);
+  // React puts comment markers between pieces of text ("+<!-- -->2"); compare without them.
+  const flat = (t) => t.replace(/<!-- -->/g, '');
+  const button = (label) => `aria-label="${label}"`;
+  let home = await pageWhere('/', (t) => t.includes('View project: Text only'));
+  check('every project card is a button that opens its details', home.ok);
+  check(
+    'the project with pictures says how many it has',
+    home.text.includes('2 pictures') && home.text.includes('View project: Brand identity')
+  );
+  check('the card text is shortened, the window has all of it', home.text.includes('line-clamp-4'));
+  check('extra tags are counted instead of overflowing', flat(home.text).includes('>+2<'));
+  check(
+    'the menu and the hero button lead to the projects',
+    /href="\/#projects"/.test(home.text) && home.text.includes('View Projects')
+  );
+
+  // ---- services: a list of pictures, details, a safe button
+  r = await api('/api/admin/content/services', {
+    method: 'POST',
+    body: [
+      {
+        title: 'Brand identity',
+        description: 'Logo and style guide.',
+        category: 'Design',
+        pricing: 'From $800',
+        icon: 'Palette',
+        features: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
+        ctaLabel: 'Book a call',
+        ctaLink: 'https://example.com/book',
+        media: [asset('sections/services/m1'), asset('sections/services/m2')],
+        order: 0,
+      },
+    ],
+  });
+  check('a service with several pictures saves', r.status === 200, r.text);
+  home = await pageWhere('/', (t) => t.includes('View service: Brand identity'));
+  check('the service card opens its details', home.ok);
+  check('its cover is on the page', home.text.includes('sections%2Fservices%2Fm1'));
+  check(
+    'all its pictures reach the details window',
+    home.text.includes('sections/services/m2') || home.text.includes('sections%2Fservices%2Fm2')
+  );
+  check('the card shows a few features and counts the rest', flat(home.text).includes('+2 more'));
+  check(
+    'the call-to-action opens in a new tab safely',
+    /href="https:\/\/example\.com\/book"[^>]*rel="noopener noreferrer"/.test(home.text) ||
+      /rel="noopener noreferrer"[^>]*href="https:\/\/example\.com\/book"/.test(home.text)
+  );
+  r = await api('/api/admin/content/services', {
+    method: 'POST',
+    body: [{ title: 'Bad', ctaLabel: 'x', ctaLink: 'javascript:alert(1)' }],
+  });
+  check(
+    'a script link on a service is refused, naming the field',
+    r.status === 400 && r.json.details.some((d) => d.path.join('.') === '0.ctaLink'),
+    JSON.stringify(r.json)
+  );
+  check(
+    'a service can take videos now',
+    (
+      await api('/api/admin/media/sign', {
+        method: 'POST',
+        body: { scope: 'services', kind: 'video' },
+      })
+    ).status === 200
+  );
+
+  // ---- the older single banner still shows, and moves into the list without losing the file
+  await conn.collection('services').insertOne({
+    title: 'Older banner',
+    banner: { src: url('image', 'sections/services/old'), public_id: 'sections/services/old' },
+    features: [],
+    order: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  const services = (await api('/api/admin/content/services')).json;
+  r = await api('/api/admin/content/services', { method: 'POST', body: services });
+  home = await pageWhere('/', (t) => t.includes('sections%2Fservices%2Fold'));
+  check('a service saved with one banner still shows it as the cover', home.ok);
+  const legacy = services.find((x) => x.title === 'Older banner');
+  r = await api('/api/admin/content/services', {
+    method: 'POST',
+    body: [
+      services.find((x) => x.title === 'Brand identity'),
+      {
+        _id: legacy._id,
+        title: 'Older banner',
+        media: [asset('sections/services/old')],
+        order: 1,
+      },
+    ],
+  });
+  await wait(1200);
+  const moved = (await api('/api/admin/content/services')).json.find(
+    (x) => x.title === 'Older banner'
+  );
+  check(
+    'moving the banner into the list drops the old field',
+    r.status === 200 && moved.banner === undefined
+  );
+  check(
+    'and keeps the picture (it is still used)',
+    moved.media?.length === 1 && (await has('sections/services/old'))
+  );
+
+  // ---- certificates: pictures are shown, the card opens, links are safe
+  r = await api('/api/admin/content/certifications', {
+    method: 'POST',
+    body: [
+      {
+        name: 'Pro Cert',
+        issuer: 'Board',
+        issueDate: 'Jan 2024',
+        credentialId: 'ABC-123',
+        credentialUrl: 'https://example.com/verify',
+        media: [
+          asset('sections/certifications/c1'),
+          asset('sections/certifications/c2'),
+          asset('sections/certifications/cv', 'video'),
+        ],
+        order: 0,
+      },
+      {
+        name: 'Badge only',
+        issuer: 'Body',
+        badge: {
+          src: url('image', 'sections/certifications/c2'),
+          public_id: 'sections/certifications/c2',
+        },
+        order: 1,
+      },
+      { name: 'Plain', issuer: 'Nobody', order: 2 },
+    ],
+  });
+  check('certificates with pictures save', r.status === 200, r.text);
+  home = await pageWhere('/', (t) => t.includes('View certificate: Pro Cert'));
+  check('a certificate with pictures opens its details', home.ok);
+  check(
+    'its picture is on the landing page (it used to be missing)',
+    home.text.includes('sections%2Fcertifications%2Fc1')
+  );
+  check('the picture and video count is shown', home.text.includes('2 pictures · 1 video'));
+  check('the credential id is shown', flat(home.text).includes('ID: ABC-123'));
+  check(
+    'a certificate with only a badge opens it larger',
+    home.text.includes('View certificate: Badge only')
+  );
+  check(
+    'a plain certificate is not a dead button',
+    !home.text.includes(button('View certificate: Plain')) && home.text.includes('Plain')
+  );
+  r = await api('/api/admin/content/certifications', {
+    method: 'POST',
+    body: [{ name: 'Bad', issuer: 'X', credentialUrl: 'javascript:alert(1)' }],
+  });
+  check('a script link on a certificate is refused', r.status === 400, String(r.status));
+
+  // ---- education: pictures are optional
+  r = await api('/api/admin/content/education', {
+    method: 'POST',
+    body: [
+      {
+        institution: 'City University',
+        degree: 'BBA',
+        media: [asset('sections/education/e1'), asset('sections/education/e2')],
+        order: 0,
+      },
+      { institution: 'Open College', degree: 'Diploma', order: 1 },
+    ],
+  });
+  check('education with pictures saves', r.status === 200, r.text);
+  home = await pageWhere('/', (t) => t.includes('View pictures and details: BBA, City University'));
+  check('an education entry with pictures opens them', home.ok);
+  check(
+    'one without pictures is a plain card',
+    !home.text.includes(button('View pictures and details: Diploma, Open College')) &&
+      home.text.includes('Open College')
+  );
+
+  // ---- pictures of these lists are protected and cleaned like every other
+  r = await api('/api/admin/media', {
+    method: 'DELETE',
+    body: { public_id: 'sections/services/m1', kind: 'image' },
+  });
+  check(
+    'a picture used by a service is not discarded as unused',
+    r.status === 409,
+    String(r.status)
+  );
+  r = await api('/api/admin/media', {
+    method: 'DELETE',
+    body: { public_id: 'sections/education/e1', kind: 'image' },
+  });
+  check(
+    'a picture used by an education entry is not discarded either',
+    r.status === 409,
+    String(r.status)
+  );
+  await api('/api/admin/cloudinary-media', {
+    method: 'DELETE',
+    body: { public_ids: ['sections/services/m2', 'sections/education/e2'] },
+  });
+  const svc = (await api('/api/admin/content/services')).json.find(
+    (x) => x.title === 'Brand identity'
+  );
+  const edu = (await api('/api/admin/content/education')).json.find((x) => x.degree === 'BBA');
+  check(
+    'deleting in the explorer removes the picture from the service and the education entry',
+    svc.media.length === 1 && edu.media.length === 1,
+    JSON.stringify([svc.media?.length, edu.media?.length])
+  );
+
+  // ---- saved empty lists really mean empty
+  r = await saveProjects([]);
+  home = await pageWhere('/', (t) => !t.includes('id="projects"'));
+  check('deleting every project removes the section, not shows placeholders', home.ok);
+  check(
+    'and the menu link and hero button that led to it',
+    !/href="\/#projects"/.test(home.text) && !home.text.includes('View Projects')
+  );
+  await saveProjects([project([])]);
+
+  // ---- every section title can be changed
+  r = await api('/api/admin/content/headings', {
+    method: 'POST',
+    body: {
+      servicesHeading: 'What I offer',
+      educationHeading: 'Studies',
+      certificationsHeading: 'Credentials',
+    },
+  });
+  check('section titles save', r.status === 200, r.text);
+  home = await pageWhere('/', (t) => t.includes('What I offer') && t.includes('Credentials'));
+  check('the new titles are on the page', home.ok && home.text.includes('Studies'));
+  await api('/api/admin/content/headings', { method: 'POST', body: {} });
+
+  // ---- links in the header area are checked as well
+  const globalDoc = (await api('/api/admin/content/global')).json;
+  r = await api('/api/admin/content/global', {
+    method: 'POST',
+    body: {
+      ...globalDoc,
+      socials: [{ href: 'javascript:alert(1)', label: 'Bad', icon: 'Mail' }],
+    },
+  });
+  check(
+    'a script link among the social links is refused, naming the field',
+    r.status === 400 && r.json.details.some((d) => d.path.join('.') === 'socials.0.href'),
+    JSON.stringify(r.json?.details?.[0])
+  );
+
+  // ---- contact: cards open the visitor's own apps
+  const contactDoc = (await api('/api/admin/content/contact')).json;
+  r = await api('/api/admin/content/contact', {
+    method: 'POST',
+    body: { ...contactDoc, whatsappLink: 'hello there' },
+  });
+  check(
+    'a WhatsApp value that cannot open WhatsApp is refused, naming the field',
+    r.status === 400 && r.json.details.some((d) => d.path.join('.') === 'whatsappLink'),
+    JSON.stringify(r.json?.details?.[0])
+  );
+  r = await api('/api/admin/content/contact', {
+    method: 'POST',
+    body: {
+      ...contactDoc,
+      email: 'owner@example.com',
+      phone: '',
+      whatsappLink: '+880 1712-345678',
+    },
+  });
+  check('a WhatsApp number alone is enough (the phone is optional)', r.status === 200, r.text);
+  home = await pageWhere('/', (t) => t.includes('mailto:owner@example.com'));
+  check('the email card opens the mail app', home.ok);
+  check(
+    'the phone card opens WhatsApp with the number',
+    /href="https:\/\/wa\.me\/8801712345678"/.test(home.text)
+  );
+  check('each card still has its own copy button', home.text.includes('Copy the email address'));
+  r = await api('/api/admin/content/contact', {
+    method: 'POST',
+    body: { ...contactDoc, phone: '+1 555 123 4567', whatsappLink: '' },
+  });
+  home = await pageWhere('/', (t) => t.includes('tel:+15551234567'));
+  check('with no WhatsApp, the phone card opens the dialer', home.ok);
+  await api('/api/admin/content/contact', { method: 'POST', body: contactDoc });
+
+  // clean up what this section created
+  await api('/api/admin/content/services', { method: 'POST', body: [] });
+  for (const col of ['services', 'certifications', 'education'])
+    await conn.collection(col).deleteMany({});
 }
 
 // ---------------------------------------------------------------------------------------

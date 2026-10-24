@@ -27,6 +27,8 @@ interface CollectionEditorProps<T extends CollectionItem> {
   renderFields: (item: T, onChange: (field: string, value: any) => void) => React.ReactNode;
   /** Fields every item must fill in: the first empty one is scrolled to and outlined in red. */
   requiredFields?: string[];
+  /** Applied to every saved item as it is loaded, e.g. to turn an older field into the current one. */
+  normalizeItem?: (item: T) => T;
   validateItem?: (item: T) => string | null;
 }
 
@@ -49,6 +51,7 @@ export function CollectionEditor<T extends CollectionItem>({
   getItemLabel,
   renderFields,
   requiredFields,
+  normalizeItem,
   validateItem,
 }: CollectionEditorProps<T>) {
   const [items, setItems] = useState<T[]>([]);
@@ -62,7 +65,8 @@ export function CollectionEditor<T extends CollectionItem>({
     fetch(endpoint)
       .then((res) => res.json())
       .then((data) => {
-        setItems(Array.isArray(data) ? data : []);
+        const list: T[] = Array.isArray(data) ? data : [];
+        setItems(normalizeItem ? list.map(normalizeItem) : list);
         setLoading(false);
       })
       .catch(() => {
@@ -165,7 +169,8 @@ export function CollectionEditor<T extends CollectionItem>({
       // Baseline the refreshed data (not the pre-refetch state), otherwise the
       // incoming _ids would immediately re-flag the page as dirty.
       const refreshed = await fetch(endpoint).then((r) => r.json());
-      const next = Array.isArray(refreshed) ? refreshed : [];
+      const loaded: T[] = Array.isArray(refreshed) ? refreshed : [];
+      const next = normalizeItem ? loaded.map(normalizeItem) : loaded;
       setItems(next);
       markClean(next);
     } catch (err) {

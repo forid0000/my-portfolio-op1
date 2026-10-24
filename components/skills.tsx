@@ -18,7 +18,8 @@ export default function Skills({
   heading = 'skills',
   terminalPrefix = DEFAULT_TERMINAL_PREFIX,
 }: SkillsProps) {
-  const categories = content || SKILLS_DEFAULTS;
+  const categories = content ?? SKILLS_DEFAULTS;
+  if (categories.length === 0) return null;
 
   return (
     <section id="skills" className="section-spacing relative overflow-hidden">

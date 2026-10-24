@@ -20,7 +20,8 @@ export default function Roadmap({
   heading = 'Roadmap',
   highlight = 'Ahead',
 }: RoadmapProps) {
-  const roadmapItems = content || ROADMAP_DEFAULTS;
+  const roadmapItems = content ?? ROADMAP_DEFAULTS;
+  if (roadmapItems.length === 0) return null;
 
   return (
     <section id="roadmap" className="section-spacing relative overflow-hidden">

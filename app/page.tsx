@@ -136,18 +136,20 @@ export default async function Home() {
       };
     }
 
+    // The placeholders stand in until the owner saves something. A saved list wins even when it
+    // is empty (everything deleted on purpose), and then the section is simply not shown.
     const experienceDoc = allDocs.find((doc: any) => doc.type === 'experience_content');
-    if (experienceDoc && experienceDoc.experiences?.length) {
+    if (Array.isArray(experienceDoc?.experiences)) {
       experienceContent = experienceDoc.experiences;
     }
 
     const skillsDoc = allDocs.find((doc: any) => doc.type === 'skills_content');
-    if (skillsDoc && skillsDoc.categories?.length) {
+    if (Array.isArray(skillsDoc?.categories)) {
       skillsContent = skillsDoc.categories;
     }
 
     const projectsDoc = allDocs.find((doc: any) => doc.type === 'projects_content');
-    if (projectsDoc && projectsDoc.projects?.length) {
+    if (Array.isArray(projectsDoc?.projects)) {
       projectsContent = projectsDoc.projects;
     }
     if (projectsDoc) {
@@ -155,7 +157,7 @@ export default async function Home() {
     }
 
     const roadmapDoc = allDocs.find((doc: any) => doc.type === 'roadmap_content');
-    if (roadmapDoc && roadmapDoc.roadmapItems?.length) {
+    if (Array.isArray(roadmapDoc?.roadmapItems)) {
       roadmapContent = roadmapDoc.roadmapItems;
     }
 
@@ -263,6 +265,14 @@ export default async function Home() {
   // this return statement.
   const renderableSections = getRenderableSections(sections);
 
+  // A section with nothing to show renders nothing, so its menu link and the hero button that
+  // lead to it must not be offered either.
+  const hasProjects = projectsContent.length > 0;
+  const navSections = hasProjects
+    ? sections
+    : sections.map((s) => (s.id === 'projects' ? { ...s, isEnabled: false } : s));
+  const nav = navFor(chrome, navSections);
+
   // Icons are stored by name in the CMS; resolve the ones this page uses to
   // plain SVG data on the server, so no icon library is sent to the browser.
   const icons = await resolveIconMap([
@@ -284,20 +294,28 @@ export default async function Home() {
       // The CV button needs an uploaded resume; the social row can be switched off.
       showResume: chrome.hero.resume && resumeAvailable,
       showSocials: chrome.hero.socials,
-      showProjects: isSectionEnabled(sections, 'projects'),
+      showProjects: isSectionEnabled(sections, 'projects') && hasProjects,
     },
     about: {
       content: aboutContent,
       heading: sectionTexts.aboutHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
     },
-    education: { content: educationItems, terminalPrefix: sectionTexts.terminalPrefix },
+    education: {
+      content: educationItems,
+      heading: sectionTexts.educationHeading,
+      terminalPrefix: sectionTexts.terminalPrefix,
+    },
     experience: {
       content: experienceContent,
       heading: sectionTexts.experienceHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
     },
-    certifications: { content: certificationItems, terminalPrefix: sectionTexts.terminalPrefix },
+    certifications: {
+      content: certificationItems,
+      heading: sectionTexts.certificationsHeading,
+      terminalPrefix: sectionTexts.terminalPrefix,
+    },
     skills: {
       content: skillsContent,
       heading: sectionTexts.skillsHeading,
@@ -313,7 +331,11 @@ export default async function Home() {
       heading: sectionTexts.techStacksHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
     },
-    services: { content: serviceItems, terminalPrefix: sectionTexts.terminalPrefix },
+    services: {
+      content: serviceItems,
+      heading: sectionTexts.servicesHeading,
+      terminalPrefix: sectionTexts.terminalPrefix,
+    },
     projects: {
       content: projectsContent,
       githubUrl: globalContent.githubProfileUrl,
@@ -322,8 +344,16 @@ export default async function Home() {
       heading: sectionTexts.projectsHeading,
       terminalPrefix: sectionTexts.terminalPrefix,
     },
-    publications: { content: publicationItems, terminalPrefix: sectionTexts.terminalPrefix },
-    testimonials: { content: testimonialItems, terminalPrefix: sectionTexts.terminalPrefix },
+    publications: {
+      content: publicationItems,
+      heading: sectionTexts.publicationsHeading,
+      terminalPrefix: sectionTexts.terminalPrefix,
+    },
+    testimonials: {
+      content: testimonialItems,
+      heading: sectionTexts.testimonialsHeading,
+      terminalPrefix: sectionTexts.terminalPrefix,
+    },
     roadmap: {
       content: roadmapContent,
       heading: sectionTexts.roadmapHeading,
@@ -343,11 +373,7 @@ export default async function Home() {
     // bg-background commented out to remove solid background color
     <main className="min-h-screen ">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
-      <Header
-        brand={toHeaderBrand(globalContent)}
-        nav={navFor(chrome, sections)}
-        uiStyle={theme.uiStyle}
-      />
+      <Header brand={toHeaderBrand(globalContent)} nav={nav} uiStyle={theme.uiStyle} />
       {renderableSections.map((section) => {
         const Component = SECTION_COMPONENT_MAP[section.id];
         if (!Component) return null;
@@ -357,12 +383,7 @@ export default async function Home() {
           </Fragment>
         );
       })}
-      <Footer
-        content={globalContent}
-        icons={icons}
-        nav={navFor(chrome, sections)}
-        show={chrome.footer}
-      />
+      <Footer content={globalContent} icons={icons} nav={nav} show={chrome.footer} />
       {chrome.floatingContact && <FloatingContact content={floatingContent} icons={icons} />}
     </main>
   );

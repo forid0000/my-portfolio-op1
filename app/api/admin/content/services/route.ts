@@ -4,5 +4,5 @@ import { serviceItemSchema } from '@/lib/validation/section-schemas';
 export const { GET, POST, PATCH, DELETE } = createCollectionHandlers(
   'services',
   serviceItemSchema,
-  { mediaFields: ['banner'] }
+  { mediaFields: ['banner', 'media'] }
 );

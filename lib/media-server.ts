@@ -116,7 +116,13 @@ export async function isMediaReferenced(publicId: string): Promise<boolean> {
         { limit: 1 }
       ),
     db.collection('testimonials').countDocuments({ 'avatar.public_id': publicId }, { limit: 1 }),
-    db.collection('services').countDocuments({ 'banner.public_id': publicId }, { limit: 1 }),
+    db
+      .collection('services')
+      .countDocuments(
+        { $or: [{ 'media.public_id': publicId }, { 'banner.public_id': publicId }] },
+        { limit: 1 }
+      ),
+    db.collection('education').countDocuments({ 'media.public_id': publicId }, { limit: 1 }),
     db.collection('avatars').countDocuments({ public_id: publicId }, { limit: 1 }),
     db
       .collection('articles')

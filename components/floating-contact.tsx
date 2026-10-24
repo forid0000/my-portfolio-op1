@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { SocialIcon } from '@/lib/social-icon';
 import { FLOATING_DEFAULTS, type FloatingContent } from '@/lib/floating';
 import type { IconMap } from '@/lib/icons/icon-data';
+import { toHref } from '@/lib/safe-href';
 
 export default function FloatingContact({
   content,
@@ -33,8 +34,11 @@ export default function FloatingContact({
     }
   };
 
-  const handleDirectClick = (href: string, external: boolean = true) => {
-    if (external) {
+  const handleDirectClick = (rawHref: string, external: boolean = true) => {
+    const href = toHref(rawHref);
+    if (!href) return; // never follow a link that is not a web, mail or phone address
+    // Web pages (WhatsApp, a profile) open in a new tab; mail and phone links hand over to the app.
+    if (external && /^https?:/i.test(href)) {
       window.open(href, '_blank', 'noopener,noreferrer');
     } else {
       window.location.href = href;

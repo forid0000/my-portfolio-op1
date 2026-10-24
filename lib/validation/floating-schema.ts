@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { toHref } from '@/lib/safe-href';
 
 /**
  * Validation schema for POST /api/admin/content/floating, mirroring FloatingContent.
@@ -10,7 +11,10 @@ const floatingItemSchema = z.object({
   label: z.string(),
   value: z.string(),
   copyValue: z.string(),
-  href: z.string(),
+  href: z
+    .string()
+    .trim()
+    .refine((v) => toHref(v) !== null, 'Use a full link such as https://example.com'),
   icon: z.string().max(100),
 });
 

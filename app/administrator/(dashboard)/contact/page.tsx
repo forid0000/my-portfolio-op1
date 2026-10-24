@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { extractApiErrorMessage } from '@/lib/utils';
+import { whatsappHref } from '@/lib/contact-links';
 
 export default function ContactCMS() {
   const [data, setData] = useState({
@@ -48,8 +49,12 @@ export default function ContactCMS() {
       toast.error('Validation Error: Invalid email format.');
       return;
     }
-    if (!data.phone.trim() || !data.whatsappLink.trim()) {
-      toast.error('Validation Error: Phone and WhatsApp fields are required.');
+    // Phone and WhatsApp are both optional (the phone card is hidden when neither is set), but a
+    // WhatsApp value has to be something that can open WhatsApp.
+    if (data.whatsappLink.trim() && !whatsappHref(data.whatsappLink)) {
+      toast.error(
+        'Enter your WhatsApp number with the country code (for example +1 555 123 4567), or a wa.me link.'
+      );
       return;
     }
 
@@ -110,10 +115,12 @@ export default function ContactCMS() {
           <div className="bg-blue-950/30 border border-blue-900/50 p-4 rounded-xl flex gap-3 items-start">
             <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
             <div className="text-sm text-blue-200 leading-relaxed">
-              <strong className="text-blue-300">Admin Hint:</strong> Ensure your email is valid. The
-              WhatsApp Link should typically be a shortlink like{' '}
-              <code>https://wa.me/YOUR_NUMBER</code> or <code>/whatsapp</code> if you handle
-              redirection via Next.js routing.
+              <strong className="text-blue-300">Admin Hint:</strong> Visitors who click the email
+              card open their mail app, and the phone card opens WhatsApp (or the dialer when there
+              is no WhatsApp). Each card also has a small copy button. Type the WhatsApp number with
+              the country code, for example <code>+1 555 123 4567</code>, or paste a{' '}
+              <code>https://wa.me/…</code> link. Phone and WhatsApp are both optional; the phone
+              card is hidden when neither is set.
             </div>
           </div>
 
@@ -167,6 +174,7 @@ export default function ContactCMS() {
                 <label className="block text-sm font-medium text-gray-400 mb-1">Direct Email</label>
                 <input
                   type="email"
+                  data-field="email"
                   value={data.email || ''}
                   onChange={(e) => handleChange('email', e.target.value)}
                   className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 transition-all font-mono text-sm"
@@ -187,10 +195,11 @@ export default function ContactCMS() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">
-                    Phone Number (Copy Text)
+                    Phone Number (optional, shown on the card and used to call)
                   </label>
                   <input
                     type="text"
+                    data-field="phone"
                     value={data.phone || ''}
                     onChange={(e) => handleChange('phone', e.target.value)}
                     className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 transition-all font-mono text-sm"
@@ -198,10 +207,11 @@ export default function ContactCMS() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">
-                    WhatsApp Link / Text
+                    WhatsApp number or link (optional)
                   </label>
                   <input
                     type="text"
+                    data-field="whatsappLink"
                     value={data.whatsappLink || ''}
                     onChange={(e) => handleChange('whatsappLink', e.target.value)}
                     className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-200 focus:outline-none focus:border-emerald-500 transition-all font-mono text-sm"

@@ -3,5 +3,6 @@ import { educationItemSchema } from '@/lib/validation/section-schemas';
 
 export const { GET, POST, PATCH, DELETE } = createCollectionHandlers(
   'education',
-  educationItemSchema
+  educationItemSchema,
+  { mediaFields: ['media'] }
 );
