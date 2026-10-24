@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TotpEnroll } from '@/components/admin/totp-enroll';
+import { FieldHelpText, KeyGuide, SetupChecklist } from '@/components/admin/key-guide';
+import { FIELD_HELP, GROUP_GUIDE, GUIDES, setupProgress } from '@/lib/admin-guides';
 
 const ADMIN_PASSWORD_MIN = 12;
 const NOTES_PASSWORD_MIN = 8;
@@ -326,6 +328,17 @@ export default function SecurityPage() {
         </p>
       </div>
 
+      <SetupChecklist
+        items={setupProgress({
+          adminHasPassword: overview.admin.hasPassword,
+          notesHasPassword: overview.notes.hasPassword,
+          notesQuickUnlock: overview.notes.quickUnlock,
+          fieldStates: Object.fromEntries(overview.integrations.map((f) => [f.key, f.state])),
+        })}
+      />
+
+      <KeyGuide guide={GUIDES.hosting} />
+
       {/* Step-up confirmation, shared by every change below */}
       <div className="sticky top-2 z-10 rounded-xl border border-emerald-900/60 bg-gray-900/95 backdrop-blur p-4 shadow-lg">
         <label
@@ -348,7 +361,9 @@ export default function SecurityPage() {
           />
           <p className="text-xs text-gray-400 flex-1 min-w-[14rem]">
             Every change below needs a current code from your authenticator app, on top of being
-            signed in. Enter it, then press the save button of the section you are changing.
+            signed in. Open the app on your phone, find this site’s entry, type the 6 digits here
+            (they change every 30 seconds), then press the save button of the section you are
+            changing. Each code works for one change; wait for the next one for the next change.
           </p>
         </div>
       </div>
@@ -370,6 +385,7 @@ export default function SecurityPage() {
 
         <div className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">Password</h3>
+          <KeyGuide guide={GUIDES['admin-password']} />
           <PasswordForm
             min={ADMIN_PASSWORD_MIN}
             hasPassword={overview.admin.hasPassword}
@@ -383,6 +399,7 @@ export default function SecurityPage() {
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">
             Authenticator
           </h3>
+          <KeyGuide guide={GUIDES.authenticator} />
           {enrolling('admin') ? (
             <div className="space-y-4">
               <TotpEnroll
@@ -443,6 +460,8 @@ export default function SecurityPage() {
           )}
         </div>
 
+        <KeyGuide guide={GUIDES['notes-vault']} />
+
         <div className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">
             Vault password (7-day session)
@@ -458,7 +477,7 @@ export default function SecurityPage() {
 
         <div className="space-y-3 border-t border-gray-800 pt-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500">
-            Authenticator quick unlock (45-minute session)
+            Authenticator quick unlock (45 minutes, +15 per click, up to 3 hours)
           </h3>
           {enrolling('notes') ? (
             <div className="space-y-4">
@@ -532,6 +551,10 @@ export default function SecurityPage() {
             title={info.label}
             description={info.description}
           >
+            <KeyGuide
+              guide={GUIDES[GROUP_GUIDE[group] ?? 'smtp']}
+              defaultOpen={fields.every((f) => f.state === 'unset')}
+            />
             <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
               {fields.map((f) => {
                 const queuedClear = clears.has(f.key);
@@ -564,6 +587,7 @@ export default function SecurityPage() {
                       }
                       className={`${inputClass} ${queuedClear ? 'opacity-40' : ''}`}
                     />
+                    <FieldHelpText help={FIELD_HELP[f.key]} />
                     {f.hint && <p className="text-[11px] text-gray-500">{f.hint}</p>}
                     {f.state === 'admin' && (
                       <label className="flex items-center gap-2 text-[11px] text-gray-500 cursor-pointer">

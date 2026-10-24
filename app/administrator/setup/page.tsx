@@ -229,6 +229,38 @@ export default function AdminSetup() {
                 <code className="font-mono text-emerald-300">node scripts/setup-code.mjs</code>.
               </p>
             </div>
+            <details className="group rounded-lg border border-emerald-900/50 bg-emerald-950/10 px-4 py-3 text-sm text-gray-300 open:bg-emerald-950/20">
+              <summary className="cursor-pointer list-none font-medium text-emerald-300 [&::-webkit-details-marker]:hidden">
+                Where do I find the setup code?
+              </summary>
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-gray-400 marker:font-bold marker:text-emerald-500">
+                <li>
+                  <strong className="text-gray-200">On Vercel:</strong> open your project at
+                  vercel.com, then <strong>Logs</strong> (runtime logs). Reload this page, wait a
+                  few seconds, refresh the logs and look for a box made of <code>====</code> lines
+                  that says <em>first-run setup is pending</em>. The code is in it, like{' '}
+                  <code className="text-emerald-300">K7QWM-3XNPD</code>.
+                </li>
+                <li>
+                  <strong className="text-gray-200">On your own computer:</strong> look in the
+                  terminal window where you started the project (<code>pnpm dev</code> or{' '}
+                  <code>pnpm preview</code>).
+                </li>
+                <li>
+                  <strong className="text-gray-200">Cannot find it?</strong> On any computer with
+                  Node.js and the project, run{' '}
+                  <code className="text-emerald-300">
+                    JWT_SECRET=&quot;your-secret&quot; node scripts/setup-code.mjs
+                  </code>
+                  . It prints the same code.
+                </li>
+              </ol>
+              <p className="mt-3 text-[12px] text-gray-500">
+                Capital letters and the dash do not matter. After 10 wrong tries you have to wait 15
+                minutes. If this page keeps saying the account already exists, go to the sign-in
+                page instead.
+              </p>
+            </details>
             <div>
               <label htmlFor="setup-code" className="block text-sm font-medium text-gray-300 mb-1">
                 Setup code

@@ -259,7 +259,7 @@ const DEFINITIONS: ItemDefinition[] = [
     group: 'services',
     title: 'Turn on the contact form',
     description:
-      'Add the details of an email provider (SMTP) so messages from visitors reach your inbox. Until then the form says it is not set up.',
+      'Add the details of an email provider (SMTP) so messages from visitors reach your inbox. A step-by-step guide with the settings for Brevo, Gmail and Resend is there. Until then the form says it is not set up.',
     href: '/administrator/security#email',
     optional: true,
     done: (f) => f.smtpReady,
@@ -269,7 +269,7 @@ const DEFINITIONS: ItemDefinition[] = [
     group: 'services',
     title: 'Connect image storage',
     description:
-      'Cloudinary (free plan) stores your photo, gallery and uploaded images. Paste its cloud name, API key and secret.',
+      'Cloudinary (free plan) stores your photo, gallery and uploaded images. A step-by-step guide shows where to find its cloud name, API key and secret.',
     href: '/administrator/security#cloudinary',
     optional: true,
     done: (f) => f.cloudinaryReady,

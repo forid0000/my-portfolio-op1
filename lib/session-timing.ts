@@ -37,3 +37,23 @@ export function extendSession(input: {
   const newExp = Math.max(next, exp); // a session already past the limit is never shortened
   return { exp: newExp, added: newExp - exp, atLimit: newExp >= limit, limit };
 }
+
+/**
+ * The private notes vault follows the same rules for its authenticator unlock (45 minutes, +15 per
+ * click, 3 hours at most from unlocking). A vault password gives a 7-day session instead, which is
+ * already longer than the cap, so it has nothing to extend.
+ */
+export const NOTES_QUICK_SESSION_SECONDS = ADMIN_SESSION_SECONDS;
+export const NOTES_PASSWORD_SESSION_SECONDS = 7 * 24 * 60 * 60;
+
+export type NotesSessionKind = 'quick' | 'password';
+
+/** Which kind of unlock a session came from, worked out from its length (no extra claim needed). */
+export function notesSessionKind(iat: number, exp: number): NotesSessionKind {
+  return exp - iat > ADMIN_SESSION_MAX_SECONDS ? 'password' : 'quick';
+}
+
+/** When a notes session can last until at the latest, in seconds since the epoch. */
+export function notesSessionLimit(iat: number, exp: number): number {
+  return notesSessionKind(iat, exp) === 'quick' ? iat + ADMIN_SESSION_MAX_SECONDS : exp;
+}

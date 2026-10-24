@@ -226,9 +226,10 @@ export default function MediaManager() {
 
       {!loading && !connected && (
         <p className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
-          Cloudinary is not connected, so pictures cannot be uploaded yet.{' '}
-          <Link href="/administrator/security" className="underline">
-            Add your keys in Security & Keys
+          Cloudinary is not connected, so pictures cannot be uploaded yet. It is free to start and
+          takes about 5 minutes:{' '}
+          <Link href="/administrator/security#cloudinary" className="underline">
+            open the step-by-step guide in Security & Keys
           </Link>
           .
         </p>

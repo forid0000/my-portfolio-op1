@@ -456,6 +456,14 @@ export default function VaultApp() {
           onNew={() => void startCreate()}
           timeLeft={session.timeLeft}
           lowTime={session.lowTime}
+          canExtend={session.canExtend}
+          atLimit={session.atLimit}
+          extending={session.extending}
+          onExtend={() =>
+            void session.extend().then((error) => {
+              if (error) toast.error(error);
+            })
+          }
           onLock={() => void session.logout()}
           onShortcuts={() => setShowShortcuts(true)}
         />

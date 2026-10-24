@@ -101,8 +101,8 @@ export function ProfilePictureCard() {
           {!connected && (
             <p className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
               Cloudinary is not connected.{' '}
-              <Link href="/administrator/security" className="underline">
-                Add your keys in Security & Keys
+              <Link href="/administrator/security#cloudinary" className="underline">
+                Open the step-by-step guide in Security & Keys
               </Link>
               .
             </p>

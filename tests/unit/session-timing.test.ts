@@ -3,7 +3,11 @@ import {
   ADMIN_SESSION_EXTEND_SECONDS,
   ADMIN_SESSION_MAX_SECONDS,
   ADMIN_SESSION_SECONDS,
+  NOTES_PASSWORD_SESSION_SECONDS,
+  NOTES_QUICK_SESSION_SECONDS,
   extendSession,
+  notesSessionKind,
+  notesSessionLimit,
 } from '@/lib/session-timing';
 
 const MIN = 60;
@@ -93,5 +97,33 @@ describe('the sign-in cookie', () => {
     expect(cookie?.maxAge).toBe(45 * 60);
     const { payload } = await jwtVerify(cookie!.value, new TextEncoder().encode('x'.repeat(48)));
     expect((payload.exp as number) - (payload.iat as number)).toBe(45 * 60);
+  });
+});
+
+describe('notes vault sessions', () => {
+  const iat = 4_000_000;
+
+  it('an authenticator unlock is the same 45 minutes as the admin, a password lasts 7 days', () => {
+    expect(NOTES_QUICK_SESSION_SECONDS).toBe(ADMIN_SESSION_SECONDS);
+    expect(NOTES_PASSWORD_SESSION_SECONDS).toBe(7 * 24 * 60 * 60);
+    expect(notesSessionKind(iat, iat + NOTES_QUICK_SESSION_SECONDS)).toBe('quick');
+    expect(notesSessionKind(iat, iat + NOTES_PASSWORD_SESSION_SECONDS)).toBe('password');
+    // an extended authenticator session is still an authenticator session
+    expect(notesSessionKind(iat, iat + ADMIN_SESSION_MAX_SECONDS)).toBe('quick');
+  });
+
+  it('an authenticator unlock can be extended up to 3 hours from unlocking', () => {
+    const exp = iat + NOTES_QUICK_SESSION_SECONDS;
+    expect(notesSessionLimit(iat, exp)).toBe(iat + ADMIN_SESSION_MAX_SECONDS);
+    const next = extendSession({ iat, exp, now: iat + 10 })!;
+    expect(next.added).toBe(ADMIN_SESSION_EXTEND_SECONDS);
+  });
+
+  it('a password session has nothing to extend', () => {
+    const exp = iat + NOTES_PASSWORD_SESSION_SECONDS;
+    expect(notesSessionLimit(iat, exp)).toBe(exp);
+    const next = extendSession({ iat, exp, now: iat + 10 })!;
+    expect(next.added).toBe(0);
+    expect(next.exp).toBe(exp);
   });
 });

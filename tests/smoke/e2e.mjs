@@ -2295,6 +2295,97 @@ group('17. Admin session: 45 minutes, +15 minutes per click, 3 hours at most');
 }
 
 // ---------------------------------------------------------------------------------------
+group('18. Private notes: the unlock can be extended like the admin session');
+{
+  const MIN = 60;
+  const signNotes = (signedIn, expires) =>
+    new SignJWT({ auth: 'notes' })
+      .setProtectedHeader({ alg: 'HS512' })
+      .setIssuedAt(signedIn)
+      .setExpirationTime(expires)
+      .sign(new TextEncoder().encode(secret));
+  const call = async (path, cookieValue, method = 'GET') => {
+    const res = await fetch(BASE + path, {
+      method,
+      redirect: 'manual',
+      headers: {
+        ...(cookieValue ? { cookie: `notes_session=${cookieValue}` } : {}),
+        'x-forwarded-for': `10.18.${Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 200)}`,
+      },
+    });
+    let json = null;
+    try {
+      json = await res.json();
+    } catch {}
+    const setCookie = res.headers.get('set-cookie') ?? '';
+    return {
+      status: res.status,
+      json,
+      next: /notes_session=([^;]+)/.exec(setCookie)?.[1] ?? null,
+      maxAge: Number(/Max-Age=(\d+)/i.exec(setCookie)?.[1] ?? NaN),
+    };
+  };
+  const near = (value, target, slack = 10) => Math.abs(value - target) <= slack;
+  const now = () => Math.floor(Date.now() / 1000);
+
+  const t0 = now();
+  let cookieValue = await signNotes(t0, t0 + 45 * MIN);
+  let r = await call('/api/notes/session', cookieValue);
+  check(
+    'an authenticator unlock is reported as extendable, with its 3-hour limit',
+    r.status === 200 &&
+      r.json.kind === 'quick' &&
+      near(r.json.limitAt / 1000, t0 + 180 * MIN) &&
+      near(r.json.expiresAt / 1000, t0 + 45 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  r = await call('/api/notes/session/refresh', cookieValue, 'POST');
+  check(
+    'one click adds 15 minutes and the cookie follows',
+    r.status === 200 && r.json.added === 15 * MIN && near(r.maxAge, 60 * MIN) && !!r.next,
+    JSON.stringify(r.json)
+  );
+  cookieValue = r.next;
+
+  let clicks = 1;
+  let last = null;
+  for (let i = 0; i < 12; i += 1) {
+    last = await call('/api/notes/session/refresh', cookieValue, 'POST');
+    if (last.status !== 200) break;
+    clicks += 1;
+    cookieValue = last.next;
+  }
+  check('nine clicks reach the 3-hour limit', clicks === 9, String(clicks));
+  check(
+    'one more click is refused and says why',
+    last.status === 409 && last.json.atLimit === true && /3-hour/.test(last.json.error ?? ''),
+    JSON.stringify(last.json)
+  );
+  r = await call('/api/notes/session', cookieValue);
+  check(
+    'the vault is still open at the limit',
+    r.status === 200 && r.json.active === true && near(r.json.expiresAt / 1000, t0 + 180 * MIN),
+    JSON.stringify(r.json)
+  );
+
+  const password = await signNotes(t0, t0 + 7 * 24 * 60 * MIN);
+  r = await call('/api/notes/session', password);
+  check('a vault-password session is reported as such', r.json?.kind === 'password');
+  r = await call('/api/notes/session/refresh', password, 'POST');
+  check(
+    'a vault-password session says it lasts 7 days and is not changed',
+    r.status === 409 && /7 days/.test(r.json?.error ?? '') && !r.next,
+    JSON.stringify(r.json)
+  );
+
+  r = await call('/api/notes/session/refresh', await signNotes(t0 - 7200, t0 - 5), 'POST');
+  check('an expired unlock cannot be extended', r.status === 401, String(r.status));
+  r = await call('/api/notes/session/refresh', '', 'POST');
+  check('without an unlock there is nothing to extend', r.status === 401, String(r.status));
+}
+
+// ---------------------------------------------------------------------------------------
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 if (failed.length) {

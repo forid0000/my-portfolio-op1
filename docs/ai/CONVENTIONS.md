@@ -80,6 +80,8 @@ On a low-memory machine run these steps **one at a time**, cap memory (`systemd-
 
 ## Pitfalls already paid for
 
+- **Every credential the admin asks for has a guide.** Adding an integration box means adding its `FIELD_HELP` entry and (for a new service) a `Guide` in `lib/admin-guides.ts`: what it is, cost, steps, the provider's own page, the usual mistake, how to check it. `tests/unit/admin-guides.test.ts` fails when a box has no help or a link leaves the allow-listed official sites. Re-check the steps against the provider's docs and bump `GUIDES_CHECKED` when you touch them.
+
 - **Colours of the public site are theme tokens, and surfaces are not overlays.** A form field is `bg-input` + `border-foreground/20` + `text-foreground` + `placeholder:text-muted-foreground`; `scrim`/`on-scrim` are only for overlays and text on pictures (`bg-scrim/40` on an input turns into a grey box on a light theme). Small labels use `.chip` (+ `chip-primary|secondary|info|success|warning|neutral`, or `chipClass(label)` from `lib/chip-hue.ts`) instead of `text-primary` on `bg-primary/10` or text at 50-60% opacity. No fixed hex/rgba glows. `tests/unit/theme-presets.test.ts` and `tests/unit/chips.test.ts` check the combinations against all presets; add a pair there when you invent a new one.
 - **Never put a width utility next to the shared `w-full` input class** (`${inputClass} w-40`): which one wins is decided by stylesheet order, not class order (`w-full` won and squeezed the next box). Merge with `cn()` (tailwind-merge) or give the variant its own base class.
 - **Icons**: no sparkle/"AI" icons (`lib/icons/no-sparkle.ts`); `tests/unit/no-sparkle.test.ts` fails if one is drawn in `app/` or `components/`.

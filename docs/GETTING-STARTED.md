@@ -143,14 +143,87 @@ Use the left menu in the dashboard. A good order:
 
 Press **Save** on each page. The public site updates right after you save; refresh the page if you do not see it. If a save is rejected, the page scrolls to the field to fix and outlines it in red. The counter at the top-left of the dashboard shows how many changes are waiting to be saved, and you can drag the edge of the left menu to make it wider or narrower, or double-click it to fold it.
 
-## Step 8: Turn on the contact form and image uploads (optional)
+## Step 8: Turn on the contact form, image uploads and the rest (optional)
 
-Open **Security & Keys** in the dashboard. Everything here is stored encrypted and is never shown again after you save it. You will be asked for a fresh authenticator code each time you change something here.
+Open **Security & Keys** in the dashboard. At the top is a **setup checklist** that shows what is done and what is missing, and every section has a green **How to get this** box with the same steps as below. Everything you save here is stored encrypted and is never shown again. You are asked for a fresh authenticator code each time you change something (type the 6 digits at the top of the page, then press the save button of the section; each code works for one change).
 
-- **Contact form email:** the form works only after you add the details of an email sending service (SMTP). Brevo has a free plan; any SMTP provider works. Fill in the host, port, username and password from the provider, plus the address that should **receive** messages and the address they are **sent from**. Until then the form politely says it is not set up.
-- **Cloudinary** (free plan): needed for the photo gallery and some image uploads. Create an account, then paste the **cloud name**, **API key** and **API secret**.
-- **GitHub profile sync** is for developers; skip it unless you need it.
-- **Private notes:** visitors see only the notes you publish at `/notes`. Your own notes (`/notes/vault`) stay locked until you set a password or turn on authenticator quick-unlock here. You can attach pictures, documents and whole folders from your computer to a note; they are kept privately in your database.
+_Steps below were checked against the providers' official documentation in October 2026. Their screens change now and then; the official pages linked here always win._
+
+### Contact form email (SMTP)
+
+**What it is:** when a visitor sends a message, your site emails it to you. For that it needs the login details of an email-sending service (SMTP). **Cost:** Brevo, Gmail and Resend all have free allowances (check their pricing pages for the current limits). **Time:** about 10 minutes. **If you skip it:** the form politely says it is not set up; the email, phone and WhatsApp buttons still work.
+
+Pick one provider:
+
+| Provider | Host                   | Port             | Username                                                                                         | Password                                                                                          |
+| -------- | ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Brevo    | `smtp-relay.brevo.com` | `587`            | The SMTP login shown on Brevo's **SMTP & API → SMTP** page (can look like `code@smtp-brevo.com`) | An **SMTP key** you generate on that page (not your account password, not an API key)             |
+| Gmail    | `smtp.gmail.com`       | `587` (or `465`) | Your full Gmail address                                                                          | A 16-character **App password** (needs 2-Step Verification; your normal password no longer works) |
+| Resend   | `smtp.resend.com`      | `465` (or `587`) | `resend`                                                                                         | Your Resend **API key** (starts with `re_`)                                                       |
+
+1. Sign in to the provider. **Brevo:** open <https://app.brevo.com/settings/keys/smtp>, stay on the **SMTP** tab, copy the login and press **Generate SMTP key**. **Gmail:** turn on 2-Step Verification, then open <https://myaccount.google.com/apppasswords>, create an app password and copy the 16 characters (work or school accounts may not offer this). **Resend:** create an API key in your Resend dashboard.
+2. Paste **host**, **port**, **username** and **password** into the boxes. Port 587 is the usual choice; with port 465 the site switches the secure connection on by itself.
+3. **Deliver messages to** = the inbox where you want to read the messages.
+4. **Send messages from** = an address your provider has **verified** for you (in Brevo add and verify the sender or domain; in Resend verify your domain; with Gmail use the same Gmail address). Providers refuse mail from addresses they do not know. If you leave it empty, the username is used.
+5. Type your authenticator code at the top, press **Save Contact form email (SMTP)**, then send yourself a test message from the contact form.
+
+Official pages: [Brevo SMTP help](https://help.brevo.com/hc/en-us/articles/7924908994450) · [Google app passwords](https://support.google.com/accounts/answer/185833) · [Resend SMTP](https://resend.com/docs/send-with-smtp).
+
+If messages do not arrive: look in the spam folder, then check that the "send from" address is verified at the provider.
+
+### Cloudinary (pictures and videos)
+
+**What it is:** it stores and resizes everything you upload (profile picture, projects, services, certificates, articles, gallery) and serves it fast. Your browser uploads straight to it, so large files work. **Cost:** it has a free plan. **Time:** about 5 minutes. **If you skip it:** uploads do not work.
+
+1. Create a free account at <https://cloudinary.com> and confirm your email.
+2. Open the **Console → Dashboard** (<https://console.cloudinary.com/>) and copy the **Cloud name** (shown at the top, in the Product Environment section).
+3. Open **Settings** (the gear in the left sidebar) → **API Keys**. Copy the **API key**. Click to reveal the **API secret** (you may be asked for your password) and copy it. Only the roles Master admin, Admin and Technical admin can see these.
+4. Paste the three values into **Security & Keys → Cloudinary**, enter your authenticator code, press **Save Cloudinary**.
+5. Test: upload a small picture in **Media Manager**.
+
+The API secret is like a password: never post it in a chat or a screenshot. If it ever leaks, create a new key on the same API Keys page, paste the new pair here, then delete the old one. Official page: [Finding your Cloudinary credentials](https://cloudinary.com/documentation/finding_your_credentials_tutorial).
+
+### Authenticator and passwords
+
+- **Authenticator (required):** any app that supports 6-digit "TOTP" codes works (Google Authenticator, Microsoft Authenticator, 2FAS, Aegis, Ente Auth, 1Password, Bitwarden, Authy). Add a new account, scan the QR code (or choose "enter a setup key" and type the written key), and **save the written key in your password manager**: there are no backup codes. If every code is refused, set your phone's clock to automatic.
+- **Admin password (optional):** an extra lock. Let your password manager generate 16 or more characters (the minimum is 12).
+- **Private notes unlock:** your private notes at `/notes/vault` stay locked for everyone until you set a **vault password** (8+ characters, a 7-day sign-in) and/or turn on **authenticator quick unlock** (a 6-digit code, 45 minutes at a time). Use a separate authenticator entry for it (label it "Notes"). With quick unlock, the **+15** button next to the countdown adds 15 minutes each time, up to 3 hours in total from unlocking. Visitors only see the notes you publish at `/notes`.
+
+### GitHub profile sync (optional, for developers)
+
+**What it is:** if your GitHub profile README is generated from this site, GitHub normally notices a change only once a day. With this, every save tells GitHub straight away. **Skip it** unless you have such a README.
+
+1. You need your profile repository: a public repository named exactly like your username (for example `your-username/your-username`) with a `README.md` ([GitHub: managing your profile README](https://docs.github.com/en/account-and-profile/how-tos/profile-customization/managing-your-profile-readme)).
+2. Add `.github/workflows/update-profile.yml` to it. The event type is `cms-updated`, and the file must be on the repository's **default branch** or GitHub ignores the event:
+
+   ```yaml
+   name: Update profile README
+   on:
+     repository_dispatch:
+       types: [cms-updated]
+     workflow_dispatch:
+   jobs:
+     update:
+       runs-on: ubuntu-latest
+       permissions:
+         contents: write
+       steps:
+         - uses: actions/checkout@v7
+         - name: Rebuild the README
+           run: echo "Put the command that regenerates your README here"
+   ```
+
+3. Create the token: GitHub → your profile picture → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**. Give it a name and an expiry. **Resource owner:** your account. **Repository access:** _Only select repositories_ → your profile repository. **Permissions → Repository permissions → Contents: Read and write.** Press **Generate token** and copy it at once: GitHub shows it only one time ([official steps](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)).
+4. In **Security & Keys → GitHub profile sync** paste `your-username/your-username` and the token, enter your authenticator code, press **Save**.
+5. Test: save any page in the admin, then open the **Actions** tab of the profile repository. A run triggered by `repository_dispatch` appears within a minute.
+
+Tokens expire. When yours does, syncing stops quietly (your site keeps working); create a new one and paste it. A classic token with the `repo` scope also works.
+
+### The two values that are not on this page
+
+`MONGODB_URI` and `JWT_SECRET` live in your hosting account (Steps 2-4) because the site needs them before anyone can sign in. In Vercel: your project → **Settings** → **Environment Variables**. Changes apply only to **new** deployments, so press **Redeploy** afterwards ([Vercel: environment variables](https://vercel.com/docs/environment-variables)). Never change `JWT_SECRET` later.
+
+- **Private notes:** visitors see only the notes you publish at `/notes`. Your own notes (`/notes/vault`) stay locked until you set a password or turn on authenticator quick-unlock in Security & Keys. You can attach pictures, documents and whole folders from your computer to a note; they are kept privately in your database. **Admin → Notes** has its own checklist, an explanation of how long you stay unlocked, and answers to common problems.
 
 ## Step 9: Your own web address (optional)
 

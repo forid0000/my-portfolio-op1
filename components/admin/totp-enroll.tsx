@@ -46,8 +46,11 @@ export function TotpEnroll({
       <div className="space-y-4 min-w-0 flex-1">
         <div className="space-y-1">
           <p className="text-xs text-gray-400">
-            Scan the QR code with an authenticator app (Aegis, 2FAS, Google Authenticator,
-            1Password...), or enter this key manually:
+            1. Open an authenticator app on your phone (Google Authenticator, Microsoft
+            Authenticator, 2FAS, Aegis, Ente Auth, 1Password, Bitwarden...) and add an account.
+            <br />
+            2. Scan this QR code, or choose &ldquo;enter a setup key&rdquo; and type this key
+            manually:
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 min-w-0 break-all rounded-md border border-gray-700 bg-gray-950 px-3 py-2 font-mono text-xs text-emerald-300 select-all">
@@ -67,8 +70,15 @@ export function TotpEnroll({
             </button>
           </div>
         </div>
+        <p className="text-[11px] leading-relaxed text-yellow-500/80">
+          3. Save the written key above in your password manager: it is your only backup (there are
+          no backup codes).
+        </p>
         <div className="space-y-1">
-          <label className="text-xs text-gray-400 font-medium">{codeLabel}</label>
+          <label className="text-xs text-gray-400 font-medium">
+            4. {codeLabel}
+            <span className="ml-2 text-gray-600">the 6 digits the app shows now</span>
+          </label>
           <input
             type="text"
             inputMode="numeric"

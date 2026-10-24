@@ -9,7 +9,7 @@ const CLOUDINARY_KEYS = [
 
 /** Shown wherever an upload or sync needs Cloudinary but no keys are saved yet. */
 export const CLOUDINARY_NOT_CONNECTED_MESSAGE =
-  'Cloudinary is not connected. Add your keys in Security & Keys.';
+  'Cloudinary is not connected. Add your keys in Security & Keys (a step-by-step guide is there).';
 
 /**
  * Points the Cloudinary SDK at the account configured in Admin -> Security ->

@@ -203,7 +203,7 @@ Credentials are managed in the admin panel (**Admin → Security & Keys**) and s
 
 **The private notes (`/notes/vault`)** are fully independent of the admin session; the public `/notes` page shows published notes only:
 
-1. **Vault password** (optional, 7-day session) and **authenticator quick unlock** (optional, 45-minute session). The vault stays locked for everyone until at least one is set. There is deliberately no clock- or formula-based key: anything derivable from open-source code would be a public backdoor.
+1. **Vault password** (optional, 7-day session) and **authenticator quick unlock** (optional, 45-minute session; **+15** per click up to 3 hours in total, the same rules as the admin session). The vault stays locked for everyone until at least one is set. There is deliberately no clock- or formula-based key: anything derivable from open-source code would be a public backdoor.
 2. Separate `notes_session` cookie, 30 attempts per 15 minutes per IP, same-site-only writes, a size limit per file (set in Admin → Notes, capped by the host), and a strict link allow-list (`https:`, `mailto:`, `/`, `#`) when rendering Markdown.
 3. **Files are served safely.** A file is readable by the owner, or by anyone once its note is published; anything else answers 404. Pages, scripts and text are always sent as plain text, unknown types as downloads, everything with `nosniff` and a sandboxing policy (a PDF is shown only inside this site's own pages).
 

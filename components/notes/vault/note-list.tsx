@@ -44,6 +44,11 @@ interface NoteListProps {
   onNew: () => void;
   timeLeft: string;
   lowTime: boolean;
+  /** "+15 min" for authenticator sessions (up to 3 hours in all). */
+  canExtend: boolean;
+  atLimit: boolean;
+  extending: boolean;
+  onExtend: () => void;
   onLock: () => void;
   onShortcuts: () => void;
 }
@@ -71,6 +76,10 @@ export default function NoteList(props: NoteListProps) {
     onNew,
     timeLeft,
     lowTime,
+    canExtend,
+    atLimit,
+    extending,
+    onExtend,
     onLock,
     onShortcuts,
   } = props;
@@ -97,6 +106,26 @@ export default function NoteList(props: NoteListProps) {
             <Clock className={`h-3 w-3 ${lowTime ? 'animate-pulse' : ''}`} />
             {timeLeft}
           </span>
+          {canExtend && (
+            <button
+              type="button"
+              onClick={onExtend}
+              disabled={extending || atLimit}
+              className={`rounded-md border px-1.5 py-1 text-xs font-medium tabular-nums transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                lowTime
+                  ? 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/20'
+                  : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              }`}
+              title={
+                atLimit
+                  ? 'This unlock is at its 3-hour limit. Lock and unlock again for a new one.'
+                  : 'Add 15 minutes (an unlock lasts 3 hours at most)'
+              }
+              aria-label={atLimit ? 'Unlock is at its 3-hour limit' : 'Add 15 minutes'}
+            >
+              {atLimit ? 'Max' : '+15'}
+            </button>
+          )}
           <button
             type="button"
             onClick={onShortcuts}

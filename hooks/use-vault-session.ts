@@ -52,6 +52,10 @@ function formatLeft(diff: number): string {
 export function useVaultSession() {
   const [status, setStatus] = useState<'checking' | 'locked' | 'open'>('checking');
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  // 'quick' (authenticator) sessions can be extended up to `limitAt`; password sessions cannot.
+  const [kind, setKind] = useState<'quick' | 'password'>('password');
+  const [limitAt, setLimitAt] = useState<number | null>(null);
+  const [extending, setExtending] = useState(false);
   const [settings, setSettings] = useState<VaultSettings>(DEFAULT_SETTINGS);
   const [setup, setSetup] = useState<VaultSetup | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -60,6 +64,12 @@ export function useVaultSession() {
   const lock = useCallback(() => {
     setStatus('locked');
     setExpiresAt(null);
+    setLimitAt(null);
+  }, []);
+
+  const adopt = useCallback((d: { kind?: string; limitAt?: number }) => {
+    setKind(d.kind === 'quick' ? 'quick' : 'password');
+    setLimitAt(typeof d.limitAt === 'number' ? d.limitAt : null);
   }, []);
 
   useEffect(() => {
@@ -80,6 +90,7 @@ export function useVaultSession() {
         if (d.active && d.expiresAt > Date.now()) {
           setSettings(readSettings(d));
           setExpiresAt(d.expiresAt);
+          adopt(d);
           setStatus('open');
         } else {
           setStatus('locked');
@@ -108,25 +119,53 @@ export function useVaultSession() {
   }, [status, expiresAt, lock]);
 
   /** Returns an error message, or null when the vault opened. */
-  const login = useCallback(async (secret: string): Promise<string | null> => {
+  const login = useCallback(
+    async (secret: string): Promise<string | null> => {
+      try {
+        const res = await fetch('/api/notes/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: secret }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          setSettings(readSettings(data));
+          setExpiresAt(data.expiresAt);
+          adopt(data);
+          setStatus('open');
+          return null;
+        }
+        return data.error || 'That did not work. Check it and try again.';
+      } catch {
+        return 'Could not reach the server. Check your connection.';
+      }
+    },
+    [adopt]
+  );
+
+  /** "+15 min": adds time to an authenticator-unlocked session, up to the 3-hour limit. */
+  const extend = useCallback(async (): Promise<string | null> => {
+    setExtending(true);
     try {
-      const res = await fetch('/api/notes/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: secret }),
-      });
+      const res = await fetch('/api/notes/session/refresh', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
-        setSettings(readSettings(data));
         setExpiresAt(data.expiresAt);
-        setStatus('open');
+        adopt(data);
         return null;
       }
-      return data.error || 'That did not work. Check it and try again.';
+      if (res.status === 401) {
+        lock();
+        return data.error || 'The vault is locked again. Unlock it to continue.';
+      }
+      if (typeof data.limitAt === 'number') setLimitAt(data.limitAt);
+      return data.error || 'The time could not be extended.';
     } catch {
       return 'Could not reach the server. Check your connection.';
+    } finally {
+      setExtending(false);
     }
-  }, []);
+  }, [adopt, lock]);
 
   const logout = useCallback(async () => {
     await fetch('/api/notes/logout', { method: 'POST' }).catch(() => {});
@@ -134,6 +173,7 @@ export function useVaultSession() {
   }, [lock]);
 
   const left = expiresAt ? expiresAt - now : 0;
+  const canExtend = status === 'open' && kind === 'quick';
   return {
     status,
     settings,
@@ -143,5 +183,11 @@ export function useVaultSession() {
     lock,
     timeLeft: status === 'open' ? formatLeft(left) : '--:--',
     lowTime: status === 'open' && left < 10 * 60 * 1000,
+    /** Authenticator sessions only; a password session lasts 7 days. */
+    canExtend,
+    /** Already as long as this session may ever be. */
+    atLimit: canExtend && limitAt !== null && (expiresAt ?? 0) >= limitAt,
+    extending,
+    extend,
   };
 }

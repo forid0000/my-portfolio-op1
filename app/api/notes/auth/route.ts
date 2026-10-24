@@ -11,13 +11,19 @@ import {
 } from '@/lib/credentials';
 import { fileLimitBytes, getNotesSettings } from '@/lib/notes-settings';
 import { rateLimit, resetRateLimit, clientIp } from '@/lib/rate-limit';
+import {
+  NOTES_PASSWORD_SESSION_SECONDS,
+  NOTES_QUICK_SESSION_SECONDS,
+  notesSessionKind,
+  notesSessionLimit,
+} from '@/lib/session-timing';
 
 const NOTES_LIMIT = 30;
 const NOTES_WINDOW_MS = 15 * 60 * 1000;
 
 // The vault is unlocked with credentials managed in Admin -> Security:
 //  - a vault password (7-day session), and/or
-//  - an authenticator code (45-minute session).
+//  - an authenticator code (45-minute session, +15 minutes per click up to 3 hours in total).
 // Both are optional, but the vault stays locked until at least one is set.
 // Neither can be derived from the source code or the clock.
 
@@ -67,8 +73,8 @@ export async function POST(request: Request) {
     let jwtExp = '';
 
     if (totpSecret && normalizeTotpCode(input) && checkTotp(totpSecret, input).valid) {
-      maxAgeSec = 45 * 60;
-      jwtExp = '45m';
+      maxAgeSec = NOTES_QUICK_SESSION_SECONDS;
+      jwtExp = `${maxAgeSec}s`;
     } else if (passwordHash) {
       if (!passwordHash.startsWith('scrypt:')) {
         return NextResponse.json(
@@ -77,8 +83,8 @@ export async function POST(request: Request) {
         );
       }
       if (await verifyPassword(input, passwordHash)) {
-        maxAgeSec = 7 * 24 * 60 * 60;
-        jwtExp = '7d';
+        maxAgeSec = NOTES_PASSWORD_SESSION_SECONDS;
+        jwtExp = `${maxAgeSec}s`;
       }
     }
 
@@ -102,9 +108,12 @@ export async function POST(request: Request) {
     });
 
     const settings = await getNotesSettings();
+    const iat = Math.floor(Date.now() / 1000);
     return NextResponse.json({
       success: true,
       expiresAt: Date.now() + maxAgeSec * 1000,
+      kind: notesSessionKind(iat, iat + maxAgeSec),
+      limitAt: notesSessionLimit(iat, iat + maxAgeSec) * 1000,
       autosaveInterval: settings.autosaveInterval,
       notesPerPage: settings.notesPerPage,
       vaultTitle: settings.vaultTitle,

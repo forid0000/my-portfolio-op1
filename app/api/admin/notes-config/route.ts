@@ -13,16 +13,22 @@ export async function GET() {
   try {
     const db = await connectToDatabase();
     const col = db.connection.client.db('portfolio_cms').collection('settings');
-    const [pwdDoc, totpDoc, settings] = await Promise.all([
+    const notes = db.connection.client.db('portfolio_cms').collection('notes');
+    const [pwdDoc, totpDoc, settings, noteCount, publishedCount] = await Promise.all([
       col.findOne({ key: 'notes_password' }),
       col.findOne({ key: 'notes_totp' }),
       getNotesSettings(),
+      notes.estimatedDocumentCount(),
+      notes.countDocuments({ published: true }),
     ]);
     const serverless = Boolean(process.env.VERCEL);
     return NextResponse.json({
       // Passwords and authenticator codes are managed in Admin -> Security.
       hasPassword: !!pwdDoc,
       hasQuickUnlock: !!totpDoc,
+      // For the setup checklist on the admin page.
+      noteCount,
+      publishedCount,
       ...settings,
       // The largest value the platform allows (a request body is limited on Vercel).
       maxFileMbAllowed: Math.floor(

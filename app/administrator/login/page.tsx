@@ -150,6 +150,40 @@ export default function AdminLogin() {
             </button>
           </form>
         )}
+
+        {ready && (
+          <details className="mt-6 rounded-lg border border-gray-800 bg-gray-950/60 px-4 py-3 text-sm text-gray-300 open:border-emerald-900/60">
+            <summary className="cursor-pointer list-none font-medium text-gray-400 hover:text-gray-200 [&::-webkit-details-marker]:hidden">
+              Need help signing in?
+            </summary>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-[13px] leading-relaxed text-gray-400 marker:text-emerald-600">
+              <li>
+                Open the <strong className="text-gray-200">authenticator app</strong> on your phone,
+                find this site’s entry and type the 6 digits it shows. The code changes every 30
+                seconds: if it is refused, wait for the next one.
+              </li>
+              <li>
+                Still refused? Check that your phone’s clock is set to{' '}
+                <strong className="text-gray-200">automatic</strong>: codes depend on the exact
+                time.
+              </li>
+              <li>
+                A session lasts 45 minutes. Inside the admin, the{' '}
+                <span className="font-mono text-gray-300">+15 Min</span> button adds more, up to 3
+                hours in total.
+              </li>
+              <li>
+                After 10 wrong tries you have to wait 15 minutes. This protects the site from
+                guessing.
+              </li>
+              <li>
+                Lost your phone? There is no “forgot” email, on purpose. If you saved the written
+                key, add it to a new authenticator app. If not, whoever manages your database can
+                reset the account: see “I lost my authenticator” in the Getting started guide.
+              </li>
+            </ul>
+          </details>
+        )}
       </div>
     </div>
   );
