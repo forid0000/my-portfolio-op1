@@ -4,7 +4,7 @@
  * a safe address (https, mailto, tel, or a path on this site), never `javascript:`.
  */
 import { z } from 'zod';
-import { isSafeHref } from '@/lib/safe-href';
+import { isSafeHref, normalizeLink } from '@/lib/safe-href';
 import { CUSTOM_NAV_PREFIX, NAV_LABEL_MAX, NAV_MAX_ENTRIES } from '@/lib/chrome-model';
 
 const navEntrySchema = z
@@ -16,7 +16,7 @@ const navEntrySchema = z
       .regex(/^[a-z0-9-]+$/, 'Invalid link id'),
     label: z.string().trim().min(1, 'Give the link a name').max(NAV_LABEL_MAX),
     enabled: z.boolean(),
-    href: z.string().trim().max(500).optional(),
+    href: z.string().trim().max(500).transform(normalizeLink).optional(),
     newTab: z.boolean().optional(),
   })
   .superRefine((entry, ctx) => {

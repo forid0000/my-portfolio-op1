@@ -10,7 +10,7 @@
  * pages working unmodified.
  */
 import { z } from 'zod';
-import { isSafeHref } from '@/lib/safe-href';
+import { isSafeHref, normalizeLink } from '@/lib/safe-href';
 import { whatsappHref } from '@/lib/contact-links';
 import { mediaListSchema } from '@/lib/validation/media-schemas';
 import { KITS_COLOR_MAP } from '@/lib/kits-registry';
@@ -83,7 +83,12 @@ export const skillsContentSchema = z.object({
 /** A labelled link on a project card (case study, live site, Behance, repository, ...). */
 export const projectLinkSchema = z.object({
   label: z.string().trim().min(1).max(40),
-  url: z.string().trim().max(500).refine(isSafeHref, 'Use a full link such as https://example.com'),
+  url: z
+    .string()
+    .trim()
+    .max(500)
+    .transform(normalizeLink)
+    .refine(isSafeHref, 'Use a full link such as https://example.com'),
 });
 
 /** projects_content - app/api/admin/content/projects/route.ts */
@@ -108,6 +113,7 @@ export const projectsContentSchema = z.object({
     .string()
     .trim()
     .max(500)
+    .transform(normalizeLink)
     .refine((v) => !v || isSafeHref(v), 'Use a full link such as https://example.com')
     .optional(),
 });

@@ -26,6 +26,38 @@ describe('projects schema', () => {
   });
 });
 
+describe('links the owner types', () => {
+  const link = (label: string, url: string) => ({ ...base, links: [{ label, url }] });
+  const stored = (url: string) => {
+    const r = projectsContentSchema.safeParse({ projects: [link('Site', url)] });
+    return r.success ? r.data.projects[0].links?.[0]?.url : null;
+  };
+
+  it('keeps complete addresses of every kind as typed', () => {
+    expect(stored('https://behance.net/gallery/123')).toBe('https://behance.net/gallery/123');
+    expect(stored('http://example.com')).toBe('http://example.com');
+    expect(stored('mailto:me@example.com')).toBe('mailto:me@example.com');
+    expect(stored('tel:+15551234567')).toBe('tel:+15551234567');
+    expect(stored('/about')).toBe('/about');
+  });
+
+  it('completes an address typed without https://', () => {
+    expect(stored('behance.net/you')).toBe('https://behance.net/you');
+    expect(stored('  www.example.com  ')).toBe('https://www.example.com');
+    expect(stored('youtu.be/abc')).toBe('https://youtu.be/abc');
+    const cta = projectsContentSchema.safeParse({ projects: [base], ctaUrl: 'example.com/work' });
+    expect(cta.success && cta.data.ctaUrl).toBe('https://example.com/work');
+  });
+
+  it('still rejects what is not a link, and an empty address', () => {
+    for (const bad of ['', 'https://', 'javascript:alert(1)', 'not a link', 'ftp://x.com/a']) {
+      expect(projectsContentSchema.safeParse({ projects: [link('Site', bad)] }).success, bad).toBe(
+        false
+      );
+    }
+  });
+});
+
 describe('certification schema', () => {
   it('keeps working without media and accepts media when present', () => {
     expect(certificationItemSchema.safeParse({ name: 'N', issuer: 'I' }).success).toBe(true);

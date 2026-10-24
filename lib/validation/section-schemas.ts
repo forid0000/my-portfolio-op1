@@ -5,14 +5,15 @@
  * collection of many small documents - one per item - mirroring `gallery`.
  */
 import { z } from 'zod';
-import { isSafeHref } from '@/lib/safe-href';
+import { isSafeHref, normalizeLink } from '@/lib/safe-href';
 import { mediaListSchema, singleMediaSchema } from '@/lib/validation/media-schemas';
 
-/** A link the owner types: empty, or a full web address (never `javascript:`). */
+/** A link the owner types: empty, or a web address (`https://` is added to a bare domain; never `javascript:`). */
 const optionalLink = z
   .string()
   .trim()
   .max(500)
+  .transform(normalizeLink)
   .refine((v) => !v || isSafeHref(v), 'Use a full link such as https://example.com')
   .default('');
 

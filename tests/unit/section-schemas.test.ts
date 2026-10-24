@@ -89,6 +89,8 @@ describe('links people type in sections', () => {
     expect(
       certificationItemSchema.safeParse({ ...cert, credentialUrl: 'javascript:alert(1)' }).success
     ).toBe(false);
+    const typed = certificationItemSchema.safeParse({ ...cert, credentialUrl: 'verify.org/c/1' });
+    expect(typed.success && typed.data.credentialUrl).toBe('https://verify.org/c/1');
     const pub = { title: 'T' };
     expect(publicationItemSchema.safeParse({ ...pub, url: 'https://example.com/a' }).success).toBe(
       true

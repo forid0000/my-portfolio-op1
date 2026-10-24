@@ -6,6 +6,7 @@ import {
   findControl,
   friendlyMessage,
   humanizeKey,
+  isSideBySide,
   labelMatchesKey,
   markFieldInvalid,
   parseIssues,
@@ -163,6 +164,40 @@ describe('highlighting the field at fault', () => {
     expect(input.getAttribute('aria-describedby')).toBe(note.id);
     clearFieldErrors();
     expect(input.hasAttribute('aria-invalid')).toBe(false);
+    expect(document.querySelector('.field-error')).toBeNull();
+  });
+
+  it('knows which containers lay their children out side by side', () => {
+    expect(isSideBySide('flex', 'row')).toBe(true);
+    expect(isSideBySide('inline-flex', 'row-reverse')).toBe(true);
+    expect(isSideBySide('flex', 'column')).toBe(false);
+    expect(isSideBySide('block', 'row')).toBe(false);
+    expect(isSideBySide('grid', 'row')).toBe(false);
+  });
+
+  it('writes the reason under a row of fields, not as one more column inside it', () => {
+    document.body.innerHTML = `
+      <div id="row" style="display:flex;flex-direction:row">
+        <input id="label" value="https://example.com" />
+        <input id="url" value="" />
+      </div>
+      <div id="stack" style="display:flex;flex-direction:column">
+        <input id="solo" value="" />
+      </div>`;
+    const url = document.getElementById('url') as HTMLInputElement;
+    markFieldInvalid(url, 'Add an address.');
+    const row = document.getElementById('row') as HTMLElement;
+    expect(url.nextElementSibling).toBeNull();
+    expect(row.nextElementSibling?.className).toBe('field-error');
+    expect(row.nextElementSibling?.textContent).toBe('Add an address.');
+    expect(url.getAttribute('aria-describedby')).toBe(row.nextElementSibling?.id);
+
+    // A column keeps the message directly under the field.
+    const solo = document.getElementById('solo') as HTMLInputElement;
+    markFieldInvalid(solo, 'Required.');
+    expect(solo.nextElementSibling?.className).toBe('field-error');
+
+    clearFieldErrors();
     expect(document.querySelector('.field-error')).toBeNull();
   });
 

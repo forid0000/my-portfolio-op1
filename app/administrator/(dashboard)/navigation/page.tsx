@@ -20,7 +20,7 @@ import {
   type ChromeContent,
   type NavEntry,
 } from '@/lib/chrome-model';
-import { isSafeHref } from '@/lib/safe-href';
+import { isSafeHref, normalizeLink } from '@/lib/safe-href';
 import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 
 const inputClass =
@@ -103,7 +103,7 @@ export default function NavigationPage() {
         {
           id: `${CUSTOM_NAV_PREFIX}${Date.now().toString(36)}`,
           label: '',
-          href: 'https://',
+          href: '',
           enabled: true,
           newTab: true,
         },
@@ -115,20 +115,27 @@ export default function NavigationPage() {
 
   const handleSave = async () => {
     const required = { code: 'too_small', origin: 'string', minimum: 1, message: 'Required' };
+    // A bare domain such as "behance.net/you" is completed to a full address before it is checked.
+    const nav = chrome.nav.map((entry) =>
+      entry.id.startsWith(CUSTOM_NAV_PREFIX) ? { ...entry, href: normalizeLink(entry.href) } : entry
+    );
     const issues: FieldIssue[] = [];
-    chrome.nav.forEach((entry, i) => {
+    nav.forEach((entry, i) => {
       if (!entry.label.trim()) issues.push({ ...required, path: ['nav', i, 'label'] });
-      if (entry.id.startsWith(CUSTOM_NAV_PREFIX) && !isSafeHref(entry.href)) {
-        issues.push({
-          path: ['nav', i, 'href'],
-          code: 'invalid_format',
-          format: 'url',
-          message: 'Enter a full web address',
-        });
+      if (entry.id.startsWith(CUSTOM_NAV_PREFIX)) {
+        if (!entry.href) issues.push({ ...required, path: ['nav', i, 'href'] });
+        else if (!isSafeHref(entry.href)) {
+          issues.push({
+            path: ['nav', i, 'href'],
+            code: 'invalid_format',
+            format: 'url',
+            message: 'Enter a full web address',
+          });
+        }
       }
     });
     if (issues.length) {
-      const { summary } = reportFieldIssues(issues, chrome);
+      const { summary } = reportFieldIssues(issues, { ...chrome, nav });
       toast.error('Please fix the highlighted fields', { description: summary });
       return;
     }
@@ -138,12 +145,13 @@ export default function NavigationPage() {
       const res = await fetch('/api/admin/content/chrome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(chrome),
+        body: JSON.stringify({ ...chrome, nav }),
       });
       if (!res.ok) {
         throw new Error(extractApiErrorMessage(await res.json().catch(() => ({}))));
       }
-      markClean(chrome);
+      setChrome((c) => ({ ...c, nav }));
+      markClean({ ...chrome, nav });
       toast.success('Navigation updated', {
         description: 'Changes are now live on your portfolio.',
       });

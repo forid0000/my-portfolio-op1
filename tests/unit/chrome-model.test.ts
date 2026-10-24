@@ -112,4 +112,17 @@ describe('navigation settings', () => {
       }).success
     ).toBe(false);
   });
+
+  it('completes a custom menu link typed without https://, and refuses an empty one', () => {
+    const parse = (href: string) =>
+      chromeContentSchema.safeParse({
+        ...CHROME_DEFAULTS,
+        nav: [{ id: 'custom-x', label: 'Blog', href, enabled: true }],
+      });
+    const typed = parse('blog.example.com/posts');
+    expect(typed.success && typed.data.nav[0].href).toBe('https://blog.example.com/posts');
+    expect(parse('/about').success).toBe(true);
+    expect(parse('').success).toBe(false);
+    expect(parse('https://').success).toBe(false);
+  });
 });

@@ -263,6 +263,22 @@ export function findControl(
 
 const MESSAGE_ATTR = 'data-field-error-for';
 
+/**
+ * True when a container lays its children out side by side. A message written next to a field in
+ * such a row would become one more column and squeeze the inputs, so it goes under the row.
+ */
+export function isSideBySide(display: string, flexDirection: string): boolean {
+  return display.includes('flex') && flexDirection.startsWith('row');
+}
+
+/** The element the message is written after: the field, or its row when the field sits in one. */
+function messageAnchor(el: Element): Element {
+  const parent = el.parentElement;
+  if (!parent || typeof getComputedStyle !== 'function') return el;
+  const style = getComputedStyle(parent);
+  return isSideBySide(style.display, style.flexDirection) ? parent : el;
+}
+
 /** Removes the red box and the message from one field (or from all of them). */
 export function clearFieldErrors(root: ParentNode = document, only?: Element) {
   const marked = only
@@ -298,7 +314,7 @@ export function markFieldInvalid(el: Control, message: string) {
   note.setAttribute('role', 'alert');
   note.setAttribute(MESSAGE_ATTR, id);
   note.textContent = message;
-  el.insertAdjacentElement('afterend', note);
+  messageAnchor(el).insertAdjacentElement('afterend', note);
   // Restart the shake each time.
   el.classList.remove('field-shake');
   void el.offsetWidth;

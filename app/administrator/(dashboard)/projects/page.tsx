@@ -9,9 +9,9 @@ import { SortableItem } from '@/components/sortable-item';
 import { MediaUploader } from '@/components/admin/media-uploader';
 import { useSafeDndSensors } from '@/hooks/use-safe-dnd-sensors';
 import { useUnsavedWarning } from '@/hooks/use-unsaved-warning';
-import { isSafeHref } from '@/lib/safe-href';
+import { isSafeHref, normalizeLink } from '@/lib/safe-href';
 import type { MediaItem } from '@/lib/media-types';
-import { extractApiErrorMessage } from '@/lib/utils';
+import { cn, extractApiErrorMessage } from '@/lib/utils';
 import { reportFieldIssues, type FieldIssue } from '@/lib/field-errors';
 
 interface ProjectLink {
@@ -181,6 +181,13 @@ export default function ProjectsCMS() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // A bare domain such as "behance.net/you" is completed to a full address before it is checked.
+    const cleaned = projects.map((proj) => ({
+      ...proj,
+      links: proj.links.map((l) => ({ label: l.label.trim(), url: normalizeLink(l.url) })),
+    }));
+    const ctaUrl = normalizeLink(state.ctaUrl);
+
     // Check before sending, and show exactly which field needs attention.
     const required = { code: 'too_small', origin: 'string', minimum: 1, message: 'Required' };
     const badAddress = {
@@ -189,29 +196,31 @@ export default function ProjectsCMS() {
       message: 'Enter a full web address, like https://example.com',
     };
     const issues: FieldIssue[] = [];
-    projects.forEach((proj, i) => {
+    cleaned.forEach((proj, i) => {
       if (!proj.title.trim()) issues.push({ ...required, path: ['projects', i, 'title'] });
       proj.links.forEach((link, j) => {
-        if (!link.label.trim())
-          issues.push({ ...required, path: ['projects', i, 'links', j, 'label'] });
-        if (!isSafeHref(link.url))
+        if (!link.label) issues.push({ ...required, path: ['projects', i, 'links', j, 'label'] });
+        if (!link.url) issues.push({ ...required, path: ['projects', i, 'links', j, 'url'] });
+        else if (!isSafeHref(link.url))
           issues.push({ ...badAddress, path: ['projects', i, 'links', j, 'url'] });
       });
     });
-    if (state.ctaUrl.trim() && !isSafeHref(state.ctaUrl)) {
+    if (ctaUrl && !isSafeHref(ctaUrl)) {
       issues.push({ ...badAddress, path: ['ctaUrl'] });
     }
     if (issues.length) {
-      const { summary } = reportFieldIssues(issues, { projects, ctaUrl: state.ctaUrl });
+      const { summary } = reportFieldIssues(issues, {
+        projects: cleaned,
+        ctaUrl,
+      });
       toast.error('Please fix the highlighted fields', { description: summary });
       return;
     }
 
     setSaving(true);
-    const payload = projects.map(({ _dndId, ...rest }) => ({
+    const payload = cleaned.map(({ _dndId, ...rest }) => ({
       ...rest,
       ...legacyFields(rest.links),
-      links: rest.links.map((l) => ({ label: l.label.trim(), url: l.url.trim() })),
     }));
 
     try {
@@ -221,7 +230,7 @@ export default function ProjectsCMS() {
         body: JSON.stringify({
           projects: payload,
           ctaLabel: state.ctaLabel.trim(),
-          ctaUrl: state.ctaUrl.trim(),
+          ctaUrl,
         }),
       });
 
@@ -233,7 +242,10 @@ export default function ProjectsCMS() {
       toast.success('Projects updated successfully!', {
         description: 'Changes are now live on your portfolio.',
       });
-      markClean(state);
+      // Show what was stored (a bare domain now carries https://) and count it as saved.
+      const saved = { ...state, projects: cleaned, ctaUrl };
+      setState(saved);
+      markClean(saved);
     } catch (err) {
       toast.error('Failed to save', {
         description:
@@ -312,6 +324,7 @@ export default function ProjectsCMS() {
                 value={state.ctaUrl}
                 data-field="ctaUrl"
                 onChange={(e) => setState((s) => ({ ...s, ctaUrl: e.target.value }))}
+                onBlur={() => setState((s) => ({ ...s, ctaUrl: normalizeLink(s.ctaUrl) }))}
                 placeholder="https://..."
                 className={inputClass}
               />
@@ -416,24 +429,27 @@ export default function ProjectsCMS() {
                         </label>
                         <div className="space-y-2">
                           {proj.links.map((link, lIdx) => (
-                            <div key={lIdx} className="flex gap-2">
+                            <div key={lIdx} className="flex flex-wrap items-center gap-2">
                               <input
                                 type="text"
                                 value={link.label}
                                 data-field={`projects.${idx}.links.${lIdx}.label`}
                                 onChange={(e) => patchLink(idx, lIdx, { label: e.target.value })}
-                                placeholder="Label"
+                                placeholder="Label, e.g. Live site"
                                 aria-label="Link label"
-                                className={`${inputClass} w-40 shrink-0`}
+                                className={cn(inputClass, 'w-40 shrink-0')}
                               />
                               <input
                                 type="text"
                                 value={link.url}
                                 data-field={`projects.${idx}.links.${lIdx}.url`}
                                 onChange={(e) => patchLink(idx, lIdx, { url: e.target.value })}
-                                placeholder="https://..."
+                                onBlur={() =>
+                                  patchLink(idx, lIdx, { url: normalizeLink(link.url) })
+                                }
+                                placeholder="Address, e.g. https://example.com"
                                 aria-label="Link address"
-                                className={`${inputClass} flex-1 min-w-0`}
+                                className={cn(inputClass, 'min-w-[12rem] flex-1')}
                               />
                               <button
                                 onClick={() => removeLink(idx, lIdx)}
