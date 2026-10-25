@@ -185,6 +185,7 @@ The public pages are kept deliberately light, and a few rules keep them that way
 
 - Metadata, JSON-LD, and `llms.txt` are derived from CMS content through `lib/identity.ts` and the canonical origin in `lib/site-config.ts`.
 - All JSON-LD is serialized through `lib/json-ld.ts`, which escapes `<` so CMS-editable text can never break out of its `<script>` tag.
+- **Software credit.** The template credits its creator in machine-readable form only: a `generator` meta tag, an `isBasedOn` (`SoftwareSourceCode`) entry on the `WebSite` JSON-LD, `/humans.txt`, and one line at the end of `/llms.txt`. Nothing is shown in the page and no link is hidden. Your own name, bio and links stay yours: `authors`, `creator` and the `Person` JSON-LD come from your CMS content. The values live in one file, `lib/project-credit.ts`; the code is MIT, so you may change or remove them.
 - `robots.txt` disallows `/administrator/` and `/api/`; `sitemap.xml` includes your Dev.to articles, the public notes page and published notes (never the private vault).
 
 ## Authentication and security
@@ -249,7 +250,7 @@ docs/           GETTING-STARTED.md (beginner guide) and ai/ (architecture, conve
 AGENTS.md       Entry point for AI coding agents (CLAUDE.md imports it)
 ```
 
-Key files: `lib/content-defaults.ts` (placeholder content), `lib/site-config.ts` (deployment settings from env), `lib/identity.ts` (SEO identity from CMS), `lib/credentials.ts` and `lib/integrations.ts` (admin-panel credentials and keys), `lib/icons/` (server-side icon resolution), `lib/sections-registry.ts` (homepage sections).
+Key files: `lib/content-defaults.ts` (placeholder content), `lib/site-config.ts` (deployment settings from env), `lib/identity.ts` (SEO identity from CMS), `lib/project-credit.ts` (software credit for the template), `lib/credentials.ts` and `lib/integrations.ts` (admin-panel credentials and keys), `lib/icons/` (server-side icon resolution), `lib/sections-registry.ts` (homepage sections).
 
 ## Privacy
 

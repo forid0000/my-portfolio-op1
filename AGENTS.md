@@ -9,7 +9,7 @@ This repository documents itself for AI agents in [`docs/ai/`](docs/ai/README.md
 
 ## The rules that matter most
 
-- **No real person's data in the source.** Placeholders only (`Your Name`, `example.com`). Defaults live in `lib/content-defaults.ts`.
+- **No real person's data in the source.** Placeholders only (`Your Name`, `example.com`). Defaults live in `lib/content-defaults.ts`. The one exception is `lib/project-credit.ts`, which credits the creator of this open-source template (never a deployment's owner); a unit test fails if the name appears anywhere else.
 - **No secrets, and no default value for one.** Only `MONGODB_URI` and `JWT_SECRET` are required in the environment; every other credential is set in the admin panel (Security & Keys) and stored encrypted.
 - **TOTP is mandatory for the admin; passwords are optional.** No bypass, no backup codes.
 - **Keep the browser light.** No `lucide-react` namespace, `react-icons`, `zod` or Sentry SDK in client code. Resolve icons on the server (`lib/icons/resolve.ts`).

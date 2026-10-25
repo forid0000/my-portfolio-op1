@@ -4,6 +4,7 @@ import { mergeKitsContent } from '@/lib/kits-registry';
 import { DEFAULT_DEVTO_USERNAME, SYSTEM_DEFAULTS } from '@/lib/content-defaults';
 import { SITE_HOST, SITE_URL } from '@/lib/site-config';
 import { getPublishedArticles } from '@/lib/articles';
+import { llmsCreditLine } from '@/lib/project-credit';
 
 // ISR instead of force-dynamic: this file changes rarely and pulls from Dev.to
 // (external), so cache and refresh every 30 min rather than rendering per hit.
@@ -227,6 +228,10 @@ ${kitsLines}
 Selected public notes, published individually with their own SEO metadata. Anything not explicitly published stays private behind the private notes' own authentication.
 
 ${noteLines}
+
+## About this site's software
+
+${llmsCreditLine()}
 `;
 
   return new Response(body, {

@@ -16,6 +16,7 @@ import { SYSTEM_DEFAULTS } from '@/lib/content-defaults';
 import { getSiteIdentity } from '@/lib/identity';
 import { SITE_URL, getGeoMeta } from '@/lib/site-config';
 import { faviconUrl, shareImageUrl } from '@/lib/cloudinary-url';
+import { GENERATOR, projectCreditJsonLd } from '@/lib/project-credit';
 
 // Fonts for text the system font may not cover (the brand can be written in any language).
 // `preload: false` + Google's per-script unicode-range files mean a visitor whose page has no
@@ -94,6 +95,8 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords,
     authors: [{ name: identity.personName, url: SITE_URL }],
     creator: identity.personName,
+    // Names the software the site runs on, not who wrote the page (that is `authors` above).
+    generator: GENERATOR,
     robots: 'index, follow',
     openGraph: {
       title,
@@ -144,6 +147,9 @@ export default async function RootLayout({
       name: identity.siteName,
       alternateName: identity.personName,
       url: SITE_URL,
+      // Software attribution for the template (lib/project-credit.ts); the site's own owner is
+      // the Person node below.
+      isBasedOn: projectCreditJsonLd(),
     },
     {
       '@context': 'https://schema.org',
@@ -180,6 +186,7 @@ export default async function RootLayout({
         {/* Admin-customizable theme: overrides CSS variables defined in globals.css. When visitors may
             switch light/dark it also holds the other look (:root[data-mode="alt"]). */}
         <style dangerouslySetInnerHTML={{ __html: siteThemeCss(theme) }} />
+        <link rel="humans" type="text/plain" href="/humans.txt" />
         {/* Applies a returning visitor's light/dark choice before the first paint (no flash). */}
         {switchScript && <script dangerouslySetInnerHTML={{ __html: switchScript }} />}
       </head>
