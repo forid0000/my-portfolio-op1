@@ -12,7 +12,7 @@ Use GitHub's private reporting instead: open the repository's **Security** tab a
 
 Only the latest release on the default branch receives security fixes.
 
-## Security model in one page 
+## Security model in one page
 
 my-portfolio-op1 is a single-owner CMS. There is one admin and one optional notes-vault user, both of whom are the site owner. The public site is read-only.
 
